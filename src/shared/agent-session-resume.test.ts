@@ -20,6 +20,22 @@ describe('agent session resume metadata', () => {
     expect(isResumableTuiAgent('prime-agent')).toBe(true)
   })
 
+  it('treats zcode as a resumable TUI agent', () => {
+    expect(isResumableTuiAgent('zcode')).toBe(true)
+  })
+
+  it('builds zcode resume argv from a session_id provider session', () => {
+    expect(getAgentResumeArgv('zcode', { key: 'session_id', id: 'sess_abc' })).toEqual([
+      'zcode',
+      '--resume',
+      'sess_abc'
+    ])
+  })
+
+  it('rejects zcode resume when provider session key is not session_id', () => {
+    expect(getAgentResumeArgv('zcode', { key: 'conversation_id', id: 'x' })).toBeNull()
+  })
+
   it.each([
     ['claude', { session_id: 'claude-session' }, { key: 'session_id', id: 'claude-session' }],
     ['codex', { session_id: 'codex-session' }, { key: 'session_id', id: 'codex-session' }],

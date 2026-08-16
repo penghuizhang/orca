@@ -158,6 +158,12 @@
       "rules": {
         "max-lines": ["error", { "max": 800, "skipBlankLines": true, "skipComments": true }]
       }
+    },
+    {
+      "files": ["src/shared/tui-agent-config.ts"],
+      "rules": {
+        "max-lines": ["error", { "max": 360, "skipBlankLines": true, "skipComments": true }]
+      }
     }
   ],
   "ignorePatterns": ["**/node_modules", "**/dist", "**/out", "tests/e2e/.cross-version-checkouts"]
