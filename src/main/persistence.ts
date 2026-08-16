@@ -32,16 +32,14 @@ import type {
   AutomationRunTrigger,
   AutomationUpdateInput
 } from '../shared/automations-types'
-import {
-  applyCalendarEntryUpdate,
-  compareCalendarEntriesByStart,
-  normalizeCalendarEntry
-} from '../shared/calendar-types'
+import { normalizeCalendarEntry } from '../shared/calendar-types'
 import type {
   CalendarEntry,
   CalendarEntryCreateInput,
   CalendarEntryUpdateInput
 } from '../shared/calendar-types'
+import { CalendarTable, CALENDAR_ENTRIES_TABLE_MIGRATION } from './custom-db/calendar-table'
+import { CustomDb } from './custom-db/custom-db'
 import {
   latestAutomationOccurrenceAtOrBefore,
   nextAutomationOccurrenceAfter
@@ -2900,6 +2898,8 @@ export type PtyBindingSourceExpectation = {
 export class Store {
   private state: PersistedState
   private readonly dataFile: string
+  private readonly customDb: CustomDb
+  private readonly calendarTable: CalendarTable
   private readonly activeViewPreference: ActiveViewPreference
   private readonly terminalScrollbackSnapshotStorage: TerminalScrollbackSnapshotStorage
   private writeTimer: ReturnType<typeof setTimeout> | null = null
@@ -2938,6 +2938,12 @@ export class Store {
   constructor(options: StoreOptions = {}) {
     // Why: profile switching yields multiple state paths; capture per Store so late async writes can't follow a global path.
     this.dataFile = options.dataFile ?? getDataFile()
+    // Why: fork business data lives in its own sqlite next to the profile state
+    // file, so a profile switch carries its calendar (and future tables) along.
+    this.customDb = new CustomDb(join(dirname(this.dataFile), 'orca-custom.db'), [
+      CALENDAR_ENTRIES_TABLE_MIGRATION
+    ])
+    this.calendarTable = new CalendarTable(this.customDb.database)
     this.staleTempCleanup = removeStaleDurableWriteTempFiles(this.dataFile, {
       minimumAgeMs: STALE_DURABLE_WRITE_TEMP_AGE_MS
     })
@@ -2977,6 +2983,7 @@ export class Store {
       // Why: rewrite legacy pane:1 leaves so older renderer writes can't revive them; other migrations also set loadNeedsSave.
       this.scheduleSave()
     }
+    this.migrateLegacyCalendarEntries()
   }
 
   // Why: notes live top-level on disk so an older build's field-by-field
@@ -5552,57 +5559,46 @@ export class Store {
   // ── Calendar ─────────────────────────────────────────────────────
 
   listCalendarEntries(): CalendarEntry[] {
-    return (this.state.calendarEntries ?? [])
-      .map((entry) => normalizeCalendarEntry(entry))
-      .filter((entry): entry is CalendarEntry => entry !== null)
-      .sort(compareCalendarEntriesByStart)
+    return this.calendarTable.list()
   }
 
   createCalendarEntry(input: CalendarEntryCreateInput): CalendarEntry {
-    const now = Date.now()
-    const entry = normalizeCalendarEntry({
-      id: randomUUID(),
-      title: input.title,
-      date: input.date,
-      allDay: input.allDay,
-      startTime: input.startTime,
-      endTime: input.endTime,
-      category: input.category,
-      description: input.description,
-      lunarRepeat: input.lunarRepeat,
-      createdAt: now,
-      updatedAt: now
-    })
-    if (!entry) {
-      throw new Error('Invalid calendar entry.')
-    }
-    this.state.calendarEntries = [...(this.state.calendarEntries ?? []), entry]
-    this.flush()
-    return entry
+    return this.calendarTable.create(input)
   }
 
   updateCalendarEntry(id: string, updates: CalendarEntryUpdateInput): CalendarEntry {
-    const current = (this.state.calendarEntries ?? []).find((entry) => entry.id === id)
-    if (!current) {
-      throw new Error('Calendar entry not found.')
-    }
-    const updated = applyCalendarEntryUpdate(current, updates)
-    if (!updated) {
-      throw new Error('Invalid calendar entry update.')
-    }
-    updated.updatedAt = Date.now()
-    this.state.calendarEntries = (this.state.calendarEntries ?? []).map((entry) =>
-      entry.id === id ? updated : entry
-    )
-    this.flush()
-    return updated
+    return this.calendarTable.update(id, updates)
   }
 
   deleteCalendarEntry(id: string): void {
-    this.state.calendarEntries = (this.state.calendarEntries ?? []).filter(
-      (entry) => entry.id !== id
-    )
-    this.flush()
+    this.calendarTable.delete(id)
+  }
+
+  // Why: pre-sqlite builds kept calendar entries in the JSON state file; move
+  // them into orca-custom.db once, then drop the JSON field. INSERT OR IGNORE
+  // (id primary key) makes retries idempotent, and the field survives when the
+  // db write fails so the next launch retries instead of losing data.
+  private migrateLegacyCalendarEntries(): void {
+    const legacy = (this.state as unknown as { calendarEntries?: unknown[] }).calendarEntries
+    if (!Array.isArray(legacy) || legacy.length === 0) {
+      return
+    }
+    let migratedAll = true
+    for (const raw of legacy) {
+      const entry = normalizeCalendarEntry(raw)
+      if (!entry) {
+        continue
+      }
+      try {
+        this.calendarTable.insert(entry)
+      } catch {
+        migratedAll = false
+      }
+    }
+    if (migratedAll) {
+      delete (this.state as unknown as { calendarEntries?: unknown[] }).calendarEntries
+      this.scheduleSave()
+    }
   }
 
   createAutomationRun(
