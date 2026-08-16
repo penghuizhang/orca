@@ -11,8 +11,18 @@ export function getRepoBackedTaskEmptyState(args: {
   provider: RepoBackedTaskEmptyStateProvider
   selectedRepoCount: number
   gitlabView?: 'issues' | 'mrs' | 'todos'
+  hasNoWorkspace?: boolean
 }): RepoBackedTaskEmptyState {
   if (args.selectedRepoCount === 0) {
+    if (args.hasNoWorkspace) {
+      return {
+        title: translate('auto.components.taskPageEmptyState.noWorkspaceTitle', 'No workspace yet'),
+        description: translate(
+          'auto.components.taskPageEmptyState.noWorkspaceDescription',
+          'Add a workspace (a git repository) to start browsing tasks.'
+        )
+      }
+    }
     return {
       title: translate(
         'auto.components.taskPageEmptyState.noProjectSourcesTitle',

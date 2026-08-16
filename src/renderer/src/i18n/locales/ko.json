@@ -14144,7 +14144,10 @@
         "noGitLabMrsTitle": "GitLab MR 없음",
         "noGitLabMrsDescription": "이 필터와 일치하는 GitLab MR이 없습니다.",
         "noGitLabWorkTitle": "GitLab 작업 없음",
-        "noGitLabWorkDescription": "이 필터와 일치하는 GitLab 작업이 없습니다."
+        "noGitLabWorkDescription": "이 필터와 일치하는 GitLab 작업이 없습니다.",
+        "noWorkspaceTitle": "워크스페이스가 아직 없습니다",
+        "noWorkspaceDescription": "워크스페이스(Git 리포지토리)를 추가하면 작업을 탐색할 수 있습니다.",
+        "addWorkspace": "워크스페이스 추가"
       },
       "taskSourceContextSummary": {
         "sourceUnavailable": "{{value0}} 소스를 사용할 수 없음: {{value1}}",

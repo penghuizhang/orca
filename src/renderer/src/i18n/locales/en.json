@@ -15044,7 +15044,10 @@
         "noGitLabMrsTitle": "No GitLab merge requests",
         "noGitLabMrsDescription": "No GitLab MRs match this filter.",
         "noGitLabWorkTitle": "No GitLab work",
-        "noGitLabWorkDescription": "No GitLab work matches this filter."
+        "noGitLabWorkDescription": "No GitLab work matches this filter.",
+        "addWorkspace": "Add workspace",
+        "noWorkspaceTitle": "No workspace yet",
+        "noWorkspaceDescription": "Add a workspace (a git repository) to start browsing tasks."
       },
       "taskSourceContextSummary": {
         "sourceUnavailable": "{{value0}} source unavailable: {{value1}}",

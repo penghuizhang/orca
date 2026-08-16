@@ -3595,9 +3595,10 @@ export default function TaskPage(): React.JSX.Element {
     () =>
       getRepoBackedTaskEmptyState({
         provider: 'github',
-        selectedRepoCount: selectedRepos.length
+        selectedRepoCount: selectedRepos.length,
+        hasNoWorkspace: repos.length === 0
       }),
-    [selectedRepos.length]
+    [repos.length, selectedRepos.length]
   )
   const taskSourceManuallyChangedRef = useRef(false)
   const lastPageTaskSourceRef = useRef(pageData.taskSource)
@@ -3661,9 +3662,10 @@ export default function TaskPage(): React.JSX.Element {
       getRepoBackedTaskEmptyState({
         provider: 'gitlab',
         selectedRepoCount: selectedRepos.length,
-        gitlabView
+        gitlabView,
+        hasNoWorkspace: repos.length === 0
       }),
-    [gitlabView, selectedRepos.length]
+    [gitlabView, repos.length, selectedRepos.length]
   )
 
   const gitlabFilterIsValid =
@@ -10382,6 +10384,20 @@ export default function TaskPage(): React.JSX.Element {
                     <p className="mt-2 text-sm text-muted-foreground">
                       {githubEmptyState.description}
                     </p>
+                    {repos.length === 0 ? (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="mt-4 gap-1.5"
+                        onClick={() => openModal('add-repo')}
+                      >
+                        <Plus className="size-4" />
+                        {translate(
+                          'auto.components.taskPageEmptyState.addWorkspace',
+                          'Add workspace'
+                        )}
+                      </Button>
+                    ) : null}
                   </div>
                 ) : null}
 
@@ -10906,6 +10922,20 @@ export default function TaskPage(): React.JSX.Element {
                     <p className="mt-2 text-sm text-muted-foreground">
                       {gitlabEmptyState.description}
                     </p>
+                    {repos.length === 0 ? (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="mt-4 gap-1.5"
+                        onClick={() => openModal('add-repo')}
+                      >
+                        <Plus className="size-4" />
+                        {translate(
+                          'auto.components.taskPageEmptyState.addWorkspace',
+                          'Add workspace'
+                        )}
+                      </Button>
+                    ) : null}
                   </div>
                 ) : null}
                 <div className="divide-y divide-border/50">

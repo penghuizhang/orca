@@ -174,23 +174,16 @@ export function SidebarTaskNavButton(): React.JSX.Element | null {
       <ContextMenuTrigger asChild>
         <button
           type="button"
-          onClick={() => {
-            if (!canBrowseTasks) {
-              return
-            }
-            openTaskPage()
-          }}
+          onClick={() => openTaskPage()}
           onPointerEnter={handlePrefetch}
           onFocus={handlePrefetch}
-          aria-disabled={!canBrowseTasks}
           aria-current={tasksActive ? 'page' : undefined}
           data-contextual-tour-target="sidebar-tasks"
           className={cn(
             'group flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-[13px] font-medium tracking-tight transition-colors',
             tasksActive
               ? 'bg-worktree-sidebar-accent text-worktree-sidebar-accent-foreground'
-              : 'text-worktree-sidebar-foreground/60 hover:bg-worktree-sidebar-foreground/8',
-            !canBrowseTasks && 'cursor-not-allowed opacity-50 hover:bg-transparent'
+              : 'text-worktree-sidebar-foreground/60 hover:bg-worktree-sidebar-foreground/8'
           )}
         >
           <List

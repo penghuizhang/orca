@@ -14133,7 +14133,10 @@
         "noGitLabMrsTitle": "No hay merge requests de GitLab",
         "noGitLabMrsDescription": "Ningún MR de GitLab coincide con este filtro.",
         "noGitLabWorkTitle": "No hay trabajo de GitLab",
-        "noGitLabWorkDescription": "Ningún trabajo de GitLab coincide con este filtro."
+        "noGitLabWorkDescription": "Ningún trabajo de GitLab coincide con este filtro.",
+        "noWorkspaceTitle": "Aún no hay espacio de trabajo",
+        "noWorkspaceDescription": "Añade un espacio de trabajo (un repositorio Git) para empezar a consultar tareas.",
+        "addWorkspace": "Añadir espacio de trabajo"
       },
       "taskSourceContextSummary": {
         "sourceUnavailable": "Origen {{value0}} no disponible: {{value1}}",
