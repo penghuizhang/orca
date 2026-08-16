@@ -1,0 +1,79 @@
+#!/usr/bin/env node
+// One-shot orca-s build: runs the full build:mac pipeline and reports artifacts.
+//   node config/scripts/build-orca-s.mjs            — build only
+//   node config/scripts/build-orca-s.mjs --install  — build, then install to
+//     /Applications, clear the quarantine attribute and launch the app
+//   node config/scripts/build-orca-s.mjs --dry-run  — print what would run
+import { spawnSync } from 'node:child_process'
+import { cpSync, existsSync, readdirSync } from 'node:fs'
+import { homedir } from 'node:os'
+import { resolve } from 'node:path'
+
+const repoRoot = resolve(import.meta.dirname, '..', '..')
+const args = new Set(process.argv.slice(2))
+const dryRun = args.has('--dry-run')
+const install = args.has('--install')
+
+// Why: this machine's nvm default points at a missing Node; pnpm build:mac
+// needs Node 24 (engines floor). Inject the known-good bin dir explicitly.
+const nvmNodeBin = `${homedir()}/.nvm/versions/node/v24.19.0/bin`
+const env = { ...process.env, PATH: `${nvmNodeBin}:${process.env.PATH ?? ''}` }
+
+function run(command, argv, options = {}) {
+  if (dryRun) {
+    console.log(`[orca-s] would run: ${command} ${argv.join(' ')}`)
+    return { status: 0 }
+  }
+  const result = spawnSync(command, argv, { cwd: repoRoot, stdio: 'inherit', env, ...options })
+  if (result.status !== 0) {
+    console.error(`[orca-s] ${command} failed (exit ${result.status})`)
+    process.exit(result.status ?? 1)
+  }
+  return result
+}
+
+function artifacts() {
+  const dist = resolve(repoRoot, 'dist')
+  if (!existsSync(dist)) {
+    return []
+  }
+  return readdirSync(dist)
+    .filter((name) => name.endsWith('.dmg') || name.endsWith('.zip'))
+    .sort()
+}
+
+function hostSlice() {
+  return process.arch === 'arm64' ? 'mac-arm64' : 'mac'
+}
+
+console.log(`[orca-s] building from ${repoRoot}`)
+run('pnpm', ['build:mac'])
+
+const files = artifacts()
+if (files.length === 0) {
+  console.error('[orca-s] no dmg/zip artifacts found under dist/')
+  process.exit(1)
+}
+console.log('[orca-s] artifacts:')
+for (const name of files) {
+  console.log(`  dist/${name}`)
+}
+
+if (install) {
+  const appSource = resolve(repoRoot, 'dist', hostSlice(), 'orca-s.app')
+  const appTarget = '/Applications/orca-s.app'
+  if (!existsSync(appSource)) {
+    console.error(`[orca-s] missing ${appSource} (unexpected host slice?)`)
+    process.exit(1)
+  }
+  console.log(`[orca-s] installing ${appSource} -> ${appTarget}`)
+  if (!dryRun) {
+    cpSync(appSource, appTarget, { recursive: true, force: true })
+    run('xattr', ['-cr', appTarget])
+    console.log('[orca-s] launching orca-s…')
+    run('open', [appTarget])
+  }
+  console.log('[orca-s] done. First launch may need right-click -> Open after a fresh install.')
+} else {
+  console.log('[orca-s] done. Re-run with --install to copy into /Applications.')
+}
