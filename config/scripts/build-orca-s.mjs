@@ -32,6 +32,27 @@ function run(command, argv, options = {}) {
   return result
 }
 
+// Why: only the custom trunk carries the orca-s build identity and the full
+// fork feature set; packaging any other branch silently ships the wrong build.
+const branch = spawnSync('git', ['branch', '--show-current'], {
+  cwd: repoRoot,
+  encoding: 'utf8',
+  env
+}).stdout.trim()
+if (branch !== 'custom') {
+  console.error(`[orca-s] must build from the custom branch (current: ${branch || '(detached)'}).`)
+  console.error('  git checkout custom && node config/scripts/build-orca-s.mjs [--install]')
+  process.exit(1)
+}
+const dirty = spawnSync('git', ['status', '--porcelain'], {
+  cwd: repoRoot,
+  encoding: 'utf8',
+  env
+}).stdout
+if (dirty.trim()) {
+  console.warn('[orca-s] working tree is not clean — the package will include uncommitted changes.')
+}
+
 function artifacts() {
   const dist = resolve(repoRoot, 'dist')
   if (!existsSync(dist)) {
