@@ -590,6 +590,35 @@ describe('createUISlice page navigation history', () => {
   })
 })
 
+describe('createUISlice calendar navigation', () => {
+  it('records and rewinds Calendar visits on close', () => {
+    const store = createUIStore()
+    store.setState({ worktreesByRepo: { 'repo-1': [makeWorktree('a')] } })
+
+    store.getState().recordWorktreeVisit('a')
+    store.getState().openCalendarPage()
+    expect(store.getState().worktreeNavHistory).toEqual(['a', 'calendar'])
+    expect(store.getState().worktreeNavHistoryIndex).toBe(1)
+
+    store.getState().closeCalendarPage()
+    expect(store.getState().activeView).toBe('terminal')
+    expect(store.getState().worktreeNavHistoryIndex).toBe(0)
+  })
+
+  it('dedupes repeated Calendar opens against the current history entry', () => {
+    const store = createUIStore()
+    store.setState({ worktreesByRepo: { 'repo-1': [makeWorktree('a')] } })
+
+    store.getState().recordWorktreeVisit('a')
+    store.getState().openCalendarPage()
+    store.getState().openCalendarPage()
+
+    expect(store.getState().activeView).toBe('calendar')
+    expect(store.getState().worktreeNavHistory).toEqual(['a', 'calendar'])
+    expect(store.getState().worktreeNavHistoryIndex).toBe(1)
+  })
+})
+
 describe('createUISlice space navigation', () => {
   it('records Space page opens as workspace cleanup interactions', () => {
     const setMock = vi.fn(() => Promise.resolve())
