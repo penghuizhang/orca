@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { FolderGit2, Github, Gitlab } from 'lucide-react'
+import { Github, Gitlab } from 'lucide-react'
+import { GiteeIcon } from '@/components/icons/GiteeIcon'
 import type { GlobalSettings } from '../../../../shared/global-settings-types'
 import type { TaskProvider } from '../../../../shared/task-providers'
 import {
@@ -100,7 +101,7 @@ const PROVIDER_META: Record<
         'Browse pull requests and issues across your Gitee repositories.'
       )
     },
-    Icon: ({ className }) => <FolderGit2 className={className} />
+    Icon: ({ className }) => <GiteeIcon className={className} />
   }
 }
 
