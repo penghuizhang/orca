@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-// One-shot orca-s build: runs the full build:mac pipeline and reports artifacts.
-//   node config/scripts/build-orca-s.mjs            — build only
+// One-shot orca-s build: runs the full packaging pipeline and reports artifacts.
+//   node config/scripts/build-orca-s.mjs            — build arm64 (default)
+//   node config/scripts/build-orca-s.mjs --x64      — build the Intel slice instead
 //   node config/scripts/build-orca-s.mjs --install  — build, then install to
 //     /Applications, clear the quarantine attribute and launch the app
 //   node config/scripts/build-orca-s.mjs --dry-run  — print what would run
@@ -9,10 +10,14 @@ import { cpSync, existsSync, readdirSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { resolve } from 'node:path'
 
+import { getLocalBuildIdentity } from './build-mac-local.mjs'
+
 const repoRoot = resolve(import.meta.dirname, '..', '..')
 const args = new Set(process.argv.slice(2))
 const dryRun = args.has('--dry-run')
 const install = args.has('--install')
+const archFlag = args.has('--x64') ? '--x64' : '--arm64'
+const archName = archFlag === '--x64' ? 'x64' : 'arm64'
 
 // Why: this machine's nvm default points at a missing Node; pnpm build:mac
 // needs Node 24 (engines floor). Inject the known-good bin dir explicitly.
@@ -64,11 +69,29 @@ function artifacts() {
 }
 
 function hostSlice() {
-  return process.arch === 'arm64' ? 'mac-arm64' : 'mac'
+  return archName === 'x64' ? 'mac' : 'mac-arm64'
 }
 
-console.log(`[orca-s] building from ${repoRoot}`)
-run('pnpm', ['build:mac'])
+console.log(`[orca-s] building ${archName} from ${repoRoot}`)
+// Why: build:mac always packs both slices; run the same front half by hand so
+// electron-builder gets an explicit --arm64/--x64 and only one slice is built.
+run('pnpm', ['run', 'build:desktop'])
+run('pnpm', ['run', 'build:computer-macos'])
+run('pnpm', ['run', 'build:notification-status-macos'])
+run('pnpm', ['run', 'ensure:electron-runtime'])
+const identity = getLocalBuildIdentity()
+console.log(`[orca-s] local update version ${identity.version}`)
+run(
+  'pnpm',
+  ['exec', 'electron-builder', '--config', 'config/electron-builder.config.cjs', '--mac', archFlag],
+  {
+    env: {
+      ...process.env,
+      ORCA_BUILD_COMMIT: identity.commit,
+      ORCA_LOCAL_BUILD_VERSION: identity.version
+    }
+  }
+)
 
 const files = artifacts()
 if (files.length === 0) {
