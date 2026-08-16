@@ -29,7 +29,16 @@ function run(command, argv, options = {}) {
     console.log(`[orca-s] would run: ${command} ${argv.join(' ')}`)
     return { status: 0 }
   }
-  const result = spawnSync(command, argv, { cwd: repoRoot, stdio: 'inherit', env, ...options })
+  // Why: caller env objects spread process.env (including the shell PATH), so
+  // optionEnv first lets the injected Node PATH win — electron-builder then
+  // runs under v24.19.0 and does not misjudge node:sqlite as a bare import.
+  const { env: optionEnv, ...spawnOptions } = options
+  const result = spawnSync(command, argv, {
+    cwd: repoRoot,
+    stdio: 'inherit',
+    env: { ...optionEnv, ...env },
+    ...spawnOptions
+  })
   if (result.status !== 0) {
     console.error(`[orca-s] ${command} failed (exit ${result.status})`)
     process.exit(result.status ?? 1)
