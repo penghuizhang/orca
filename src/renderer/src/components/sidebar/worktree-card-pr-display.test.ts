@@ -66,7 +66,7 @@ describe('getWorktreeCardPrDisplay', () => {
 
   it('ignores linked-lookup PR details when the worktree is unlinked', () => {
     expect(
-      getWorktreeCardPrDisplay(pr, null, null, null, null, null, {
+      getWorktreeCardPrDisplay(pr, null, null, null, null, null, null, {
         reviewHintKey: 'github:123'
       })
     ).toBeNull()
@@ -74,7 +74,7 @@ describe('getWorktreeCardPrDisplay', () => {
 
   it('keeps an unlinked GitHub PR visible when branch provenance names the same PR', () => {
     expect(
-      getWorktreeCardPrDisplay(pr, null, null, null, null, null, {
+      getWorktreeCardPrDisplay(pr, null, null, null, null, null, null, {
         reviewHintKey: 'github:123',
         branchLookupGitHubPRNumber: 123
       })
@@ -83,7 +83,7 @@ describe('getWorktreeCardPrDisplay', () => {
 
   it('still suppresses unlinked linked-lookup details when branch provenance names a different PR', () => {
     expect(
-      getWorktreeCardPrDisplay(pr, null, null, null, null, null, {
+      getWorktreeCardPrDisplay(pr, null, null, null, null, null, null, {
         reviewHintKey: 'github:123',
         branchLookupGitHubPRNumber: 999
       })
@@ -92,7 +92,7 @@ describe('getWorktreeCardPrDisplay', () => {
 
   it('does not let a GitHub branch PR number corroborate an unlinked GitLab MR', () => {
     expect(
-      getWorktreeCardPrDisplay(gitLabReview, null, null, null, null, null, {
+      getWorktreeCardPrDisplay(gitLabReview, null, null, null, null, null, null, {
         reviewHintKey: 'gitlab:321',
         branchLookupGitHubPRNumber: 321
       })
@@ -101,7 +101,7 @@ describe('getWorktreeCardPrDisplay', () => {
 
   it('does not let branch provenance override linked non-GitHub review metadata', () => {
     expect(
-      getWorktreeCardPrDisplay(pr, null, 321, null, null, null, {
+      getWorktreeCardPrDisplay(pr, null, 321, null, null, null, null, {
         reviewHintKey: 'gitlab:321',
         branchLookupGitHubPRNumber: 123
       })
@@ -110,7 +110,7 @@ describe('getWorktreeCardPrDisplay', () => {
 
   it('shows branch-discovered GitHub PR details when the worktree is unlinked', () => {
     expect(
-      getWorktreeCardPrDisplay(pr, null, null, null, null, null, {
+      getWorktreeCardPrDisplay(pr, null, null, null, null, null, null, {
         reviewHintKey: ''
       })
     ).toBe(pr)

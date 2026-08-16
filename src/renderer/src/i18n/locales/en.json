@@ -2033,7 +2033,22 @@
         "linearModeHasWorktreeTooltip": "Linear tickets linked to an Orca workspace",
         "linearEmptyHasWorktree": "No Linear tickets are linked to an Orca workspace yet. Start work from a Linear issue to see it here.",
         "linearOpenAttachedWorkspace": "Open workspace attached to {{value0}}",
-        "linearWorktreesColumn": "Workspaces"
+        "linearWorktreesColumn": "Workspaces",
+        "gitee": {
+          "rejected": "Gitee rejected the token. Reconnect in Settings → Review providers → Gitee.",
+          "unreachable": "Could not reach Gitee. Check your connection, then retry.",
+          "pulls": "Pull requests",
+          "issues": "Issues",
+          "refresh": "Refresh Gitee items",
+          "repo": "Repository",
+          "state": "State",
+          "emptyTitle": "No open items",
+          "emptyDescription": "No pull requests or issues across your Gitee repositories. Connect Gitee in Settings → Review providers to list them here.",
+          "sourceOption": "Gitee",
+          "searchPlaceholder": "Search Gitee items...",
+          "noMatching": "No items match the current filter.",
+          "openOnGitee": "Open on Gitee"
+        }
       },
       "Terminal": {
         "73768427cf": "Close",
@@ -4517,6 +4532,9 @@
           "d599269755": "Hide from sidebar",
           "artifacts": "Artifacts",
           "calendar": "Calendar"
+          "gitee": {
+            "openTasks": "Open Gitee tasks"
+          }
         },
         "SidebarRepositoryFilterSection": {
           "d3a9c4cea1": "Clear",
@@ -7616,7 +7634,9 @@
           "integrationsHint": "Credentials for all providers also live under",
           "integrationsLink": "Integrations",
           "skillHint": ". After Linear is connected, usage examples stay under Settings → Linear.",
-          "incompleteBannerBodyWithLinear": "Hide providers you do not use, or expand a card and finish its steps. For Linear: API access, the agent skill, and Show in Tasks."
+          "incompleteBannerBodyWithLinear": "Hide providers you do not use, or expand a card and finish its steps. For Linear: API access, the agent skill, and Show in Tasks.",
+          "giteeLabel": "Gitee",
+          "giteeDescription": "Browse pull requests and issues across your Gitee repositories."
         },
         "TerminalAppearanceSection": {
           "a14a427ae4": "Thickness of the pane divider line.",
@@ -8818,7 +8838,11 @@
             "7166b9090c": "GitHub authentication via the gh CLI.",
             "f16e41cc72": "GitHub Integration",
             "760e2446e0": "Bitbucket Cloud authentication with a saved API token or environment variables.",
-            "af5ae87847": "access token"
+            "af5ae87847": "access token",
+            "gitee": {
+              "title": "Gitee Integration",
+              "description": "Gitee authentication via a private token, with repository, pull request, and issue browsing."
+            }
           }
         },
         "jira": {
@@ -10737,6 +10761,49 @@
         },
         "shortcutDefinitionCatalog": {
           "missionControlConflict": "Blocked by Mission Control. Remap here or change it in System Settings."
+        },
+        "gitee": {
+          "dialog": {
+            "connectFailed": "Could not connect to Gitee. Try again.",
+            "title": "Connect Gitee",
+            "description": "Enter a Gitee private token. Create one at Gitee → Settings → Private Tokens with repo and issues scopes.",
+            "tokenLabel": "Private token",
+            "tokenDocs": "Open the Gitee private token page",
+            "envManaged": "Configured via the ORCA_GITEE_ACCESS_TOKEN environment variable. Unset it to manage the credential in Orca.",
+            "cancel": "Cancel",
+            "connect": "Connect"
+          },
+          "card": {
+            "disconnectFailed": "Could not remove the saved Gitee credential.",
+            "connectedAccount": "{{value0}} · Pull requests and issues",
+            "connected": "Pull requests and issues for your repositories",
+            "description": "Pull requests and issues for your Gitee repositories.",
+            "edit": "Edit credentials",
+            "connect": "Connect",
+            "accountUnknown": "Gitee account",
+            "disconnect": "Disconnect Gitee",
+            "browseRepos": "Browse repositories",
+            "unavailable": "Gitee status is not available in this runtime yet.",
+            "envManaged": "Configured via the ORCA_GITEE_ACCESS_TOKEN environment variable. Unset it to manage this credential in Orca.",
+            "storedAuthFailed": "The saved Gitee credential could not authenticate. Edit it, or check that the token still has repo and issues access.",
+            "authFailed": "Gitee credentials are configured but could not authenticate. Check the token and repository permissions, then restart Orca if environment variables changed.",
+            "storedCredential": "Saved in Orca on this machine. The ORCA_GITEE_ACCESS_TOKEN environment variable takes precedence when set.",
+            "notConfigured": "Connect a Gitee account with a private token. The ORCA_GITEE_ACCESS_TOKEN environment variable works too and takes precedence."
+          },
+          "repos": {
+            "rejected": "Gitee rejected the token. Reconnect with a valid private token.",
+            "unreachable": "Could not reach Gitee. Check your connection, then retry.",
+            "noPulls": "No pull requests.",
+            "noIssues": "No issues.",
+            "title": "Gitee repositories",
+            "description": "Your public and private repositories on gitee.com.",
+            "retry": "Retry",
+            "pulls": "Pull requests",
+            "issues": "Issues",
+            "openInBrowser": "Open in browser",
+            "copyCloneUrl": "Copy clone URL",
+            "selectRepo": "Select a repository to browse its pull requests and issues."
+          }
         }
       },
       "right": {
@@ -15273,6 +15340,17 @@
         "pickMonth": "Pick a month",
         "previousYear": "Previous year",
         "nextYear": "Next year"
+      "GiteeItemDialog": {
+        "createdAt": "Created",
+        "updatedAt": "Updated",
+        "milestone": "Milestone",
+        "openOnGitee": "Open on Gitee",
+        "loadError": "Could not load Gitee item details.",
+        "close": "Close",
+        "commits": "Commits",
+        "noComments": "No comments yet.",
+        "noFiles": "No files changed.",
+        "noCommits": "No commits."
       }
     },
     "i18n": {
