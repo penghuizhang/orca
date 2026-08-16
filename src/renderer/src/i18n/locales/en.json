@@ -2033,7 +2033,19 @@
         "linearModeHasWorktreeTooltip": "Linear tickets linked to an Orca workspace",
         "linearEmptyHasWorktree": "No Linear tickets are linked to an Orca workspace yet. Start work from a Linear issue to see it here.",
         "linearOpenAttachedWorkspace": "Open workspace attached to {{value0}}",
-        "linearWorktreesColumn": "Workspaces"
+        "linearWorktreesColumn": "Workspaces",
+        "gitee": {
+          "rejected": "Gitee rejected the token. Reconnect in Settings → Review providers → Gitee.",
+          "unreachable": "Could not reach Gitee. Check your connection, then retry.",
+          "pulls": "Pull requests",
+          "issues": "Issues",
+          "refresh": "Refresh Gitee items",
+          "repo": "Repository",
+          "state": "State",
+          "emptyTitle": "No open items",
+          "emptyDescription": "No open pull requests or issues across your Gitee repositories. Connect Gitee in Settings → Review providers to list them here.",
+          "sourceOption": "Gitee"
+        }
       },
       "Terminal": {
         "73768427cf": "Close",
@@ -7615,7 +7627,9 @@
           "integrationsHint": "Credentials for all providers also live under",
           "integrationsLink": "Integrations",
           "skillHint": ". After Linear is connected, usage examples stay under Settings → Linear.",
-          "incompleteBannerBodyWithLinear": "Hide providers you do not use, or expand a card and finish its steps. For Linear: API access, the agent skill, and Show in Tasks."
+          "incompleteBannerBodyWithLinear": "Hide providers you do not use, or expand a card and finish its steps. For Linear: API access, the agent skill, and Show in Tasks.",
+          "giteeLabel": "Gitee",
+          "giteeDescription": "Browse pull requests and issues across your Gitee repositories."
         },
         "TerminalAppearanceSection": {
           "a14a427ae4": "Thickness of the pane divider line.",
