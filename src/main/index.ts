@@ -119,6 +119,7 @@ import {
 import {
   configureElectronNetworkCompatibility,
   configureDevUserDataPath,
+  configurePackagedUserDataPath,
   configureOrcaUserDataPathEnv,
   disableUnsupportedChromiumFeatures,
   enableMainProcessGpuFeatures,
@@ -664,6 +665,9 @@ if (app.isPackaged && process.platform !== 'win32') {
   })
 }
 configureDevUserDataPath(is.dev)
+if (!is.dev) {
+  configurePackagedUserDataPath()
+}
 configureOrcaUserDataPathEnv()
 installServeSupervisorDisconnectQuit(isServeMode)
 

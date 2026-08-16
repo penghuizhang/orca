@@ -6,7 +6,7 @@
 //     /Applications, clear the quarantine attribute and launch the app
 //   node config/scripts/build-orca-s.mjs --dry-run  — print what would run
 import { spawnSync } from 'node:child_process'
-import { cpSync, existsSync, readdirSync } from 'node:fs'
+import { cpSync, existsSync, readdirSync, rmSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { resolve } from 'node:path'
 
@@ -112,6 +112,11 @@ if (install) {
   }
   console.log(`[orca-s] installing ${appSource} -> ${appTarget}`)
   if (!dryRun) {
+    // Why: cpSync cannot overwrite an existing .app — its Versions/Current
+    // symlink trips ERR_FS_CP_SYMLINK_TO_SUBDIRECTORY — so remove first.
+    if (existsSync(appTarget)) {
+      rmSync(appTarget, { recursive: true, force: true })
+    }
     cpSync(appSource, appTarget, { recursive: true, force: true })
     run('xattr', ['-cr', appTarget])
     console.log('[orca-s] launching orca-s…')
