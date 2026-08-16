@@ -128,6 +128,7 @@ import {
 } from '@/components/linear-state-pill-style'
 import { parseTaskQuery, stripRepoQualifiers, withQualifier } from '../../../shared/task-query'
 import { githubProjectHost } from '../../../shared/github/project-identity'
+import type { GiteeAccountItem } from '../../../shared/gitee-api'
 import {
   buildLinearTeamUrl,
   getLinearOrganizationUrlKeyFromIssueUrl
@@ -3699,6 +3700,15 @@ export default function TaskPage(): React.JSX.Element {
   // Why: when every refresh fails (GitHub outage/network/rate limit), attribute it to GitHub instead of showing an empty or stale list as current.
   const [githubUnavailable, setGithubUnavailable] = useState(false)
   const [taskRefreshNonce, setTaskRefreshNonce] = useState(0)
+
+  // ── Gitee task-source state ─────────────────────────────────────
+  // Why: account-level aggregation (all repos, open PRs/issues) fetched
+  // directly via window.api.gitee — same slim pattern as the GitLab tab.
+  const [giteeView, setGiteeView] = useState<'pulls' | 'issues'>('pulls')
+  const [giteeItems, setGiteeItems] = useState<GiteeAccountItem[]>([])
+  const [giteeLoading, setGiteeLoading] = useState(false)
+  const [giteeError, setGiteeError] = useState<string | null>(null)
+  const [giteeRefreshNonce, setGiteeRefreshNonce] = useState(0)
   // Why: quiet success revalidate must never share taskRefreshNonce / tasksFiltering
   // (K23) — membership exits and merge success refresh without filter skeletons.
   const [quietRefreshNonce, setQuietRefreshNonce] = useState(0)
@@ -5029,6 +5039,63 @@ export default function TaskPage(): React.JSX.Element {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- selectedReposKey covers every selectedRepos field read above (see its GitHub-scoped-context note); keying off the array ref would re-run on every parent render.
   }, [taskSource, gitlabView, activeGitlabFilter, gitlabRefreshNonce, selectedReposKey])
+
+  // Why: Gitee aggregates at the account level (all authenticated repos), so
+  // its effect is user-scoped and needs no repo selection.
+  useEffect(() => {
+    if (taskSource !== 'gitee') {
+      return
+    }
+    let stale = false
+    setGiteeLoading(true)
+    setGiteeError(null)
+    const request =
+      giteeView === 'pulls'
+        ? window.api.gitee.listAccountPulls()
+        : window.api.gitee.listAccountIssues()
+    void request
+      .then((result) => {
+        if (stale) {
+          return
+        }
+        const typed = result as { ok: boolean; items?: GiteeAccountItem[]; reason?: string }
+        if (typed.ok && typed.items) {
+          setGiteeItems(typed.items)
+        } else {
+          setGiteeItems([])
+          setGiteeError(
+            typed.reason === 'rejected'
+              ? translate(
+                  'auto.components.TaskPage.gitee.rejected',
+                  'Gitee rejected the token. Reconnect in Settings → Review providers → Gitee.'
+                )
+              : translate(
+                  'auto.components.TaskPage.gitee.unreachable',
+                  'Could not reach Gitee. Check your connection, then retry.'
+                )
+          )
+        }
+      })
+      .catch(() => {
+        if (!stale) {
+          setGiteeItems([])
+          setGiteeError(
+            translate(
+              'auto.components.TaskPage.gitee.unreachable',
+              'Could not reach Gitee. Check your connection, then retry.'
+            )
+          )
+        }
+      })
+      .finally(() => {
+        if (!stale) {
+          setGiteeLoading(false)
+        }
+      })
+    return () => {
+      stale = true
+    }
+  }, [taskSource, giteeView, giteeRefreshNonce])
 
   // Why: Todos fetch has its own effect — different trigger (no chip filter) and data path (gl.todos is user-scoped, not repo-scoped).
   useEffect(() => {
@@ -10871,6 +10938,142 @@ export default function TaskPage(): React.JSX.Element {
                           <ExternalLink className="size-3.5" />
                         </button>
                       </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : taskSource === 'gitee' ? (
+            <div className="flex min-h-0 max-h-full flex-col overflow-hidden rounded-md rounded-t-none border border-t-0 border-border/50 bg-muted/50 shadow-sm">
+              <div className="flex flex-none items-center gap-1.5 border-b border-border/50 px-3 py-2">
+                <button
+                  type="button"
+                  onClick={() => setGiteeView('pulls')}
+                  className={cn(
+                    'rounded-md px-2.5 py-1 text-xs font-medium transition-colors',
+                    giteeView === 'pulls'
+                      ? 'bg-accent text-foreground'
+                      : 'text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  {translate('auto.components.TaskPage.gitee.pulls', 'Pull requests')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setGiteeView('issues')}
+                  className={cn(
+                    'rounded-md px-2.5 py-1 text-xs font-medium transition-colors',
+                    giteeView === 'issues'
+                      ? 'bg-accent text-foreground'
+                      : 'text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  {translate('auto.components.TaskPage.gitee.issues', 'Issues')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setGiteeRefreshNonce((n) => n + 1)}
+                  aria-label={translate(
+                    'auto.components.TaskPage.gitee.refresh',
+                    'Refresh Gitee items'
+                  )}
+                  className="ml-auto rounded-md p-1 text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <RefreshCw className={cn('size-3.5', giteeLoading && 'animate-spin')} />
+                </button>
+              </div>
+              <div className="flex-none grid grid-cols-[150px_minmax(0,3fr)_90px_100px_40px] gap-3 border-b border-border/50 px-3 py-2 text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+                <span>{translate('auto.components.TaskPage.gitee.repo', 'Repository')}</span>
+                <span>{translate('auto.components.TaskPage.16cba35bee', 'Title')}</span>
+                <span>{translate('auto.components.TaskPage.gitee.state', 'State')}</span>
+                <span>{translate('auto.components.TaskPage.f362667d55', 'Updated')}</span>
+                <span />
+              </div>
+              <div
+                className="min-h-0 flex-initial overflow-y-auto scrollbar-sleek"
+                style={{ scrollbarGutter: 'stable' }}
+              >
+                {giteeError ? (
+                  <div className="border-b border-border px-4 py-4 text-sm text-destructive">
+                    {giteeError}
+                  </div>
+                ) : null}
+                {giteeLoading && giteeItems.length === 0 ? (
+                  <div className="divide-y divide-border/50">
+                    {Array.from({ length: 8 }).map((_, i) => (
+                      <div
+                        key={i}
+                        className="grid w-full gap-3 px-3 py-2 grid-cols-[150px_minmax(0,3fr)_90px_100px_40px]"
+                      >
+                        <div className="h-4 w-24 animate-pulse rounded bg-muted/70" />
+                        <div className="h-4 w-3/5 animate-pulse rounded bg-muted/70" />
+                        <div className="h-3 w-14 animate-pulse rounded bg-muted/60" />
+                        <div className="h-3 w-16 animate-pulse rounded bg-muted/60" />
+                        <div />
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+                {!giteeLoading && giteeItems.length === 0 && !giteeError ? (
+                  <div className="px-4 py-12 text-center">
+                    <p className="text-base font-medium text-foreground">
+                      {translate('auto.components.TaskPage.gitee.emptyTitle', 'No open items')}
+                    </p>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      {translate(
+                        'auto.components.TaskPage.gitee.emptyDescription',
+                        'No open pull requests or issues across your Gitee repositories. Connect Gitee in Settings → Review providers to list them here.'
+                      )}
+                    </p>
+                  </div>
+                ) : null}
+                <div className="divide-y divide-border/50">
+                  {giteeItems.map((item) => (
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      key={`${item.repoFullName}:${item.kind}:${item.number}`}
+                      onClick={() => void window.api.shell.openUrl(item.url)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault()
+                          void window.api.shell.openUrl(item.url)
+                        }
+                      }}
+                      className="grid w-full cursor-pointer gap-3 px-3 py-2 text-left grid-cols-[150px_minmax(0,3fr)_90px_100px_40px] hover:bg-muted/50"
+                    >
+                      <span className="truncate text-xs text-muted-foreground">
+                        {item.repoFullName}
+                      </span>
+                      <span className="min-w-0 truncate text-sm">
+                        <span className="font-mono text-xs text-muted-foreground">
+                          {item.kind === 'pull' ? '!' : '#'}
+                          {item.number}
+                        </span>{' '}
+                        {item.title}
+                      </span>
+                      <span>
+                        <span
+                          className={cn(
+                            'rounded px-1.5 py-0.5 text-[10px] font-medium',
+                            item.state === 'open' && 'bg-emerald-500/15 text-emerald-600',
+                            item.state === 'merged' && 'bg-purple-500/15 text-purple-600',
+                            (item.state === 'closed' ||
+                              item.state === 'draft' ||
+                              item.state === 'rejected' ||
+                              item.state === 'processing') &&
+                              'bg-muted text-muted-foreground'
+                          )}
+                        >
+                          {item.state}
+                        </span>
+                      </span>
+                      <span className="truncate text-xs text-muted-foreground">
+                        {item.updatedAt ? formatRelativeTime(item.updatedAt) : ''}
+                      </span>
+                      <span className="flex justify-end">
+                        <ExternalLink className="size-3.5 text-muted-foreground" />
+                      </span>
                     </div>
                   ))}
                 </div>

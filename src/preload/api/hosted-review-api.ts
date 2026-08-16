@@ -3,7 +3,7 @@ import type {
   BitbucketConnectionStatus
 } from '../../shared/bitbucket-credentials'
 import type { GiteeConnectArgs, GiteeConnectionStatus } from '../../shared/gitee-credentials'
-import type { GiteeIssue, GiteePull, GiteeRepo } from '../../shared/gitee-api'
+import type { GiteeAccountItem, GiteeIssue, GiteePull, GiteeRepo } from '../../shared/gitee-api'
 import type {
   CreateHostedReviewArgs,
   CreateHostedReviewResult,
@@ -55,4 +55,6 @@ export type GiteeApi = {
     state?: 'open' | 'closed' | 'all'
     page?: number
   }) => Promise<GiteeListApiResult<GiteeIssue>>
+  listAccountPulls: () => Promise<GiteeListApiResult<GiteeAccountItem>>
+  listAccountIssues: () => Promise<GiteeListApiResult<GiteeAccountItem>>
 }

@@ -1,6 +1,7 @@
 import type { HostedReviewExecutionOptions } from '../source-control/hosted-review-git-options'
 import { getHostedReviewLocalGitOptions } from '../source-control/hosted-review-git-options'
 import type {
+  GiteeAccountItem,
   GiteePull,
   GiteeRepo,
   GiteeIssue,
@@ -10,6 +11,7 @@ import type {
 } from '../../shared/gitee-api'
 import { requestGiteeJson } from './api'
 import { resolveGiteeAuthConfig } from './resolve-auth'
+import type { GiteeAuthConfig } from './gitee-auth-config'
 import { getGiteeRepoRef, type GiteeRepoRef } from './repository-ref'
 import { mapGiteePull } from './pull-request-mappers'
 
@@ -195,4 +197,107 @@ function normalizeIssueState(state: string): GiteeIssue['state'] {
     default:
       return 'open'
   }
+}
+
+// Why: Gitee has no account-level pull endpoint, so the Tasks surface
+// aggregates open PRs across the authenticated user's repos. Bounded to keep
+// the request fan-out sane on large accounts.
+const ACCOUNT_AGGREGATE_REPO_LIMIT = 50
+const ACCOUNT_AGGREGATE_PER_REPO_LIMIT = 5
+const ACCOUNT_AGGREGATE_CONCURRENCY = 8
+
+async function listAccountRepos(config: GiteeAuthConfig): Promise<RawGiteeRepo[] | null> {
+  const result = await requestGiteeJson<RawGiteeRepo[]>(config, '/user/repos', {
+    type: 'all',
+    page: 1,
+    per_page: 100
+  })
+  return result.ok ? result.data : null
+}
+
+async function mapReposWithConcurrency<T>(
+  repos: RawGiteeRepo[],
+  mapper: (repo: RawGiteeRepo) => Promise<T[]>
+): Promise<T[]> {
+  const results: T[][] = []
+  let index = 0
+  async function worker(): Promise<void> {
+    while (index < repos.length) {
+      const current = repos[index]
+      index += 1
+      results.push(await mapper(current))
+    }
+  }
+  await Promise.all(
+    Array.from({ length: Math.min(ACCOUNT_AGGREGATE_CONCURRENCY, repos.length) }, () => worker())
+  )
+  return results.flat()
+}
+
+function accountRepoOwner(repo: RawGiteeRepo): string {
+  return repo.full_name.split('/')[0] ?? ''
+}
+
+export async function listAccountPulls(): Promise<GiteeListResult<GiteeAccountItem>> {
+  const config = resolveGiteeAuthConfig()
+  const repos = await listAccountRepos(config)
+  if (!repos) {
+    return { ok: false, reason: 'unreachable' }
+  }
+  const items = await mapReposWithConcurrency(
+    repos.slice(0, ACCOUNT_AGGREGATE_REPO_LIMIT),
+    async (repo) => {
+      const result = await requestGiteeJson<RawGiteePull[]>(
+        config,
+        `/repos/${encodeURIComponent(accountRepoOwner(repo))}/${encodeURIComponent(repo.path)}/pulls`,
+        { state: 'open', page: 1, per_page: ACCOUNT_AGGREGATE_PER_REPO_LIMIT }
+      )
+      if (!result.ok) {
+        return []
+      }
+      return result.data.map(mapGiteePull).map((pull) => ({
+        kind: 'pull' as const,
+        number: String(pull.number),
+        title: pull.title,
+        state: pull.state,
+        url: pull.url,
+        repoFullName: repo.full_name ?? '',
+        repoHtmlUrl: (repo.html_url ?? '').replace(/\.git$/, ''),
+        updatedAt: pull.updatedAt
+      }))
+    }
+  )
+  return { ok: true, items }
+}
+
+export async function listAccountIssues(): Promise<GiteeListResult<GiteeAccountItem>> {
+  const config = resolveGiteeAuthConfig()
+  const repos = await listAccountRepos(config)
+  if (!repos) {
+    return { ok: false, reason: 'unreachable' }
+  }
+  const items = await mapReposWithConcurrency(
+    repos.slice(0, ACCOUNT_AGGREGATE_REPO_LIMIT),
+    async (repo) => {
+      const result = await requestGiteeJson<RawGiteeIssue[]>(
+        config,
+        `/repos/${encodeURIComponent(accountRepoOwner(repo))}/${encodeURIComponent(repo.path)}/issues`,
+        { state: 'open', page: 1, per_page: ACCOUNT_AGGREGATE_PER_REPO_LIMIT }
+      )
+      if (!result.ok) {
+        return []
+      }
+      return result.data.map((issue) => ({
+        kind: 'issue' as const,
+        number: issue.number ?? '',
+        title: issue.title ?? '',
+        state: normalizeIssueState(issue.state ?? 'open'),
+        url: issue.html_url ?? '',
+        repoFullName: repo.full_name ?? '',
+        repoHtmlUrl: (repo.html_url ?? '').replace(/\.git$/, ''),
+        updatedAt: issue.updated_at ?? null
+      }))
+    }
+  )
+  return { ok: true, items }
 }

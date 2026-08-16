@@ -11,9 +11,11 @@ import {
   listGiteeIssues,
   listGiteePulls,
   listGiteeRepos,
+  listAccountPulls,
+  listAccountIssues,
   type GiteeListResult
 } from '../gitee/client'
-import type { GiteeIssue, GiteePull, GiteeRepo } from '../../shared/gitee-api'
+import type { GiteeAccountItem, GiteeIssue, GiteePull, GiteeRepo } from '../../shared/gitee-api'
 
 function normalizeConnectInput(value: unknown): GiteeConnectArgs | null {
   if (!value || typeof value !== 'object') {
@@ -85,6 +87,17 @@ export function registerGiteeHandlers(): void {
         normalizeRepoState(raw.state),
         normalizeListPage(raw.page)
       )
+    }
+  )
+
+  ipcMain.handle('gitee:listAccountPulls', async (): Promise<GiteeListResult<GiteeAccountItem>> => {
+    return listAccountPulls()
+  })
+
+  ipcMain.handle(
+    'gitee:listAccountIssues',
+    async (): Promise<GiteeListResult<GiteeAccountItem>> => {
+      return listAccountIssues()
     }
   )
 }

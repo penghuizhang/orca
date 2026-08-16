@@ -1786,7 +1786,11 @@ const api = {
       repo: string
       state?: 'open' | 'closed' | 'all'
       page?: number
-    }): Promise<unknown> => ipcRenderer.invoke('gitee:listIssues', args)
+    }): Promise<unknown> => ipcRenderer.invoke('gitee:listIssues', args),
+
+    listAccountPulls: (): Promise<unknown> => ipcRenderer.invoke('gitee:listAccountPulls'),
+
+    listAccountIssues: (): Promise<unknown> => ipcRenderer.invoke('gitee:listAccountIssues')
   },
 
   linear: {

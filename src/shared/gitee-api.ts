@@ -94,3 +94,16 @@ export type GiteeIssue = {
   authorLogin: string | null
   updatedAt: string | null
 }
+
+// Account-level aggregation item for the Tasks surface: a pull or issue
+// tagged with its owning repository.
+export type GiteeAccountItem = {
+  kind: 'pull' | 'issue'
+  number: string
+  title: string
+  state: string
+  url: string
+  repoFullName: string
+  repoHtmlUrl: string
+  updatedAt: string | null
+}
