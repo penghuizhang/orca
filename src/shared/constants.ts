@@ -276,6 +276,7 @@ export function getDefaultSettings(homedir: string): GlobalSettings {
     showTitlebarAppName: true,
     showTasksButton: true,
     showAutomationsButton: true,
+    showCalendarLunarInfo: true,
     artifactsEnabled: true,
     artifactSharingEnabled: false,
     showArtifactsButton: false,
@@ -449,6 +450,7 @@ export function getDefaultPersistedState(homedir: string): PersistedState {
     legacyPaneKeyAliasEntries: [],
     automations: [],
     automationRuns: [],
+    calendarEntries: [],
     onboarding: getDefaultOnboardingState(),
     featureInteractionTelemetryBuckets: {},
     codexResetCreditAttemptLedger: structuredClone(EMPTY_CODEX_RESET_CREDIT_ATTEMPT_LEDGER)

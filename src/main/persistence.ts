@@ -33,6 +33,16 @@ import type {
   AutomationUpdateInput
 } from '../shared/automations-types'
 import {
+  applyCalendarEntryUpdate,
+  compareCalendarEntriesByStart,
+  normalizeCalendarEntry
+} from '../shared/calendar-types'
+import type {
+  CalendarEntry,
+  CalendarEntryCreateInput,
+  CalendarEntryUpdateInput
+} from '../shared/calendar-types'
+import {
   latestAutomationOccurrenceAtOrBefore,
   nextAutomationOccurrenceAfter
 } from '../shared/automation-schedules'
@@ -5535,6 +5545,62 @@ export class Store {
     this.state.automations = (this.state.automations ?? []).filter((entry) => entry.id !== id)
     this.state.automationRuns = (this.state.automationRuns ?? []).filter(
       (entry) => entry.automationId !== id
+    )
+    this.flush()
+  }
+
+  // ── Calendar ─────────────────────────────────────────────────────
+
+  listCalendarEntries(): CalendarEntry[] {
+    return (this.state.calendarEntries ?? [])
+      .map((entry) => normalizeCalendarEntry(entry))
+      .filter((entry): entry is CalendarEntry => entry !== null)
+      .sort(compareCalendarEntriesByStart)
+  }
+
+  createCalendarEntry(input: CalendarEntryCreateInput): CalendarEntry {
+    const now = Date.now()
+    const entry = normalizeCalendarEntry({
+      id: randomUUID(),
+      title: input.title,
+      date: input.date,
+      allDay: input.allDay,
+      startTime: input.startTime,
+      endTime: input.endTime,
+      category: input.category,
+      description: input.description,
+      lunarRepeat: input.lunarRepeat,
+      createdAt: now,
+      updatedAt: now
+    })
+    if (!entry) {
+      throw new Error('Invalid calendar entry.')
+    }
+    this.state.calendarEntries = [...(this.state.calendarEntries ?? []), entry]
+    this.flush()
+    return entry
+  }
+
+  updateCalendarEntry(id: string, updates: CalendarEntryUpdateInput): CalendarEntry {
+    const current = (this.state.calendarEntries ?? []).find((entry) => entry.id === id)
+    if (!current) {
+      throw new Error('Calendar entry not found.')
+    }
+    const updated = applyCalendarEntryUpdate(current, updates)
+    if (!updated) {
+      throw new Error('Invalid calendar entry update.')
+    }
+    updated.updatedAt = Date.now()
+    this.state.calendarEntries = (this.state.calendarEntries ?? []).map((entry) =>
+      entry.id === id ? updated : entry
+    )
+    this.flush()
+    return updated
+  }
+
+  deleteCalendarEntry(id: string): void {
+    this.state.calendarEntries = (this.state.calendarEntries ?? []).filter(
+      (entry) => entry.id !== id
     )
     this.flush()
   }

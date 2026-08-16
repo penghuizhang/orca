@@ -18,6 +18,7 @@ const WorktreeCreationPanel = lazy(
 )
 const TaskPage = lazy(() => import('../components/TaskPage'))
 const AutomationsPage = lazy(() => import('../components/automations/AutomationsPage'))
+const CalendarPage = lazy(() => import('../components/calendar/CalendarPage'))
 const ActivityPrototypePage = lazy(() => import('../components/activity/ActivityPrototypePage'))
 const Settings = lazy(() => import('../components/settings/Settings'))
 const ArtifactsPage = lazy(() => import('../components/artifacts/ArtifactsPage'))
@@ -71,6 +72,7 @@ function ActivePage({ layout }: { layout: AppChromeLayout }): React.JSX.Element 
       {activeView === 'artifacts' ? <ArtifactsPage /> : null}
       {activeView === 'tasks' ? <TaskPage /> : null}
       {activeView === 'automations' ? <AutomationsPage /> : null}
+      {activeView === 'calendar' ? <CalendarPage /> : null}
       {activeView === 'activity' ? <ActivityPrototypePage /> : null}
       {activeView === 'space' ? <WorkspaceSpacePage /> : null}
       {activeView === 'mobile' ? <MobilePage /> : null}
@@ -153,8 +155,10 @@ export function AppWorkspaceShell(props: {
               )
             ) : null}
             <div className="flex flex-col flex-1 min-w-0 min-h-0 overflow-hidden">
-              {/* Why: automations owns its page header; the stacked titlebar would be an empty 36px stripe. */}
-              {layout.stackedSidebarOpen && layout.activeView !== 'automations' ? (
+              {/* Why: automations/calendar own their page header; the stacked titlebar would be an empty 36px stripe. */}
+              {layout.stackedSidebarOpen &&
+              layout.activeView !== 'automations' &&
+              layout.activeView !== 'calendar' ? (
                 <div className="titlebar">{titlebarMainStrip}</div>
               ) : null}
               <div className="relative flex flex-1 min-w-0 min-h-0 overflow-hidden">

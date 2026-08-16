@@ -615,6 +615,7 @@ export type UISlice = {
     | 'settings'
     | 'activity'
     | 'automations'
+    | 'calendar'
     | 'space'
     | 'artifacts'
     | 'mobile'
@@ -623,6 +624,7 @@ export type UISlice = {
     | 'tasks'
     | 'activity'
     | 'automations'
+    | 'calendar'
     | 'space'
     | 'artifacts'
     | 'mobile'
@@ -631,6 +633,7 @@ export type UISlice = {
     | 'settings'
     | 'tasks'
     | 'automations'
+    | 'calendar'
     | 'space'
     | 'artifacts'
     | 'mobile'
@@ -639,6 +642,7 @@ export type UISlice = {
     | 'settings'
     | 'tasks'
     | 'activity'
+    | 'calendar'
     | 'space'
     | 'artifacts'
     | 'mobile'
@@ -648,6 +652,7 @@ export type UISlice = {
     | 'tasks'
     | 'activity'
     | 'automations'
+    | 'calendar'
     | 'artifacts'
     | 'mobile'
   previousViewBeforeMobile:
@@ -656,6 +661,7 @@ export type UISlice = {
     | 'tasks'
     | 'activity'
     | 'automations'
+    | 'calendar'
     | 'space'
     | 'artifacts'
   previousViewBeforeArtifacts:
@@ -664,7 +670,17 @@ export type UISlice = {
     | 'tasks'
     | 'activity'
     | 'automations'
+    | 'calendar'
     | 'space'
+    | 'mobile'
+  previousViewBeforeCalendar:
+    | 'terminal'
+    | 'settings'
+    | 'tasks'
+    | 'activity'
+    | 'automations'
+    | 'space'
+    | 'artifacts'
     | 'mobile'
   setActiveView: (view: UISlice['activeView']) => void
   taskPageData: {
@@ -742,6 +758,8 @@ export type UISlice = {
   ) => void
   openAutomationsPage: () => void
   closeAutomationsPage: () => void
+  openCalendarPage: () => void
+  closeCalendarPage: () => void
   openSpacePage: () => void
   closeSpacePage: () => void
   openArtifactsPage: () => void
@@ -1241,6 +1259,7 @@ export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set, get)
   previousViewBeforeSpace: 'terminal',
   previousViewBeforeMobile: 'terminal',
   previousViewBeforeArtifacts: 'terminal',
+  previousViewBeforeCalendar: 'terminal',
   setActiveView: (view) => set({ activeView: view }),
   taskPageData: {},
   taskResumeState: undefined,
@@ -1463,6 +1482,29 @@ export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set, get)
       }
       return {
         activeView: state.previousViewBeforeAutomations,
+        worktreeNavHistoryIndex: nextHistoryIndex
+      }
+    }),
+  openCalendarPage: () => {
+    get().recordViewVisit('calendar')
+    set((state) => ({
+      activeView: 'calendar',
+      previousViewBeforeCalendar:
+        state.activeView === 'calendar' ? state.previousViewBeforeCalendar : state.activeView
+    }))
+  },
+  closeCalendarPage: () =>
+    set((state) => {
+      const currentEntry = state.worktreeNavHistory[state.worktreeNavHistoryIndex]
+      let nextHistoryIndex = state.worktreeNavHistoryIndex
+      if (currentEntry === 'calendar') {
+        const prev = findPrevLiveWorktreeHistoryIndex(state)
+        if (prev !== null) {
+          nextHistoryIndex = prev
+        }
+      }
+      return {
+        activeView: state.previousViewBeforeCalendar,
         worktreeNavHistoryIndex: nextHistoryIndex
       }
     }),

@@ -4531,6 +4531,7 @@
           "fee535205b": "Tasks",
           "d599269755": "Hide from sidebar",
           "artifacts": "Artifacts",
+          "calendar": "Calendar"
           "gitee": {
             "openTasks": "Open Gitee tasks"
           }
@@ -15288,6 +15289,57 @@
           "update": "Update shared content"
         }
       },
+      "calendar": {
+        "loadFailed": "Failed to load calendar entries.",
+        "entryUpdated": "Entry updated.",
+        "entryCreated": "Entry added.",
+        "saveFailed": "Failed to save entry.",
+        "entryDeleted": "Entry deleted.",
+        "deleteFailed": "Failed to delete entry.",
+        "title": "Title",
+        "previousMonth": "Previous month",
+        "nextMonth": "Next month",
+        "today": "Today",
+        "newEntry": "New entry",
+        "deleteEntry": "Delete entry",
+        "deleteEntryDescription": "Delete \"{{title}}\"?",
+        "cancel": "Cancel",
+        "delete": "Delete",
+        "noEntries": "No entries",
+        "untitled": "Untitled",
+        "allDay": "All day",
+        "editEntry": "Edit entry",
+        "editEntryDescription": "Update this calendar entry.",
+        "newEntryDescription": "Add an entry to your calendar.",
+        "titlePlaceholder": "What is it?",
+        "date": "Date",
+        "categoryLabel": "Category",
+        "startTime": "Start",
+        "endTime": "End",
+        "description": "Description",
+        "saving": "Saving…",
+        "save": "Save",
+        "moreEntries": "+{{count}} more",
+        "categories": "Categories",
+        "category": {
+          "meeting": "Meeting",
+          "feature": "Feature",
+          "milestone": "Milestone",
+          "other": "Other"
+        },
+        "pageTitle": "Calendar",
+        "showLunarInfo": "Show lunar info",
+        "lunarRepeat": "Lunar date (repeats yearly)",
+        "lunarMonth": "Lunar month",
+        "lunarDay": "Lunar day",
+        "restBadge": "休",
+        "workBadge": "班",
+        "holidayDays_one": "{{count}} day",
+        "holidayDays_other": "{{count}} days",
+        "holidayDays": "{{count}} days",
+        "pickMonth": "Pick a month",
+        "previousYear": "Previous year",
+        "nextYear": "Next year"
       "GiteeItemDialog": {
         "createdAt": "Created",
         "updatedAt": "Updated",

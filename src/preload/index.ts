@@ -4,6 +4,11 @@ import { electronAPI } from '@electron-toolkit/preload'
 import { preloadE2EConfig } from './e2e-config'
 import { glApi } from './gitlab'
 import type { AppIdentity } from '../shared/app-identity'
+import type {
+  CalendarEntry,
+  CalendarEntryCreateInput,
+  CalendarEntryUpdateInput
+} from '../shared/calendar-types'
 import type { MacCapturedDigitRowChord } from '../shared/macos-symbolic-hotkeys'
 import type { ComputerAwakeStatus } from '../shared/computer-awake-mode'
 import type {
@@ -4771,6 +4776,15 @@ const api = {
       ipcRenderer.on('automations:dispatchRequested', listener)
       return () => ipcRenderer.removeListener('automations:dispatchRequested', listener)
     }
+  },
+
+  calendar: {
+    list: (): Promise<CalendarEntry[]> => ipcRenderer.invoke('calendar:list'),
+    create: (input: CalendarEntryCreateInput): Promise<CalendarEntry> =>
+      ipcRenderer.invoke('calendar:create', input),
+    update: (args: { id: string; updates: CalendarEntryUpdateInput }): Promise<CalendarEntry> =>
+      ipcRenderer.invoke('calendar:update', args),
+    delete: (args: { id: string }): Promise<void> => ipcRenderer.invoke('calendar:delete', args)
   },
 
   e2e: {

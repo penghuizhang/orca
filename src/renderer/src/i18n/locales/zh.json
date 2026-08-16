@@ -4292,7 +4292,8 @@
           "196c1b5362": "打开 GitLab 任务",
           "0ccba862b8": "打开 GitHub 任务",
           "fee535205b": "任务",
-          "d599269755": "从侧边栏隐藏"
+          "d599269755": "从侧边栏隐藏",
+          "calendar": "日历"
         },
         "SidebarRepositoryFilterSection": {
           "d3a9c4cea1": "清除",
@@ -14254,6 +14255,58 @@
           "errorAlreadyActive": "元素选择已处于活动状态。",
           "errorInjectionFailed": "无法在此页面上启动元素选择。"
         }
+      },
+      "calendar": {
+        "loadFailed": "加载日历条目失败。",
+        "entryUpdated": "条目已更新。",
+        "entryCreated": "条目已添加。",
+        "saveFailed": "保存条目失败。",
+        "entryDeleted": "条目已删除。",
+        "deleteFailed": "删除条目失败。",
+        "title": "标题",
+        "pageTitle": "日历",
+        "previousMonth": "上个月",
+        "nextMonth": "下个月",
+        "today": "今天",
+        "newEntry": "新建条目",
+        "deleteEntry": "删除条目",
+        "deleteEntryDescription": "确定删除「{{title}}」？",
+        "cancel": "取消",
+        "delete": "删除",
+        "noEntries": "暂无条目",
+        "untitled": "无标题",
+        "allDay": "全天",
+        "editEntry": "编辑条目",
+        "editEntryDescription": "更新此日历条目。",
+        "newEntryDescription": "添加一条日历条目。",
+        "titlePlaceholder": "是什么事项？",
+        "date": "日期",
+        "categoryLabel": "分类",
+        "startTime": "开始",
+        "endTime": "结束",
+        "description": "描述",
+        "saving": "保存中…",
+        "save": "保存",
+        "moreEntries": "+{{count}} 条",
+        "categories": "分类",
+        "category": {
+          "meeting": "会议",
+          "feature": "功能点",
+          "milestone": "里程碑",
+          "other": "其他"
+        },
+        "showLunarInfo": "显示农历",
+        "lunarRepeat": "农历日期（每年重复）",
+        "lunarMonth": "农历月",
+        "lunarDay": "农历日",
+        "restBadge": "休",
+        "workBadge": "班",
+        "holidayDays_one": "{{count}} 天",
+        "holidayDays_other": "{{count}} 天",
+        "holidayDays": "{{count}} 天",
+        "pickMonth": "选择月份",
+        "previousYear": "上一年",
+        "nextYear": "下一年"
       },
       "pluginCatalog": {
         "PluginCatalogLayout": {
