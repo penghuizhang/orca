@@ -3713,6 +3713,7 @@ export default function TaskPage(): React.JSX.Element {
   )
   const [giteeSearchInput, setGiteeSearchInput] = useState('')
   const [giteeRepoFilter, setGiteeRepoFilter] = useState<ReadonlySet<string>>(new Set())
+  const [giteeAccountRepos, setGiteeAccountRepos] = useState<string[]>([])
   const [giteeDialogItem, setGiteeDialogItem] = useState<GiteeAccountItem | null>(null)
   const [giteeItems, setGiteeItems] = useState<GiteeAccountItem[]>([])
   const [giteeLoading, setGiteeLoading] = useState(false)
@@ -5062,12 +5063,23 @@ export default function TaskPage(): React.JSX.Element {
       giteeView === 'pulls'
         ? window.api.gitee.listAccountPulls()
         : window.api.gitee.listAccountIssues()
-    void request
-      .then((result) => {
+    // Why: the project picker lists every account repo, not just repos that
+    // happen to have PR/issue rows — an empty aggregation must not hide repos.
+    const reposRequest = window.api.gitee.listRepos()
+    void Promise.all([request, reposRequest])
+      .then(([result, repos]) => {
         if (stale) {
           return
         }
         const typed = result as { ok: boolean; items?: GiteeAccountItem[]; reason?: string }
+        const typedRepos = repos as { ok: boolean; items?: { fullName?: string }[] }
+        if (typedRepos.ok && typedRepos.items) {
+          setGiteeAccountRepos(
+            [...new Set(typedRepos.items.map((repo) => repo.fullName ?? ''))]
+              .filter((name) => name.length > 0)
+              .sort()
+          )
+        }
         if (typed.ok && typed.items) {
           setGiteeItems(typed.items)
         } else {
@@ -5108,13 +5120,7 @@ export default function TaskPage(): React.JSX.Element {
 
   // Why: the account-level list is already fully fetched; filter locally so
   // status chips and search stay instant without extra Gitee API round-trips.
-  const giteeRepoOptions = useMemo(
-    () =>
-      [...new Set(giteeItems.map((item) => item.repoFullName))]
-        .filter((name) => name.length > 0)
-        .sort(),
-    [giteeItems]
-  )
+  const giteeRepoOptions = useMemo(() => [...giteeAccountRepos].sort(), [giteeAccountRepos])
   const filteredGiteeItems = useMemo(() => {
     const query = giteeSearchInput.trim().toLowerCase()
     return giteeItems.filter((item) => {
