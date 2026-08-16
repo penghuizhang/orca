@@ -23,6 +23,14 @@ const archName = archFlag === '--x64' ? 'x64' : 'arm64'
 // needs Node 24 (engines floor). Inject the known-good bin dir explicitly.
 const nvmNodeBin = `${homedir()}/.nvm/versions/node/v24.19.0/bin`
 const env = { ...process.env, PATH: `${nvmNodeBin}:${process.env.PATH ?? ''}` }
+// Why: github release downloads time out on this network; npmmirror (Alibaba)
+// is the domestic mirror for electron + electron-builder binaries. Overridable.
+if (!process.env.ELECTRON_MIRROR) {
+  env.ELECTRON_MIRROR = 'https://npmmirror.com/mirrors/electron/'
+}
+if (!process.env.ELECTRON_BUILDER_BINARIES_MIRROR) {
+  env.ELECTRON_BUILDER_BINARIES_MIRROR = 'https://npmmirror.com/mirrors/electron-builder-binaries/'
+}
 
 function run(command, argv, options = {}) {
   if (dryRun) {
