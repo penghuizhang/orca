@@ -4531,10 +4531,10 @@
           "fee535205b": "Tasks",
           "d599269755": "Hide from sidebar",
           "artifacts": "Artifacts",
-          "calendar": "Calendar"
           "gitee": {
             "openTasks": "Open Gitee tasks"
-          }
+          },
+          "calendar": "Calendar"
         },
         "SidebarRepositoryFilterSection": {
           "d3a9c4cea1": "Clear",
@@ -15289,6 +15289,18 @@
           "update": "Update shared content"
         }
       },
+      "GiteeItemDialog": {
+        "createdAt": "Created",
+        "updatedAt": "Updated",
+        "milestone": "Milestone",
+        "openOnGitee": "Open on Gitee",
+        "loadError": "Could not load Gitee item details.",
+        "close": "Close",
+        "commits": "Commits",
+        "noComments": "No comments yet.",
+        "noFiles": "No files changed.",
+        "noCommits": "No commits."
+      },
       "calendar": {
         "loadFailed": "Failed to load calendar entries.",
         "entryUpdated": "Entry updated.",
@@ -15297,6 +15309,7 @@
         "entryDeleted": "Entry deleted.",
         "deleteFailed": "Failed to delete entry.",
         "title": "Title",
+        "pageTitle": "Calendar",
         "previousMonth": "Previous month",
         "nextMonth": "Next month",
         "today": "Today",
@@ -15327,30 +15340,18 @@
           "milestone": "Milestone",
           "other": "Other"
         },
-        "pageTitle": "Calendar",
         "showLunarInfo": "Show lunar info",
         "lunarRepeat": "Lunar date (repeats yearly)",
         "lunarMonth": "Lunar month",
         "lunarDay": "Lunar day",
         "restBadge": "休",
         "workBadge": "班",
+        "holidayDays": "{{count}} days",
         "holidayDays_one": "{{count}} day",
         "holidayDays_other": "{{count}} days",
-        "holidayDays": "{{count}} days",
         "pickMonth": "Pick a month",
         "previousYear": "Previous year",
         "nextYear": "Next year"
-      "GiteeItemDialog": {
-        "createdAt": "Created",
-        "updatedAt": "Updated",
-        "milestone": "Milestone",
-        "openOnGitee": "Open on Gitee",
-        "loadError": "Could not load Gitee item details.",
-        "close": "Close",
-        "commits": "Commits",
-        "noComments": "No comments yet.",
-        "noFiles": "No files changed.",
-        "noCommits": "No commits."
       }
     },
     "i18n": {
