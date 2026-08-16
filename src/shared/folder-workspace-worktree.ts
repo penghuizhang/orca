@@ -28,6 +28,7 @@ export function folderWorkspaceToWorktree(folderWorkspace: FolderWorkspace): Wor
     linkedBitbucketPR: null,
     linkedAzureDevOpsPR: null,
     linkedGiteaPR: null,
+    linkedGiteePR: null,
     linkedWorkItem: linkedTask,
     linkedTaskSourceContext: folderWorkspace.linkedTaskSourceContext ?? null,
     isArchived: folderWorkspace.isArchived,

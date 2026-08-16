@@ -3426,6 +3426,17 @@ export class Store {
           visibleTaskProviders: migratedVisibleTaskProviders,
           defaultTaskSource: rawTaskProviderSettings.defaultTaskSource
         })
+        const visibleTaskProvidersDefaultedForGitee =
+          parsed.settings?.visibleTaskProvidersDefaultedForGitee === true
+        const giteeDefaultedVisibleTaskProviders = visibleTaskProvidersDefaultedForGitee
+          ? taskProviderSettings.visibleTaskProviders
+          : taskProviderSettings.visibleTaskProviders.includes('gitee')
+            ? taskProviderSettings.visibleTaskProviders
+            : [...taskProviderSettings.visibleTaskProviders, 'gitee' as const]
+        const taskProviderSettingsWithGitee = normalizeTaskProviderSettings({
+          visibleTaskProviders: giteeDefaultedVisibleTaskProviders,
+          defaultTaskSource: taskProviderSettings.defaultTaskSource
+        })
         const primarySelectionDefaultedForLinux =
           parsed.settings?.primarySelectionMiddleClickPasteDefaultedForLinux === true
         const primarySelectionDefaultedForTerminalDefaults =
@@ -3443,6 +3454,9 @@ export class Store {
           this.loadNeedsSave = true
         }
         if (!visibleTaskProvidersDefaultedForJira) {
+          this.loadNeedsSave = true
+        }
+        if (!visibleTaskProvidersDefaultedForGitee) {
           this.loadNeedsSave = true
         }
         const claudeAgentTeamsDefaultDisabledMigrated =
@@ -3627,9 +3641,10 @@ export class Store {
             // Why: missing means default-on; round-trips unchanged on non-mac since darwin consumers gate the effect.
             showMenuBarIcon: parsed.settings?.showMenuBarIcon !== false,
             uiLanguage: normalizeUiLanguage(parsed.settings?.uiLanguage),
-            defaultTaskSource: taskProviderSettings.defaultTaskSource,
-            visibleTaskProviders: taskProviderSettings.visibleTaskProviders,
+            defaultTaskSource: taskProviderSettingsWithGitee.defaultTaskSource,
+            visibleTaskProviders: taskProviderSettingsWithGitee.visibleTaskProviders,
             visibleTaskProvidersDefaultedForJira: true,
+            visibleTaskProvidersDefaultedForGitee: true,
             terminalShortcutPolicy: normalizeTerminalShortcutPolicy(
               parsed.settings?.terminalShortcutPolicy
             ),
@@ -6112,6 +6127,7 @@ export class Store {
       sanitizedUpdates.visibleTaskProviders = taskProviderSettings.visibleTaskProviders
       if ('visibleTaskProviders' in updates) {
         sanitizedUpdates.visibleTaskProvidersDefaultedForJira = true
+        sanitizedUpdates.visibleTaskProvidersDefaultedForGitee = true
       }
     }
     if ('autoRenameBranchFromWork' in updates || 'autoRenameBranchFromWorkDefaultedOn' in updates) {
@@ -8004,6 +8020,7 @@ function getDefaultWorktreeMeta(): WorktreeMeta {
     linkedBitbucketPR: null,
     linkedAzureDevOpsPR: null,
     linkedGiteaPR: null,
+    linkedGiteePR: null,
     linkedWorkItem: null,
     linkedTaskSourceContext: null,
     isArchived: false,

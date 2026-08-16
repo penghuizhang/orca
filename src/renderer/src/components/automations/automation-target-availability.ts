@@ -261,6 +261,8 @@ function getAutomationSourceProviderLabel(provider: TaskSourceContext['provider'
       return 'Linear'
     case 'jira':
       return 'Jira'
+    case 'gitee':
+      return 'Gitee'
   }
 }
 

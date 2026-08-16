@@ -1,6 +1,12 @@
-export type TaskProvider = 'github' | 'gitlab' | 'linear' | 'jira'
+export type TaskProvider = 'github' | 'gitlab' | 'linear' | 'jira' | 'gitee'
 
-export const TASK_PROVIDERS: readonly TaskProvider[] = ['github', 'gitlab', 'linear', 'jira']
+export const TASK_PROVIDERS: readonly TaskProvider[] = [
+  'github',
+  'gitlab',
+  'linear',
+  'jira',
+  'gitee'
+]
 
 const TASK_PROVIDER_SET = new Set<TaskProvider>(TASK_PROVIDERS)
 
@@ -99,6 +105,11 @@ function isTaskProviderAvailable(
   }
   if (provider === 'gitlab') {
     return availability.gitlabInstalled
+  }
+  // Why: Gitee connects from the Settings pane; keeping the source visible
+  // gives the Tasks surface its own setup hint when unconnected.
+  if (provider === 'gitee') {
+    return true
   }
   // Why: Jira can be connected from the Tasks surface itself, so hiding it
   // when disconnected would remove the entry point for first-time setup.
