@@ -49,7 +49,9 @@ export const SKILLS_CLI_AGENT_KEY_BY_TUI_AGENT = {
   devin: 'devin',
   ante: null,
   // Why: Orca detects trae by `traecli`, an alias only TRAE CN ships.
-  trae: 'trae-cn'
+  trae: 'trae-cn',
+  // Why: the community skills CLI's --agent namespace does not list zcode yet; dropping avoids its exit-1 validation.
+  zcode: null
 } satisfies Record<TuiAgent, string | null>
 
 /**
