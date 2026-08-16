@@ -1761,6 +1761,17 @@ const api = {
     status: (): Promise<unknown> => ipcRenderer.invoke('bitbucket:status')
   },
 
+  gitee: {
+    connect: (args: {
+      accessToken: string
+    }): Promise<{ ok: true; account: string | null } | { ok: false; error: string }> =>
+      ipcRenderer.invoke('gitee:connect', args),
+
+    disconnect: (): Promise<void> => ipcRenderer.invoke('gitee:disconnect'),
+
+    status: (): Promise<unknown> => ipcRenderer.invoke('gitee:status')
+  },
+
   linear: {
     connect: (args: {
       apiKey: string
