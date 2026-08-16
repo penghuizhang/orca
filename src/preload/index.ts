@@ -1769,7 +1769,24 @@ const api = {
 
     disconnect: (): Promise<void> => ipcRenderer.invoke('gitee:disconnect'),
 
-    status: (): Promise<unknown> => ipcRenderer.invoke('gitee:status')
+    status: (): Promise<unknown> => ipcRenderer.invoke('gitee:status'),
+
+    listRepos: (args?: { page?: number }): Promise<unknown> =>
+      ipcRenderer.invoke('gitee:listRepos', args),
+
+    listPulls: (args: {
+      owner: string
+      repo: string
+      state?: 'open' | 'closed' | 'all'
+      page?: number
+    }): Promise<unknown> => ipcRenderer.invoke('gitee:listPulls', args),
+
+    listIssues: (args: {
+      owner: string
+      repo: string
+      state?: 'open' | 'closed' | 'all'
+      page?: number
+    }): Promise<unknown> => ipcRenderer.invoke('gitee:listIssues', args)
   },
 
   linear: {

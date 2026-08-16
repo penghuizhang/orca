@@ -81,3 +81,26 @@ export function getGiteeConnectionStatus(): GiteeConnectionStatus {
 export function _giteeStoredSecretToken(): string | null {
   return loadStoredGiteeSecret({ force: true })?.accessToken ?? null
 }
+
+export type GiteeAuthStatus = {
+  configured: boolean
+  authenticated: boolean
+  account: string | null
+  tokenConfigured: boolean
+}
+
+// Preflight is a config probe, not a live verification: a configured token is
+// reported authenticated and the card's Re-check performs the real /user call.
+export function getGiteeAuthStatus(): GiteeAuthStatus {
+  const env = getEnvAuthConfig()
+  if (hasAuth(env)) {
+    return { configured: true, authenticated: true, account: null, tokenConfigured: true }
+  }
+  const tokenConfigured = hasStoredGiteeCredential()
+  return {
+    configured: tokenConfigured,
+    authenticated: tokenConfigured,
+    account: getStoredGiteeMetadata()?.account ?? null,
+    tokenConfigured
+  }
+}

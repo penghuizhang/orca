@@ -2,6 +2,8 @@ import type {
   BitbucketConnectArgs,
   BitbucketConnectionStatus
 } from '../../shared/bitbucket-credentials'
+import type { GiteeConnectArgs, GiteeConnectionStatus } from '../../shared/gitee-credentials'
+import type { GiteeIssue, GiteePull, GiteeRepo } from '../../shared/gitee-api'
 import type {
   CreateHostedReviewArgs,
   CreateHostedReviewResult,
@@ -28,4 +30,29 @@ export type BitbucketApi = {
   ) => Promise<{ ok: true; account: string | null } | { ok: false; error: string }>
   disconnect: () => Promise<void>
   status: () => Promise<BitbucketConnectionStatus>
+}
+
+type GiteeListApiResult<T> =
+  | { ok: true; items: T[] }
+  | { ok: false; reason: 'rejected' | 'unreachable' }
+
+export type GiteeApi = {
+  connect: (
+    args: GiteeConnectArgs
+  ) => Promise<{ ok: true; account: string | null } | { ok: false; error: string }>
+  disconnect: () => Promise<void>
+  status: () => Promise<GiteeConnectionStatus>
+  listRepos: (args?: { page?: number }) => Promise<GiteeListApiResult<GiteeRepo>>
+  listPulls: (args: {
+    owner: string
+    repo: string
+    state?: 'open' | 'closed' | 'all'
+    page?: number
+  }) => Promise<GiteeListApiResult<GiteePull>>
+  listIssues: (args: {
+    owner: string
+    repo: string
+    state?: 'open' | 'closed' | 'all'
+    page?: number
+  }) => Promise<GiteeListApiResult<GiteeIssue>>
 }
