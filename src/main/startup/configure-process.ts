@@ -192,6 +192,16 @@ function areSameE2EHomePath(left: string, right: string): boolean {
     : normalizedLeft === normalizedRight
 }
 
+/**
+ * Packaged fork builds ship as orca-s with their own bundle id. Point userData
+ * at `Application Support/orca-s` so the fork and the official Orca can run
+ * side by side: every persisted store, the daemon and the single-instance lock
+ * derive from this path (Electron locks on userData).
+ */
+export function configurePackagedUserDataPath(): void {
+  app.setPath('userData', join(app.getPath('appData'), 'orca-s'))
+}
+
 export function configureOrcaUserDataPathEnv(): void {
   // Why: relaunches can inherit a stale ORCA_USER_DATA_PATH; canonicalize before CLI-shared modules build runtime-home paths.
   process.env.ORCA_USER_DATA_PATH = app.getPath('userData')

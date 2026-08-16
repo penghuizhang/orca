@@ -14133,7 +14133,10 @@
         "noGitLabMrsTitle": "GitLab の MR はありません",
         "noGitLabMrsDescription": "このフィルターに一致する GitLab の MR はありません。",
         "noGitLabWorkTitle": "GitLab の作業はありません",
-        "noGitLabWorkDescription": "このフィルターに一致する GitLab の作業はありません。"
+        "noGitLabWorkDescription": "このフィルターに一致する GitLab の作業はありません。",
+        "noWorkspaceTitle": "ワークスペースがまだありません",
+        "noWorkspaceDescription": "ワークスペース（Git リポジトリ）を追加するとタスクを閲覧できます。",
+        "addWorkspace": "ワークスペースを追加"
       },
       "taskSourceContextSummary": {
         "sourceUnavailable": "{{value0}} のソースを利用できません: {{value1}}",
