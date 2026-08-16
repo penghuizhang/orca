@@ -78,7 +78,7 @@ export type ForgeProvider = {
   ): Promise<CreateHostedReviewResult>
 }
 
-function hostedReviewExecutionArgs(
+export function hostedReviewExecutionArgs(
   options: HostedReviewExecutionOptions
 ): [] | [HostedReviewExecutionOptions] {
   return hasHostedReviewLocalGitOptions(options)

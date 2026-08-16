@@ -1,15 +1,30 @@
 import type { ForgeProvider } from '../source-control/forge-provider'
-import { getGiteeRepoRef } from './repository-ref'
+import { hostedReviewExecutionArgs } from '../source-control/forge-provider'
+import { mapGiteeReview } from '../source-control/forge-review-mappers'
+import { getGiteePullRequest, getGiteePullRequestForBranch, getGiteeRepoSlug } from './client'
 
-// Why: L0 只做 provider 识别；PR 查询在 L1 接入 API 客户端（PAT 认证）后实现。
 export const giteeForgeProvider = {
   id: 'gitee',
   supportsReviewCreation: false,
-  resolveRepository: (context) => getGiteeRepoRef(context.repoPath, context.connectionId),
-  async getReviewForBranch() {
-    return null
+  resolveRepository: (context) =>
+    getGiteeRepoSlug(context.repoPath, context.connectionId, ...hostedReviewExecutionArgs(context)),
+  async getReviewForBranch(input) {
+    const pr = await getGiteePullRequestForBranch(
+      input.repoPath,
+      input.branch,
+      input.linkedReviewNumber ?? null,
+      input.connectionId,
+      ...hostedReviewExecutionArgs(input)
+    )
+    return pr ? mapGiteeReview(pr) : null
   },
-  async getReviewByNumber() {
-    return null
+  async getReviewByNumber(input) {
+    const pr = await getGiteePullRequest(
+      input.repoPath,
+      input.number,
+      input.connectionId,
+      ...hostedReviewExecutionArgs(input)
+    )
+    return pr ? mapGiteeReview(pr) : null
   }
 } satisfies ForgeProvider
