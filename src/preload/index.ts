@@ -1790,7 +1790,33 @@ const api = {
 
     listAccountPulls: (): Promise<unknown> => ipcRenderer.invoke('gitee:listAccountPulls'),
 
-    listAccountIssues: (): Promise<unknown> => ipcRenderer.invoke('gitee:listAccountIssues')
+    listAccountIssues: (): Promise<unknown> => ipcRenderer.invoke('gitee:listAccountIssues'),
+
+    itemDetail: (args: {
+      kind: 'pull' | 'issue'
+      owner: string
+      repo: string
+      number: string
+    }): Promise<unknown> => ipcRenderer.invoke('gitee:itemDetail', args),
+
+    itemComments: (args: {
+      kind: 'pull' | 'issue'
+      owner: string
+      repo: string
+      number: string
+    }): Promise<unknown> => ipcRenderer.invoke('gitee:itemComments', args),
+
+    pullFiles: (args: {
+      owner: string
+      repo: string
+      number: string
+    }): Promise<unknown> => ipcRenderer.invoke('gitee:pullFiles', args),
+
+    pullCommits: (args: {
+      owner: string
+      repo: string
+      number: string
+    }): Promise<unknown> => ipcRenderer.invoke('gitee:pullCommits', args)
   },
 
   linear: {

@@ -1,4 +1,5 @@
 import { ipcMain } from 'electron'
+import type { GiteeApiResult } from '../gitee/api'
 import {
   connectGitee,
   disconnectGitee,
@@ -13,9 +14,22 @@ import {
   listGiteeRepos,
   listAccountPulls,
   listAccountIssues,
+  getGiteeItemDetail,
+  listGiteeItemComments,
+  listGiteePullFiles,
+  listGiteePullCommits,
   type GiteeListResult
 } from '../gitee/client'
-import type { GiteeAccountItem, GiteeIssue, GiteePull, GiteeRepo } from '../../shared/gitee-api'
+import type {
+  GiteeAccountItem,
+  GiteeComment,
+  GiteeIssue,
+  GiteeItemDetail,
+  GiteePull,
+  GiteePullCommit,
+  GiteePullFile,
+  GiteeRepo
+} from '../../shared/gitee-api'
 
 function normalizeConnectInput(value: unknown): GiteeConnectArgs | null {
   if (!value || typeof value !== 'object') {
@@ -98,6 +112,81 @@ export function registerGiteeHandlers(): void {
     'gitee:listAccountIssues',
     async (): Promise<GiteeListResult<GiteeAccountItem>> => {
       return listAccountIssues()
+    }
+  )
+
+  ipcMain.handle(
+    'gitee:itemDetail',
+    async (
+      _event,
+      args: unknown
+    ): Promise<GiteeApiResult<GiteeItemDetail>> => {
+      const raw = (args ?? {}) as Record<string, unknown>
+      if (
+        (raw.kind !== 'pull' && raw.kind !== 'issue') ||
+        typeof raw.owner !== 'string' ||
+        typeof raw.repo !== 'string' ||
+        typeof raw.number !== 'string'
+      ) {
+        return { ok: false, reason: 'unreachable' }
+      }
+      return getGiteeItemDetail({
+        kind: raw.kind,
+        owner: raw.owner,
+        repo: raw.repo,
+        number: raw.number
+      })
+    }
+  )
+
+  ipcMain.handle(
+    'gitee:itemComments',
+    async (_event, args: unknown): Promise<GiteeListResult<GiteeComment>> => {
+      const raw = (args ?? {}) as Record<string, unknown>
+      if (
+        (raw.kind !== 'pull' && raw.kind !== 'issue') ||
+        typeof raw.owner !== 'string' ||
+        typeof raw.repo !== 'string' ||
+        typeof raw.number !== 'string'
+      ) {
+        return { ok: false, reason: 'unreachable' }
+      }
+      return listGiteeItemComments({
+        kind: raw.kind,
+        owner: raw.owner,
+        repo: raw.repo,
+        number: raw.number
+      })
+    }
+  )
+
+  ipcMain.handle(
+    'gitee:pullFiles',
+    async (_event, args: unknown): Promise<GiteeListResult<GiteePullFile>> => {
+      const raw = (args ?? {}) as Record<string, unknown>
+      if (
+        typeof raw.owner !== 'string' ||
+        typeof raw.repo !== 'string' ||
+        typeof raw.number !== 'string'
+      ) {
+        return { ok: false, reason: 'unreachable' }
+      }
+      return listGiteePullFiles({ owner: raw.owner, repo: raw.repo, number: raw.number })
+    }
+  )
+
+  ipcMain.handle(
+    'gitee:pullCommits',
+    async (_event, args: unknown): Promise<GiteeListResult<GiteePullCommit>> => {
+      const raw = (args ?? {}) as Record<string, unknown>
+      if (
+        typeof raw.owner !== 'string' ||
+        typeof raw.repo !== 'string' ||
+        typeof raw.number !== 'string'
+      ) {
+        return { ok: false, reason: 'unreachable' }
+      }
+      return listGiteePullCommits({ owner: raw.owner, repo: raw.repo, number: raw.number })
     }
   )
 }

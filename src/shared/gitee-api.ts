@@ -26,14 +26,19 @@ export type RawGiteePull = {
   title: string
   state: string
   html_url: string
+  body?: string | null
   draft?: boolean
   merged_at?: string | null
-  mergeable?: boolean | null
-  user?: RawGiteeUser | null
-  head?: RawGiteeRef | null
-  base?: RawGiteeRef | null
+  closed_at?: string | null
   created_at?: string | null
   updated_at?: string | null
+  mergeable?: boolean | null
+  user?: RawGiteeUser | null
+  assignees?: RawGiteeUser[] | null
+  labels?: GiteeLabel[] | null
+  milestone?: { title?: string | null } | null
+  head?: RawGiteeRef | null
+  base?: RawGiteeRef | null
 }
 
 export type GiteePull = {
@@ -82,6 +87,9 @@ export type RawGiteeIssue = {
   html_url: string
   body?: string | null
   user?: RawGiteeUser | null
+  assignee?: RawGiteeUser | null
+  labels?: GiteeLabel[] | null
+  milestone?: { title?: string | null } | null
   created_at?: string | null
   updated_at?: string | null
 }
@@ -97,6 +105,11 @@ export type GiteeIssue = {
 
 // Account-level aggregation item for the Tasks surface: a pull or issue
 // tagged with its owning repository.
+export type GiteeLabel = {
+  name: string
+  color: string | null
+}
+
 export type GiteeAccountItem = {
   kind: 'pull' | 'issue'
   number: string
@@ -105,5 +118,76 @@ export type GiteeAccountItem = {
   url: string
   repoFullName: string
   repoHtmlUrl: string
+  authorLogin: string | null
+  authorAvatarUrl: string | null
+  assigneeLogin: string | null
+  assigneeAvatarUrl: string | null
+  labels: GiteeLabel[]
   updatedAt: string | null
+}
+
+export type GiteeItemDetail = {
+  kind: 'pull' | 'issue'
+  number: string
+  title: string
+  state: string
+  url: string
+  repoFullName: string
+  body: string | null
+  labels: GiteeLabel[]
+  milestone: string | null
+  authorLogin: string | null
+  authorAvatarUrl: string | null
+  assigneeLogin: string | null
+  assigneeAvatarUrl: string | null
+  createdAt: string | null
+  updatedAt: string | null
+  mergedAt: string | null
+}
+
+export type GiteeComment = {
+  id: number
+  body: string
+  authorLogin: string | null
+  authorAvatarUrl: string | null
+  createdAt: string | null
+}
+
+export type GiteePullFile = {
+  filename: string
+  additions: number
+  deletions: number
+  status: string | null
+  patch: string | null
+}
+
+export type GiteePullCommit = {
+  sha: string
+  message: string
+  authorLogin: string | null
+  createdAt: string | null
+}
+
+export type RawGiteeComment = {
+  id: number
+  body?: string | null
+  user?: RawGiteeUser | null
+  created_at?: string | null
+}
+
+export type RawGiteePullFile = {
+  filename?: string | null
+  additions?: number
+  deletions?: number
+  status?: string | null
+  patch?: string | null
+}
+
+export type RawGiteePullCommit = {
+  sha?: string | null
+  commit?: {
+    message?: string | null
+    author?: { name?: string | null; date?: string | null } | null
+  } | null
+  author?: RawGiteeUser | null
 }

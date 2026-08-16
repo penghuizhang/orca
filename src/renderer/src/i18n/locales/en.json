@@ -2043,8 +2043,11 @@
           "repo": "Repository",
           "state": "State",
           "emptyTitle": "No open items",
-          "emptyDescription": "No open pull requests or issues across your Gitee repositories. Connect Gitee in Settings → Review providers to list them here.",
-          "sourceOption": "Gitee"
+          "emptyDescription": "No pull requests or issues across your Gitee repositories. Connect Gitee in Settings → Review providers to list them here.",
+          "sourceOption": "Gitee",
+          "searchPlaceholder": "Search Gitee items...",
+          "noMatching": "No items match the current filter.",
+          "openOnGitee": "Open on Gitee"
         }
       },
       "Terminal": {
@@ -4527,7 +4530,10 @@
           "0ccba862b8": "Open GitHub tasks",
           "fee535205b": "Tasks",
           "d599269755": "Hide from sidebar",
-          "artifacts": "Artifacts"
+          "artifacts": "Artifacts",
+          "gitee": {
+            "openTasks": "Open Gitee tasks"
+          }
         },
         "SidebarRepositoryFilterSection": {
           "d3a9c4cea1": "Clear",
@@ -15281,6 +15287,18 @@
           "updating": "Updating…",
           "update": "Update shared content"
         }
+      },
+      "GiteeItemDialog": {
+        "createdAt": "Created",
+        "updatedAt": "Updated",
+        "milestone": "Milestone",
+        "openOnGitee": "Open on Gitee",
+        "loadError": "Could not load Gitee item details.",
+        "close": "Close",
+        "commits": "Commits",
+        "noComments": "No comments yet.",
+        "noFiles": "No files changed.",
+        "noCommits": "No commits."
       }
     },
     "i18n": {

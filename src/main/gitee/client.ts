@@ -2,14 +2,21 @@ import type { HostedReviewExecutionOptions } from '../source-control/hosted-revi
 import { getHostedReviewLocalGitOptions } from '../source-control/hosted-review-git-options'
 import type {
   GiteeAccountItem,
+  GiteeComment,
+  GiteeItemDetail,
   GiteePull,
+  GiteePullCommit,
+  GiteePullFile,
   GiteeRepo,
   GiteeIssue,
   RawGiteePull,
   RawGiteeRepo,
-  RawGiteeIssue
+  RawGiteeIssue,
+  RawGiteeComment,
+  RawGiteePullFile,
+  RawGiteePullCommit
 } from '../../shared/gitee-api'
-import { requestGiteeJson } from './api'
+import { requestGiteeJson, type GiteeApiResult } from './api'
 import { resolveGiteeAuthConfig } from './resolve-auth'
 import type { GiteeAuthConfig } from './gitee-auth-config'
 import { getGiteeRepoRef, type GiteeRepoRef } from './repository-ref'
@@ -19,6 +26,9 @@ import { mapGiteePull } from './pull-request-mappers'
 // while still covering long-lived PR lists.
 const PULL_SCAN_MAX_PAGES = 5
 const LIST_PER_PAGE = 100
+// Why: the Tasks board mirrors GitHub by offering open/merged/closed filters,
+// so the account-level aggregation fetches both states per repo.
+const ACCOUNT_AGGREGATE_STATES = ['open', 'closed'] as const
 
 export async function getGiteeRepoSlug(
   repoPath: string,
@@ -247,27 +257,42 @@ export async function listAccountPulls(): Promise<GiteeListResult<GiteeAccountIt
   const items = await mapReposWithConcurrency(
     repos.slice(0, ACCOUNT_AGGREGATE_REPO_LIMIT),
     async (repo) => {
-      const result = await requestGiteeJson<RawGiteePull[]>(
-        config,
-        `/repos/${encodeURIComponent(accountRepoOwner(repo))}/${encodeURIComponent(repo.path)}/pulls`,
-        { state: 'open', page: 1, per_page: ACCOUNT_AGGREGATE_PER_REPO_LIMIT }
+      const repoPath = `/repos/${encodeURIComponent(accountRepoOwner(repo))}/${encodeURIComponent(repo.path)}/pulls`
+      const results = await Promise.all(
+        ACCOUNT_AGGREGATE_STATES.map((state) =>
+          requestGiteeJson<RawGiteePull[]>(config, repoPath, {
+            state,
+            page: 1,
+            per_page: ACCOUNT_AGGREGATE_PER_REPO_LIMIT
+          })
+        )
       )
-      if (!result.ok) {
-        return []
-      }
-      return result.data.map(mapGiteePull).map((pull) => ({
-        kind: 'pull' as const,
-        number: String(pull.number),
-        title: pull.title,
-        state: pull.state,
-        url: pull.url,
-        repoFullName: repo.full_name ?? '',
-        repoHtmlUrl: (repo.html_url ?? '').replace(/\.git$/, ''),
-        updatedAt: pull.updatedAt
-      }))
+      return results.flatMap((result) =>
+        result.ok
+          ? result.data.map((raw) => {
+              const pull = mapGiteePull(raw)
+              const assignee = raw.assignees?.[0] ?? null
+              return {
+                kind: 'pull' as const,
+                number: String(pull.number),
+                title: pull.title,
+                state: pull.state,
+                url: pull.url,
+                repoFullName: repo.full_name ?? '',
+                repoHtmlUrl: (repo.html_url ?? '').replace(/\.git$/, ''),
+                authorLogin: raw.user?.login ?? null,
+                authorAvatarUrl: raw.user?.avatar_url ?? null,
+                assigneeLogin: assignee?.login ?? null,
+                assigneeAvatarUrl: assignee?.avatar_url ?? null,
+                labels: raw.labels ?? [],
+                updatedAt: pull.updatedAt
+              }
+            })
+          : []
+      )
     }
   )
-  return { ok: true, items }
+  return { ok: true, items: sortAccountItemsByUpdatedAt(items) }
 }
 
 export async function listAccountIssues(): Promise<GiteeListResult<GiteeAccountItem>> {
@@ -279,25 +304,193 @@ export async function listAccountIssues(): Promise<GiteeListResult<GiteeAccountI
   const items = await mapReposWithConcurrency(
     repos.slice(0, ACCOUNT_AGGREGATE_REPO_LIMIT),
     async (repo) => {
-      const result = await requestGiteeJson<RawGiteeIssue[]>(
-        config,
-        `/repos/${encodeURIComponent(accountRepoOwner(repo))}/${encodeURIComponent(repo.path)}/issues`,
-        { state: 'open', page: 1, per_page: ACCOUNT_AGGREGATE_PER_REPO_LIMIT }
+      const repoPath = `/repos/${encodeURIComponent(accountRepoOwner(repo))}/${encodeURIComponent(repo.path)}/issues`
+      const results = await Promise.all(
+        ACCOUNT_AGGREGATE_STATES.map((state) =>
+          requestGiteeJson<RawGiteeIssue[]>(config, repoPath, {
+            state,
+            page: 1,
+            per_page: ACCOUNT_AGGREGATE_PER_REPO_LIMIT
+          })
+        )
       )
-      if (!result.ok) {
-        return []
-      }
-      return result.data.map((issue) => ({
-        kind: 'issue' as const,
-        number: issue.number ?? '',
-        title: issue.title ?? '',
-        state: normalizeIssueState(issue.state ?? 'open'),
-        url: issue.html_url ?? '',
-        repoFullName: repo.full_name ?? '',
-        repoHtmlUrl: (repo.html_url ?? '').replace(/\.git$/, ''),
-        updatedAt: issue.updated_at ?? null
-      }))
+      return results.flatMap((result) =>
+        result.ok
+          ? result.data.map((issue) => ({
+              kind: 'issue' as const,
+              number: issue.number ?? '',
+              title: issue.title ?? '',
+              state: normalizeIssueState(issue.state ?? 'open'),
+              url: issue.html_url ?? '',
+              repoFullName: repo.full_name ?? '',
+              repoHtmlUrl: (repo.html_url ?? '').replace(/\.git$/, ''),
+              authorLogin: issue.user?.login ?? null,
+              authorAvatarUrl: issue.user?.avatar_url ?? null,
+              assigneeLogin: issue.assignee?.login ?? null,
+              assigneeAvatarUrl: issue.assignee?.avatar_url ?? null,
+              labels: issue.labels ?? [],
+              updatedAt: issue.updated_at ?? null
+            }))
+          : []
+      )
     }
   )
-  return { ok: true, items }
+  return { ok: true, items: sortAccountItemsByUpdatedAt(items) }
+}
+
+function sortAccountItemsByUpdatedAt(items: GiteeAccountItem[]): GiteeAccountItem[] {
+  return items.sort((a, b) => {
+    const aTime = a.updatedAt ? Date.parse(a.updatedAt) : 0
+    const bTime = b.updatedAt ? Date.parse(b.updatedAt) : 0
+    return bTime - aTime
+  })
+}
+
+// Why: detail views (Tasks board dialog) fetch per-repo endpoints the account
+// aggregation cannot cover — body, comments, files, and commits.
+export async function getGiteeItemDetail(args: {
+  kind: 'pull' | 'issue'
+  owner: string
+  repo: string
+  number: string
+}): Promise<GiteeApiResult<GiteeItemDetail>> {
+  const config = resolveGiteeAuthConfig()
+  const repoPath = `/repos/${encodeURIComponent(args.owner)}/${encodeURIComponent(args.repo)}`
+  const suffix = encodeURIComponent(args.number)
+  const result =
+    args.kind === 'pull'
+      ? await requestGiteeJson<RawGiteePull>(config, `${repoPath}/pulls/${suffix}`)
+      : await requestGiteeJson<RawGiteeIssue>(config, `${repoPath}/issues/${suffix}`)
+  if (!result.ok) {
+    return result
+  }
+  if (args.kind === 'pull') {
+    const pull = result.data as RawGiteePull
+    const assignee = pull.assignees?.[0] ?? null
+    return {
+      ok: true,
+      data: {
+        kind: 'pull',
+        number: String(pull.number),
+        title: pull.title ?? '',
+        state: pull.state ?? 'open',
+        url: pull.html_url ?? '',
+        repoFullName: `${args.owner}/${args.repo}`,
+        body: pull.body ?? null,
+        labels: pull.labels ?? [],
+        milestone: pull.milestone?.title ?? null,
+        authorLogin: pull.user?.login ?? null,
+        authorAvatarUrl: pull.user?.avatar_url ?? null,
+        assigneeLogin: assignee?.login ?? null,
+        assigneeAvatarUrl: assignee?.avatar_url ?? null,
+        createdAt: pull.created_at ?? null,
+        updatedAt: pull.updated_at ?? null,
+        mergedAt: pull.merged_at ?? null
+      }
+    }
+  }
+  const issue = result.data as RawGiteeIssue
+  return {
+    ok: true,
+    data: {
+      kind: 'issue',
+      number: issue.number ?? '',
+      title: issue.title ?? '',
+      state: issue.state ?? 'open',
+      url: issue.html_url ?? '',
+      repoFullName: `${args.owner}/${args.repo}`,
+      body: issue.body ?? null,
+      labels: issue.labels ?? [],
+      milestone: issue.milestone?.title ?? null,
+      authorLogin: issue.user?.login ?? null,
+      authorAvatarUrl: issue.user?.avatar_url ?? null,
+      assigneeLogin: issue.assignee?.login ?? null,
+      assigneeAvatarUrl: issue.assignee?.avatar_url ?? null,
+      createdAt: issue.created_at ?? null,
+      updatedAt: issue.updated_at ?? null,
+      mergedAt: null
+    }
+  }
+}
+
+export async function listGiteeItemComments(args: {
+  kind: 'pull' | 'issue'
+  owner: string
+  repo: string
+  number: string
+}): Promise<GiteeListResult<GiteeComment>> {
+  const config = resolveGiteeAuthConfig()
+  const repoPath = `/repos/${encodeURIComponent(args.owner)}/${encodeURIComponent(args.repo)}`
+  const suffix = encodeURIComponent(args.number)
+  const result = await requestGiteeJson<RawGiteeComment[]>(
+    config,
+    args.kind === 'pull'
+      ? `${repoPath}/pulls/${suffix}/comments`
+      : `${repoPath}/issues/${suffix}/comments`,
+    { page: 1, per_page: 100 }
+  )
+  if (!result.ok) {
+    return result
+  }
+  return {
+    ok: true,
+    items: result.data.map((comment) => ({
+      id: comment.id,
+      body: comment.body ?? '',
+      authorLogin: comment.user?.login ?? null,
+      authorAvatarUrl: comment.user?.avatar_url ?? null,
+      createdAt: comment.created_at ?? null
+    }))
+  }
+}
+
+export async function listGiteePullFiles(args: {
+  owner: string
+  repo: string
+  number: string
+}): Promise<GiteeListResult<GiteePullFile>> {
+  const config = resolveGiteeAuthConfig()
+  const result = await requestGiteeJson<RawGiteePullFile[]>(
+    config,
+    `/repos/${encodeURIComponent(args.owner)}/${encodeURIComponent(args.repo)}/pulls/${encodeURIComponent(args.number)}/files`,
+    { page: 1, per_page: 100 }
+  )
+  if (!result.ok) {
+    return result
+  }
+  return {
+    ok: true,
+    items: result.data.map((file) => ({
+      filename: file.filename ?? '',
+      additions: file.additions ?? 0,
+      deletions: file.deletions ?? 0,
+      status: file.status ?? null,
+      patch: file.patch ?? null
+    }))
+  }
+}
+
+export async function listGiteePullCommits(args: {
+  owner: string
+  repo: string
+  number: string
+}): Promise<GiteeListResult<GiteePullCommit>> {
+  const config = resolveGiteeAuthConfig()
+  const result = await requestGiteeJson<RawGiteePullCommit[]>(
+    config,
+    `/repos/${encodeURIComponent(args.owner)}/${encodeURIComponent(args.repo)}/pulls/${encodeURIComponent(args.number)}/commits`,
+    { page: 1, per_page: 100 }
+  )
+  if (!result.ok) {
+    return result
+  }
+  return {
+    ok: true,
+    items: result.data.map((commit) => ({
+      sha: commit.sha ?? '',
+      message: commit.commit?.message ?? '',
+      authorLogin: commit.author?.login ?? commit.commit?.author?.name ?? null,
+      createdAt: commit.commit?.author?.date ?? null
+    }))
+  }
 }

@@ -3,7 +3,16 @@ import type {
   BitbucketConnectionStatus
 } from '../../shared/bitbucket-credentials'
 import type { GiteeConnectArgs, GiteeConnectionStatus } from '../../shared/gitee-credentials'
-import type { GiteeAccountItem, GiteeIssue, GiteePull, GiteeRepo } from '../../shared/gitee-api'
+import type {
+  GiteeAccountItem,
+  GiteeComment,
+  GiteeIssue,
+  GiteeItemDetail,
+  GiteePull,
+  GiteePullCommit,
+  GiteePullFile,
+  GiteeRepo
+} from '../../shared/gitee-api'
 import type {
   CreateHostedReviewArgs,
   CreateHostedReviewResult,
@@ -57,4 +66,26 @@ export type GiteeApi = {
   }) => Promise<GiteeListApiResult<GiteeIssue>>
   listAccountPulls: () => Promise<GiteeListApiResult<GiteeAccountItem>>
   listAccountIssues: () => Promise<GiteeListApiResult<GiteeAccountItem>>
+  itemDetail: (args: {
+    kind: 'pull' | 'issue'
+    owner: string
+    repo: string
+    number: string
+  }) => Promise<{ ok: true; data: GiteeItemDetail } | { ok: false; reason: 'rejected' | 'unreachable' }>
+  itemComments: (args: {
+    kind: 'pull' | 'issue'
+    owner: string
+    repo: string
+    number: string
+  }) => Promise<GiteeListApiResult<GiteeComment>>
+  pullFiles: (args: {
+    owner: string
+    repo: string
+    number: string
+  }) => Promise<GiteeListApiResult<GiteePullFile>>
+  pullCommits: (args: {
+    owner: string
+    repo: string
+    number: string
+  }) => Promise<GiteeListApiResult<GiteePullCommit>>
 }

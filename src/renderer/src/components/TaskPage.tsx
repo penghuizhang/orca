@@ -31,6 +31,7 @@ import {
   SlidersHorizontal,
   Users,
   X,
+  FolderGit2,
   FolderKanban,
   FolderOpen,
   Tag,
@@ -51,6 +52,7 @@ import {
 } from '../../../shared/execution-host'
 import { Button } from '@/components/ui/button'
 import { ButtonGroup } from '@/components/ui/button-group'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import {
   Command,
@@ -184,6 +186,7 @@ import {
 import type { TaskPageGitHubMutationIntent } from '@/components/task-page-github-work-item-mutation-patches'
 import type { TaskPageGitHubPatchWorkItem } from '@/components/task-page-github-work-item-mutation-types'
 import GitHubItemDialog, { type ItemDialogTab } from '@/components/GitHubItemDialog'
+import GiteeItemDialog from '@/components/GiteeItemDialog'
 import PullRequestPage from '@/components/PullRequestPage'
 import GitLabItemDialog from '@/components/GitLabItemDialog'
 import ProjectViewWrapper from '@/components/github-project/ProjectViewWrapper'
@@ -3705,6 +3708,12 @@ export default function TaskPage(): React.JSX.Element {
   // Why: account-level aggregation (all repos, open PRs/issues) fetched
   // directly via window.api.gitee — same slim pattern as the GitLab tab.
   const [giteeView, setGiteeView] = useState<'pulls' | 'issues'>('pulls')
+  const [giteeStatusFilter, setGiteeStatusFilter] = useState<'all' | 'open' | 'merged' | 'closed'>(
+    'all'
+  )
+  const [giteeSearchInput, setGiteeSearchInput] = useState('')
+  const [giteeRepoFilter, setGiteeRepoFilter] = useState<ReadonlySet<string>>(new Set())
+  const [giteeDialogItem, setGiteeDialogItem] = useState<GiteeAccountItem | null>(null)
   const [giteeItems, setGiteeItems] = useState<GiteeAccountItem[]>([])
   const [giteeLoading, setGiteeLoading] = useState(false)
   const [giteeError, setGiteeError] = useState<string | null>(null)
@@ -5096,6 +5105,35 @@ export default function TaskPage(): React.JSX.Element {
       stale = true
     }
   }, [taskSource, giteeView, giteeRefreshNonce])
+
+  // Why: the account-level list is already fully fetched; filter locally so
+  // status chips and search stay instant without extra Gitee API round-trips.
+  const giteeRepoOptions = useMemo(
+    () =>
+      [...new Set(giteeItems.map((item) => item.repoFullName))]
+        .filter((name) => name.length > 0)
+        .sort(),
+    [giteeItems]
+  )
+  const filteredGiteeItems = useMemo(() => {
+    const query = giteeSearchInput.trim().toLowerCase()
+    return giteeItems.filter((item) => {
+      if (giteeRepoFilter.size > 0 && !giteeRepoFilter.has(item.repoFullName)) {
+        return false
+      }
+      if (giteeStatusFilter !== 'all' && item.state !== giteeStatusFilter) {
+        return false
+      }
+      if (!query) {
+        return true
+      }
+      return (
+        item.title.toLowerCase().includes(query) ||
+        item.number.toLowerCase().includes(query) ||
+        item.repoFullName.toLowerCase().includes(query)
+      )
+    })
+  }, [giteeItems, giteeRepoFilter, giteeSearchInput, giteeStatusFilter])
 
   // Why: Todos fetch has its own effect — different trigger (no chip filter) and data path (gl.todos is user-scoped, not repo-scoped).
   useEffect(() => {
@@ -10948,27 +10986,33 @@ export default function TaskPage(): React.JSX.Element {
               <div className="flex flex-none items-center gap-1.5 border-b border-border/50 px-3 py-2">
                 <button
                   type="button"
-                  onClick={() => setGiteeView('pulls')}
+                  onClick={() => {
+                    setGiteeView('pulls')
+                    setGiteeStatusFilter('all')
+                  }}
                   className={cn(
-                    'rounded-md px-2.5 py-1 text-xs font-medium transition-colors',
+                    'rounded-md border px-2.5 py-1 text-xs font-medium transition',
                     giteeView === 'pulls'
-                      ? 'bg-accent text-foreground'
-                      : 'text-muted-foreground hover:text-foreground'
+                      ? 'border-border/50 bg-foreground/90 text-background shadow-xs'
+                      : 'border-border/60 bg-background text-foreground shadow-xs hover:bg-muted/60'
                   )}
                 >
-                  {translate('auto.components.TaskPage.gitee.pulls', 'Pull requests')}
+                  {translate('auto.components.TaskPage.137e2a8a01', 'PRs')}
                 </button>
                 <button
                   type="button"
-                  onClick={() => setGiteeView('issues')}
+                  onClick={() => {
+                    setGiteeView('issues')
+                    setGiteeStatusFilter('all')
+                  }}
                   className={cn(
-                    'rounded-md px-2.5 py-1 text-xs font-medium transition-colors',
+                    'rounded-md border px-2.5 py-1 text-xs font-medium transition',
                     giteeView === 'issues'
-                      ? 'bg-accent text-foreground'
-                      : 'text-muted-foreground hover:text-foreground'
+                      ? 'border-border/50 bg-foreground/90 text-background shadow-xs'
+                      : 'border-border/60 bg-background text-foreground shadow-xs hover:bg-muted/60'
                   )}
                 >
-                  {translate('auto.components.TaskPage.gitee.issues', 'Issues')}
+                  {translate('auto.components.TaskPage.dfc0c79bd8', 'Issues')}
                 </button>
                 <button
                   type="button"
@@ -10982,9 +11026,140 @@ export default function TaskPage(): React.JSX.Element {
                   <RefreshCw className={cn('size-3.5', giteeLoading && 'animate-spin')} />
                 </button>
               </div>
-              <div className="flex-none grid grid-cols-[150px_minmax(0,3fr)_90px_100px_40px] gap-3 border-b border-border/50 px-3 py-2 text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
-                <span>{translate('auto.components.TaskPage.gitee.repo', 'Repository')}</span>
-                <span>{translate('auto.components.TaskPage.16cba35bee', 'Title')}</span>
+              <div className="flex flex-none flex-wrap items-center gap-2 border-b border-border/50 px-3 py-2">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-8 rounded-md border-border/50 bg-muted/50 px-2 text-xs font-medium shadow-sm transition hover:bg-muted/50"
+                    >
+                      <FolderGit2 className="size-3.5" />
+                      <span className="max-w-[180px] truncate">
+                        {giteeRepoFilter.size === 0
+                          ? translate(
+                              'auto.components.task.project.source.combobox.allProjects',
+                              'All projects'
+                            )
+                          : `${giteeRepoFilter.size} projects`}
+                      </span>
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent align="start" className="w-64 p-1.5">
+                    <div className="flex flex-col gap-0.5">
+                      <button
+                        type="button"
+                        onClick={() => setGiteeRepoFilter(new Set())}
+                        className="flex items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs hover:bg-muted/50"
+                      >
+                        <Checkbox checked={giteeRepoFilter.size === 0} />
+                        <span className="truncate font-medium">
+                          {translate(
+                            'auto.components.task.project.source.combobox.allProjects',
+                            'All projects'
+                          )}
+                        </span>
+                      </button>
+                      <div className="my-1 h-px bg-border/60" />
+                      <div className="max-h-64 overflow-y-auto scrollbar-sleek">
+                        {giteeRepoOptions.map((repo) => (
+                          <button
+                            key={repo}
+                            type="button"
+                            onClick={() => {
+                              const next = new Set(giteeRepoFilter)
+                              if (next.has(repo)) {
+                                next.delete(repo)
+                              } else {
+                                next.add(repo)
+                              }
+                              setGiteeRepoFilter(next)
+                            }}
+                            className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs hover:bg-muted/50"
+                          >
+                            <Checkbox checked={giteeRepoFilter.has(repo)} />
+                            <span className="truncate">{repo}</span>
+                          </button>
+                        ))}
+                        {giteeRepoOptions.length === 0 ? (
+                          <p className="px-2 py-3 text-center text-xs text-muted-foreground">
+                            {translate(
+                              'auto.components.task.project.source.combobox.noProjects',
+                              'No projects'
+                            )}
+                          </p>
+                        ) : null}
+                      </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+                {[
+                  {
+                    id: 'open' as const,
+                    label: translate('auto.components.TaskPage.606a85c774', 'Open')
+                  },
+                  ...(giteeView === 'pulls'
+                    ? [
+                        {
+                          id: 'merged' as const,
+                          label: translate('auto.components.TaskPage.37a82eaaf8', 'Merged')
+                        }
+                      ]
+                    : []),
+                  {
+                    id: 'closed' as const,
+                    label: translate('auto.components.TaskPage.d09bf34db7', 'Closed')
+                  },
+                  {
+                    id: 'all' as const,
+                    label: translate('auto.components.TaskPage.c2268a9982', 'All')
+                  }
+                ].map((option) => {
+                  const active = giteeStatusFilter === option.id
+                  return (
+                    <button
+                      key={option.id}
+                      type="button"
+                      onClick={() => setGiteeStatusFilter(option.id)}
+                      className={cn(
+                        'rounded-md border px-2.5 py-1 text-xs font-medium transition',
+                        active
+                          ? 'border-border/50 bg-foreground/90 text-background shadow-xs'
+                          : 'border-border/60 bg-background text-foreground shadow-xs hover:bg-muted/60'
+                      )}
+                    >
+                      {option.label}
+                    </button>
+                  )
+                })}
+                <div className="relative min-w-0 flex-1 basis-56">
+                  <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    value={giteeSearchInput}
+                    onChange={(e) => setGiteeSearchInput(e.target.value)}
+                    placeholder={translate(
+                      'auto.components.TaskPage.gitee.searchPlaceholder',
+                      'Search Gitee items...'
+                    )}
+                    className="h-8 rounded-md border-border/60 bg-background pl-8 pr-8 text-xs text-foreground shadow-xs"
+                  />
+                  {giteeSearchInput ? (
+                    <button
+                      type="button"
+                      aria-label={translate('auto.components.TaskPage.b797bdd7c3', 'Clear search')}
+                      onClick={() => setGiteeSearchInput('')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition hover:text-foreground"
+                    >
+                      <X className="size-4" />
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+              <div className="flex-none grid grid-cols-[70px_minmax(0,3fr)_minmax(90px,1fr)_90px_110px_40px] gap-3 border-b border-border/50 px-3 py-2 text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+                <span>{translate('auto.components.TaskPage.eb10c32872', 'ID')}</span>
+                <span>{translate('auto.components.TaskPage.5eccb3c841', 'Title / Context')}</span>
+                <span>{translate('auto.components.TaskPage.d2a876ca53', 'Assignee')}</span>
                 <span>{translate('auto.components.TaskPage.gitee.state', 'State')}</span>
                 <span>{translate('auto.components.TaskPage.f362667d55', 'Updated')}</span>
                 <span />
@@ -11003,10 +11178,11 @@ export default function TaskPage(): React.JSX.Element {
                     {Array.from({ length: 8 }).map((_, i) => (
                       <div
                         key={i}
-                        className="grid w-full gap-3 px-3 py-2 grid-cols-[150px_minmax(0,3fr)_90px_100px_40px]"
+                        className="grid w-full gap-3 px-3 py-2 grid-cols-[70px_minmax(0,3fr)_minmax(90px,1fr)_90px_110px_40px]"
                       >
-                        <div className="h-4 w-24 animate-pulse rounded bg-muted/70" />
+                        <div className="h-4 w-12 animate-pulse rounded bg-muted/70" />
                         <div className="h-4 w-3/5 animate-pulse rounded bg-muted/70" />
+                        <div className="h-3 w-14 animate-pulse rounded bg-muted/60" />
                         <div className="h-3 w-14 animate-pulse rounded bg-muted/60" />
                         <div className="h-3 w-16 animate-pulse rounded bg-muted/60" />
                         <div />
@@ -11022,35 +11198,118 @@ export default function TaskPage(): React.JSX.Element {
                     <p className="mt-2 text-sm text-muted-foreground">
                       {translate(
                         'auto.components.TaskPage.gitee.emptyDescription',
-                        'No open pull requests or issues across your Gitee repositories. Connect Gitee in Settings → Review providers to list them here.'
+                        'No pull requests or issues across your Gitee repositories. Connect Gitee in Settings → Review providers to list them here.'
                       )}
                     </p>
                   </div>
                 ) : null}
+                {!giteeLoading && giteeItems.length > 0 && filteredGiteeItems.length === 0 ? (
+                  <div className="border-b border-border px-4 py-3 text-sm text-muted-foreground">
+                    {translate(
+                      'auto.components.TaskPage.gitee.noMatching',
+                      'No items match the current filter.'
+                    )}
+                  </div>
+                ) : null}
                 <div className="divide-y divide-border/50">
-                  {giteeItems.map((item) => (
+                  {filteredGiteeItems.map((item) => (
                     <div
                       role="button"
                       tabIndex={0}
                       key={`${item.repoFullName}:${item.kind}:${item.number}`}
-                      onClick={() => void window.api.shell.openUrl(item.url)}
+                      onClick={() => setGiteeDialogItem(item)}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' || e.key === ' ') {
                           e.preventDefault()
-                          void window.api.shell.openUrl(item.url)
+                          setGiteeDialogItem(item)
                         }
                       }}
-                      className="grid w-full cursor-pointer gap-3 px-3 py-2 text-left grid-cols-[150px_minmax(0,3fr)_90px_100px_40px] hover:bg-muted/50"
+                      className="grid w-full cursor-pointer gap-3 px-3 py-2 text-left grid-cols-[70px_minmax(0,3fr)_minmax(90px,1fr)_90px_110px_40px] hover:bg-muted/50"
                     >
-                      <span className="truncate text-xs text-muted-foreground">
-                        {item.repoFullName}
+                      <span className="flex min-w-0 items-center gap-1.5">
+                        {item.kind === 'pull' ? (
+                          <GitPullRequest
+                            className={cn(
+                              'size-3.5 shrink-0',
+                              item.state === 'open'
+                                ? 'text-emerald-600'
+                                : item.state === 'merged'
+                                  ? 'text-purple-600'
+                                  : 'text-muted-foreground'
+                            )}
+                          />
+                        ) : (
+                          <CircleDot className="size-3.5 shrink-0 text-muted-foreground" />
+                        )}
+                        <span className="truncate font-mono text-xs text-muted-foreground">
+                          #{item.number}
+                        </span>
                       </span>
-                      <span className="min-w-0 truncate text-sm">
-                        <span className="font-mono text-xs text-muted-foreground">
-                          {item.kind === 'pull' ? '!' : '#'}
-                          {item.number}
-                        </span>{' '}
-                        {item.title}
+                      <span className="min-w-0">
+                        <span className="flex min-w-0 items-center gap-2">
+                          <span className="truncate text-[13px] font-medium text-foreground">
+                            {item.title}
+                          </span>
+                          {item.state !== 'open' ? (
+                            <span
+                              className={cn(
+                                'shrink-0 rounded px-1.5 py-0 text-[10px] font-medium',
+                                item.state === 'merged' && 'bg-purple-500/15 text-purple-600',
+                                (item.state === 'closed' ||
+                                  item.state === 'draft' ||
+                                  item.state === 'rejected' ||
+                                  item.state === 'processing') &&
+                                  'bg-muted text-muted-foreground'
+                              )}
+                            >
+                              {item.state}
+                            </span>
+                          ) : null}
+                          <span className="truncate text-[11px] text-muted-foreground">
+                            {item.repoFullName}
+                          </span>
+                        </span>
+                        <span className="mt-0.5 flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-[12px] text-muted-foreground">
+                          <span>
+                            {item.authorLogin ??
+                              translate('auto.components.TaskPage.6430594b18', 'unknown author')}
+                          </span>
+                          {item.labels.slice(0, 3).map((label) => (
+                            <span
+                              key={label.name}
+                              className="inline-flex items-center gap-1 rounded-full border border-border/40 px-1.5 py-0 text-[10px] text-muted-foreground"
+                              style={
+                                label.color
+                                  ? {
+                                      backgroundColor: `#${label.color}14`,
+                                      borderColor: `#${label.color}55`,
+                                      color: `#${label.color}`
+                                    }
+                                  : undefined
+                              }
+                            >
+                              <span
+                                className="size-1.5 rounded-full"
+                                style={
+                                  label.color ? { backgroundColor: `#${label.color}` } : undefined
+                                }
+                              />
+                              {label.name}
+                            </span>
+                          ))}
+                        </span>
+                      </span>
+                      <span className="flex min-w-0 items-center gap-1.5">
+                        {item.assigneeAvatarUrl ? (
+                          <img
+                            src={item.assigneeAvatarUrl}
+                            alt=""
+                            className="size-4 shrink-0 rounded-full"
+                          />
+                        ) : null}
+                        <span className="truncate text-xs text-muted-foreground">
+                          {item.assigneeLogin ?? '—'}
+                        </span>
                       </span>
                       <span>
                         <span
@@ -11072,12 +11331,32 @@ export default function TaskPage(): React.JSX.Element {
                         {item.updatedAt ? formatRelativeTime(item.updatedAt) : ''}
                       </span>
                       <span className="flex justify-end">
-                        <ExternalLink className="size-3.5 text-muted-foreground" />
+                        <button
+                          type="button"
+                          aria-label={translate(
+                            'auto.components.TaskPage.gitee.openOnGitee',
+                            'Open on Gitee'
+                          )}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            void window.api.shell.openUrl(item.url)
+                          }}
+                          className="rounded p-0.5 text-muted-foreground transition-colors hover:text-foreground"
+                        >
+                          <ExternalLink className="size-3.5" />
+                        </button>
                       </span>
                     </div>
                   ))}
                 </div>
               </div>
+              {giteeDialogItem ? (
+                <GiteeItemDialog
+                  key={`${giteeDialogItem.repoFullName}:${giteeDialogItem.number}`}
+                  item={giteeDialogItem}
+                  onClose={() => setGiteeDialogItem(null)}
+                />
+              ) : null}
             </div>
           ) : taskSource === 'jira' ? (
             !jiraStatusReady ? (
