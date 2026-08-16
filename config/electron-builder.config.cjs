@@ -26,6 +26,12 @@ const isMacRelease =
   process.env.ORCA_MAC_RELEASE === '1' || isMacHourly || isMacDaily || isMacAdhoc
 const isLinuxArm64Release = process.env.ORCA_LINUX_ARM64_RELEASE === '1'
 const localBuildVersion = isMacRelease ? undefined : process.env.ORCA_LOCAL_BUILD_VERSION
+// Why: local orca-s builds package the host slice only (arm64) by default;
+// release CI keeps the full dual-arch set. Override via ORCA_MAC_TARGET_ARCHS.
+const macTargetArchs = (process.env.ORCA_MAC_TARGET_ARCHS ?? 'x64,arm64')
+  .split(',')
+  .map((arch) => arch.trim())
+  .filter(Boolean)
 const devChannelBuildVersion = isMacHourly
   ? process.env.ORCA_HOURLY_BUILD_VERSION
   : isMacDaily
@@ -406,11 +412,11 @@ module.exports = {
     target: [
       {
         target: 'dmg',
-        arch: ['x64', 'arm64']
+        arch: macTargetArchs
       },
       {
         target: 'zip',
-        arch: ['x64', 'arm64']
+        arch: macTargetArchs
       }
     ]
   },

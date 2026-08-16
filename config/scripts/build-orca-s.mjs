@@ -105,7 +105,8 @@ run(
     env: {
       ...process.env,
       ORCA_BUILD_COMMIT: identity.commit,
-      ORCA_LOCAL_BUILD_VERSION: identity.version
+      ORCA_LOCAL_BUILD_VERSION: identity.version,
+      ORCA_MAC_TARGET_ARCHS: archName
     }
   }
 )
