@@ -180,7 +180,8 @@ describe('forge provider interface', () => {
       ['github', true],
       ['bitbucket', true],
       ['azure-devops', true],
-      ['gitea', true]
+      ['gitea', true],
+      ['gitee', false]
     ])
     // Why: the shared list is what the Create blocker and the renderer read.
     // When it drifted from this one, Bitbucket had a working createReview but

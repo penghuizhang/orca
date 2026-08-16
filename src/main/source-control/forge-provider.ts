@@ -22,6 +22,7 @@ import {
   getGiteaRepoSlug
 } from '../gitea/client'
 import { createGiteaPullRequest } from '../gitea/pull-request-creation'
+import { giteeForgeProvider } from '../gitee/forge-provider'
 import {
   createGitHubPullRequest,
   getGitHubPRLookupRateLimitBlock,
@@ -299,7 +300,8 @@ export const FORGE_PROVIDERS = [
   gitHubForgeProvider,
   bitbucketForgeProvider,
   azureDevOpsForgeProvider,
-  giteaForgeProvider
+  giteaForgeProvider,
+  giteeForgeProvider
 ] as const satisfies readonly ForgeProvider[]
 
 export function getForgeProviderById(id: ForgeProviderId): ForgeProvider {

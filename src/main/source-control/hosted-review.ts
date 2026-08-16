@@ -25,6 +25,9 @@ function reviewLinkForProvider(
       return { linkedReviewNumber: input.linkedAzureDevOpsPR ?? null }
     case 'gitea':
       return { linkedReviewNumber: input.linkedGiteaPR ?? null }
+    case 'gitee':
+      // Why: linkedGiteePR 元数据在 L1 接入，L0 仅识别 provider。
+      return { linkedReviewNumber: null }
   }
 }
 
