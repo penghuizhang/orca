@@ -20098,6 +20098,7 @@ export class OrcaRuntimeService {
     linkedBitbucketPR?: number | null
     linkedAzureDevOpsPR?: number | null
     linkedGiteaPR?: number | null
+    linkedGiteePR?: number | null
   }): Promise<HostedReviewInfo | null> {
     const repo = await this.resolveRepoSelector(args.repoSelector)
     const executionOptions = this.getHostedReviewExecutionOptions(repo)
@@ -20113,6 +20114,7 @@ export class OrcaRuntimeService {
       linkedBitbucketPR: args.linkedBitbucketPR ?? null,
       linkedAzureDevOpsPR: args.linkedAzureDevOpsPR ?? null,
       linkedGiteaPR: args.linkedGiteaPR ?? null,
+      linkedGiteePR: args.linkedGiteePR ?? null,
       ...executionOptions
     })
     if (review?.provider === 'github' && this.stats && !this.stats.hasCountedPR(review.url)) {
@@ -20149,6 +20151,7 @@ export class OrcaRuntimeService {
       linkedBitbucketPR: args.linkedBitbucketPR ?? null,
       linkedAzureDevOpsPR: args.linkedAzureDevOpsPR ?? null,
       linkedGiteaPR: args.linkedGiteaPR ?? null,
+      linkedGiteePR: args.linkedGiteePR ?? null,
       ...executionOptions
     })
   }
@@ -22319,6 +22322,7 @@ export class OrcaRuntimeService {
     linkedBitbucketPR?: number | null
     linkedAzureDevOpsPR?: number | null
     linkedGiteaPR?: number | null
+    linkedGiteePR?: number | null
     linkedWorkItem?: WorkspaceLinkedItem | null
     linkedTaskSourceContext?: TaskSourceContext | null
     comment?: string
@@ -22430,6 +22434,7 @@ export class OrcaRuntimeService {
           ? { linkedAzureDevOpsPR: args.linkedAzureDevOpsPR }
           : {}),
         ...(args.linkedGiteaPR !== undefined ? { linkedGiteaPR: args.linkedGiteaPR } : {}),
+        ...(args.linkedGiteePR !== undefined ? { linkedGiteePR: args.linkedGiteePR } : {}),
         ...(args.linkedWorkItem !== undefined ? { linkedWorkItem: args.linkedWorkItem } : {}),
         ...(args.linkedTaskSourceContext !== undefined
           ? { linkedTaskSourceContext: args.linkedTaskSourceContext }
@@ -23061,6 +23066,7 @@ export class OrcaRuntimeService {
         ? { linkedAzureDevOpsPR: args.linkedAzureDevOpsPR }
         : {}),
       ...(args.linkedGiteaPR !== undefined ? { linkedGiteaPR: args.linkedGiteaPR } : {}),
+      ...(args.linkedGiteePR !== undefined ? { linkedGiteePR: args.linkedGiteePR } : {}),
       ...(args.linkedWorkItem !== undefined ? { linkedWorkItem: args.linkedWorkItem } : {}),
       ...(args.linkedTaskSourceContext !== undefined
         ? { linkedTaskSourceContext: args.linkedTaskSourceContext }
@@ -23465,6 +23471,7 @@ export class OrcaRuntimeService {
       linkedBitbucketPR?: number | null
       linkedAzureDevOpsPR?: number | null
       linkedGiteaPR?: number | null
+      linkedGiteePR?: number | null
       linkedWorkItem?: WorkspaceLinkedItem | null
       linkedTaskSourceContext?: TaskSourceContext | null
       comment?: string
@@ -23527,6 +23534,7 @@ export class OrcaRuntimeService {
           ? { linkedAzureDevOpsPR: args.linkedAzureDevOpsPR }
           : {}),
         ...(args.linkedGiteaPR != null ? { linkedGiteaPR: args.linkedGiteaPR } : {}),
+        ...(args.linkedGiteePR != null ? { linkedGiteePR: args.linkedGiteePR } : {}),
         ...(args.linkedWorkItem !== undefined ? { linkedWorkItem: args.linkedWorkItem } : {}),
         ...(args.linkedTaskSourceContext !== undefined
           ? { linkedTaskSourceContext: args.linkedTaskSourceContext }

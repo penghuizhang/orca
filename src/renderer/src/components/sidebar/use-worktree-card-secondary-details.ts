@@ -147,7 +147,8 @@ export function useWorktreeCardSecondaryDetails({
     (hoverReviewProvider === 'gitlab' && linkedGitLabMR !== null) ||
     (hoverReviewProvider === 'bitbucket' && linkedBitbucketPR !== null) ||
     (hoverReviewProvider === 'azure-devops' && linkedAzureDevOpsPR !== null) ||
-    (hoverReviewProvider === 'gitea' && linkedGiteaPR !== null)
+    (hoverReviewProvider === 'gitea' && linkedGiteaPR !== null) ||
+    (hoverReviewProvider === 'gitee' && worktree.linkedGiteePR !== null)
   const handleUnlinkReview = useCallback(() => {
     switch (hoverReviewProvider) {
       case 'github':
@@ -166,6 +167,7 @@ export function useWorktreeCardSecondaryDetails({
         void updateWorktreeMeta(worktree.id, { linkedGiteaPR: null })
         break
       case 'gitee':
+        void updateWorktreeMeta(worktree.id, { linkedGiteePR: null })
         break
       case 'unsupported':
       case undefined:

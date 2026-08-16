@@ -102,17 +102,20 @@ export function useWorktreeCardReviewDetails({
   const linkedBitbucketPR = worktree.linkedBitbucketPR ?? null
   const linkedAzureDevOpsPR = worktree.linkedAzureDevOpsPR ?? null
   const linkedGiteaPR = worktree.linkedGiteaPR ?? null
+  const linkedGiteePR = worktree.linkedGiteePR ?? null
   const hasNonGitHubLinkedReview =
     linkedGitLabMR !== null ||
     linkedBitbucketPR !== null ||
     linkedAzureDevOpsPR !== null ||
-    linkedGiteaPR !== null
+    linkedGiteaPR !== null ||
+    linkedGiteePR !== null
   const hasLinkedReview =
     linkedGitHubPR !== null ||
     linkedGitLabMR !== null ||
     linkedBitbucketPR !== null ||
     linkedAzureDevOpsPR !== null ||
-    linkedGiteaPR !== null
+    linkedGiteaPR !== null ||
+    linkedGiteePR !== null
   // Why: a newer hosted-review miss trusts the merged-PR cache only when the stored head proves it still describes the current commit.
   const cachedBranchPR = prCacheEntry?.data
   const cachedBranchPRFetchedAt = prCacheEntry?.fetchedAt
@@ -163,6 +166,7 @@ export function useWorktreeCardReviewDetails({
     linkedBitbucketPR,
     linkedAzureDevOpsPR,
     linkedGiteaPR,
+    linkedGiteePR,
     {
       reviewHintKey:
         (useCachedBranchReview || cachedMergedBranchPRMatchesCurrentHead) && !hasLinkedReview
@@ -192,6 +196,7 @@ export function useWorktreeCardReviewDetails({
     linkedBitbucketPR,
     linkedAzureDevOpsPR,
     linkedGiteaPR,
+    linkedGiteePR,
     cachedBranchFallbackGitHubPRNumber,
     prDisplay
   }

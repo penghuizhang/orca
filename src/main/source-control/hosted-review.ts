@@ -26,8 +26,7 @@ function reviewLinkForProvider(
     case 'gitea':
       return { linkedReviewNumber: input.linkedGiteaPR ?? null }
     case 'gitee':
-      // Why: linkedGiteePR 元数据在 L1 接入，L0 仅识别 provider。
-      return { linkedReviewNumber: null }
+      return { linkedReviewNumber: input.linkedGiteePR ?? null }
   }
 }
 
@@ -42,6 +41,7 @@ export async function getHostedReviewForBranch(
     linkedBitbucketPR?: number | null
     linkedAzureDevOpsPR?: number | null
     linkedGiteaPR?: number | null
+    linkedGiteePR?: number | null
     currentHeadOid?: string | null
     /**
      * Set by surfaces that only ever render the selected worktree, which is the

@@ -63,6 +63,7 @@ export type HostedReviewForBranchArgs = {
   linkedBitbucketPR?: number | null
   linkedAzureDevOpsPR?: number | null
   linkedGiteaPR?: number | null
+  linkedGiteePR?: number | null
   // The worktree's checked-out HEAD oid (GitHub merged-at-head visibility).
   currentHeadOid?: string | null
   /**
@@ -203,6 +204,7 @@ export type HostedReviewCreationEligibilityArgs = {
   linkedBitbucketPR?: number | null
   linkedAzureDevOpsPR?: number | null
   linkedGiteaPR?: number | null
+  linkedGiteePR?: number | null
 }
 
 export type HostedReviewDecision = 'approved' | 'changes_requested' | 'review_required' | null

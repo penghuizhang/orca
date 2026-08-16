@@ -26,6 +26,7 @@ type LinkedReviewNumbers = {
   linkedBitbucketPR: number | null
   linkedAzureDevOpsPR: number | null
   linkedGiteaPR: number | null
+  linkedGiteePR: number | null
 }
 
 export type WorktreeCardPrDisplay =
@@ -61,7 +62,7 @@ function getLinkedReviewNumber(
     case 'gitea':
       return links.linkedGiteaPR
     case 'gitee':
-      return null
+      return links.linkedGiteePR
   }
 }
 
@@ -87,6 +88,7 @@ export function getWorktreeCardPrDisplay(
   linkedBitbucketPR: number | null = null,
   linkedAzureDevOpsPR: number | null = null,
   linkedGiteaPR: number | null = null,
+  linkedGiteePR: number | null = null,
   options: WorktreeCardPrDisplayOptions = {}
 ): WorktreeCardPrDisplay | null {
   const links = {
@@ -94,14 +96,16 @@ export function getWorktreeCardPrDisplay(
     linkedGitLabMR,
     linkedBitbucketPR,
     linkedAzureDevOpsPR,
-    linkedGiteaPR
+    linkedGiteaPR,
+    linkedGiteePR
   }
   const hasLinkedReview =
     linkedPR !== null ||
     linkedGitLabMR !== null ||
     linkedBitbucketPR !== null ||
     linkedAzureDevOpsPR !== null ||
-    linkedGiteaPR !== null
+    linkedGiteaPR !== null ||
+    linkedGiteePR !== null
   if (review) {
     if (review.provider === 'unsupported') {
       return review
@@ -148,6 +152,10 @@ export function getWorktreeCardPrDisplay(
 
   if (linkedGiteaPR !== null) {
     return makeLinkedReviewFallback('gitea', linkedGiteaPR, review)
+  }
+
+  if (linkedGiteePR !== null) {
+    return makeLinkedReviewFallback('gitee', linkedGiteePR, review)
   }
 
   return null

@@ -8004,6 +8004,7 @@ function getDefaultWorktreeMeta(): WorktreeMeta {
     linkedBitbucketPR: null,
     linkedAzureDevOpsPR: null,
     linkedGiteaPR: null,
+    linkedGiteePR: null,
     linkedWorkItem: null,
     linkedTaskSourceContext: null,
     isArchived: false,
