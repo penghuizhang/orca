@@ -1,5 +1,7 @@
 # MEMORY.md — orca 二开工程精华索引
 
+- [2026-08-18 本周概览+复制清单（PR #8）](2026-08-18.md) — 周五填工时场景 V2 方案：保持月视图原貌，底部加本周概览条（分类计数+工时合计=start-end 纯前端计算，allDay 不计、0.5h 向下精度）+「复制本周清单」弹窗（预览 Markdown 按天分组可复制即填报）；**PR #8 已由用户合并（b88fc84a6）**；新增 calendar-week-summary.tsx / calendar-week-list-dialog.tsx / calendar-week-list.ts(+test 11)；验证全绿；设计文档 docs/2026-08-18-日历周视图与工时汇总设计.md + 原型 docs/2026-08-18-本周概览与复制清单原型.html；【答疑】GitHub 页面 152 files changed = custom vs main 全部累积差异（8 PR 总和），非未提交代码，无需再建 PR
+- [2026-08-18 上游同步 v1.4.99](2026-08-18.md) — main ff 到 7a695c70f（142 commits）并入 custom（00a83662d）；6 冲突全保留 fork 逻辑：**persistence.ts 被上游拆目录后定制代码现在在 loading-store/store.ts + applying-settings/settings-update.ts**；electron-builder 丢弃上游 orca:// protocols（共存原则）；en.json 用 python 递归深度合并；**ui.ts 不变式 previouslyViewBeforeX=TopLevelView 全集−{X}**；补上游缺陷 occupantAgent mock（ab2f538b1）；**打包 orca-s 待 calendar-week-summary 分支合回后再执行**；docs/2026-08-18-上游同步v1_4_99影响说明.md
 - [2026-08-16 日历功能](2026-08-16.md) — calendar-feature 分支（**全功能+优化均未提交**，尽快 commit 防共享目录事故）；一期（月视图/农历/分类/CRUD/持久化）已实现；优化轮（点击格子弹新建、zh.json 补 36 键国际化、en title 键拆 pageTitle）已全绿验证；设计文档 docs/2026-08-16-日历功能设计方案.md + docs/2026-08-16-日历优化-点击建条目与国际化.md；【惯例】en.json 由 sync 自动补、**zh/es/ja/ko 手工补键**
 - [2026-08-16 调研：二开可行性 + fork 同步策略](2026-08-16.md) — 上游日更（v1.4.18x）、MIT、有 skills/ 扩展机制；main 纯净跟踪上游、定制走独立分支；二开文档放 .workbuddy/ 不碰上游 docs/
 - [2026-08-16 环境搭建](2026-08-16.md) — Node 24.19.0 已装；【坑】本机 nvm use 24 失败，必须 `nvm use 24.19`，非交互 shell 用 PATH 注入 `$HOME/.nvm/versions/node/v24.19.0/bin`；`pnpm dev` 已验证可跑；打包用 `pnpm build:mac`
