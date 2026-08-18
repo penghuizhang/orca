@@ -14333,7 +14333,20 @@
         "holidayDays": "{{count}} 天",
         "pickMonth": "选择月份",
         "previousYear": "上一年",
-        "nextYear": "下一年"
+        "nextYear": "下一年",
+        "weekSummary": "本周概览",
+        "copyWeekList": "复制本周清单",
+        "weekListDescription": "按天分组的一周工作记录，可直接粘贴到工时系统。",
+        "weekListWorkList": "工作清单",
+        "weekListSubtotal": "小计",
+        "weekListTotal": "合计",
+        "weekListUntimed": "未计时",
+        "weekListHourUnit": "小时",
+        "copyToClipboard": "复制到剪贴板",
+        "weekListCopied": "本周工作清单已复制。",
+        "weekListCopyFailed": "复制失败，请手动选中文本复制。",
+        "weekEntryCount": "共 {{count}} 条",
+        "weekTotalHours": "合计 {{hours}} 小时"
       },
       "pluginCatalog": {
         "PluginCatalogLayout": {
