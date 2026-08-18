@@ -1,6 +1,10 @@
 import React from 'react'
 
-import type { CalendarEntry, CalendarCategory } from '../../../../shared/calendar-types'
+import type {
+  CalendarCategory,
+  CalendarCategoryInfo,
+  CalendarEntry
+} from '../../../../shared/calendar-types'
 import { getDayLabel } from './festival'
 import { getHolidayBlock, getHolidayException, isWeekendDateKey } from './holiday-data'
 import {
@@ -12,7 +16,7 @@ import {
   toDateKey,
   lunarRepeatDateKey
 } from './calendar-time'
-import { CALENDAR_CATEGORY_DOT_CLASSES } from './calendar-category-display'
+import { categoryColor } from './calendar-category-display'
 import { cn } from '@/lib/utils'
 import { translate } from '@/i18n/i18n'
 
@@ -25,6 +29,7 @@ export function CalendarMonthGrid({
   selectedDateKey,
   todayKey,
   visibleCategories,
+  categories,
   locale,
   showLunarInfo,
   onSelectDate,
@@ -37,6 +42,7 @@ export function CalendarMonthGrid({
   selectedDateKey: string
   todayKey: string
   visibleCategories: ReadonlySet<CalendarCategory>
+  categories: readonly CalendarCategoryInfo[]
   locale: string
   showLunarInfo: boolean
   onSelectDate: (dateKey: string) => void
@@ -195,7 +201,7 @@ export function CalendarMonthGrid({
                     <span
                       className={cn(
                         'size-1.5 shrink-0 rounded-full',
-                        CALENDAR_CATEGORY_DOT_CLASSES[entry.category]
+                        categoryColor(entry.category, categories)
                       )}
                     />
                     <span className="truncate">

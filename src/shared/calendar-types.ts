@@ -1,8 +1,46 @@
 export const CALENDAR_CATEGORIES = ['meeting', 'feature', 'milestone', 'other'] as const
-export type CalendarCategory = (typeof CALENDAR_CATEGORIES)[number]
+
+/**
+ * Category identifier: built-in ids plus user-defined ones (see
+ * CALENDAR_CATEGORY_COLORS / calendar_categories table). Any non-empty string
+ * is valid so unknown stored values are kept instead of being clobbered.
+ */
+export type CalendarCategory = string
+
+/** Color swatch options for user-defined categories (tailwind literals). */
+export const CALENDAR_CATEGORY_COLORS = [
+  'bg-red-500',
+  'bg-orange-500',
+  'bg-purple-500',
+  'bg-teal-500',
+  'bg-pink-500',
+  'bg-indigo-500',
+  'bg-yellow-500',
+  'bg-lime-500'
+] as const
+
+export type CalendarCategoryColor = (typeof CALENDAR_CATEGORY_COLORS)[number]
+
+/** Display metadata for a calendar category (built-in or user-defined). */
+export type CalendarCategoryInfo = {
+  id: string
+  /** Display name; built-ins keep the English fallback (i18n keys win), customs store user text. */
+  name: string
+  /** Tailwind dot color class, e.g. 'bg-amber-500'. */
+  color: string
+  /** Built-in categories are seeded and cannot be renamed or deleted. */
+  builtIn: boolean
+}
+
+export type CalendarCategoryCreateInput = {
+  name: string
+  color: CalendarCategoryColor
+}
+
+export type CalendarCategoryUpdateInput = Partial<CalendarCategoryCreateInput>
 
 export function isCalendarCategory(value: unknown): value is CalendarCategory {
-  return typeof value === 'string' && (CALENDAR_CATEGORIES as readonly string[]).includes(value)
+  return typeof value === 'string' && value.length > 0
 }
 
 /**

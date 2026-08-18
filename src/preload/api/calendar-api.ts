@@ -1,7 +1,10 @@
 import type {
   CalendarEntry,
   CalendarEntryCreateInput,
-  CalendarEntryUpdateInput
+  CalendarEntryUpdateInput,
+  CalendarCategoryCreateInput,
+  CalendarCategoryInfo,
+  CalendarCategoryUpdateInput
 } from '../../shared/calendar-types'
 
 export type CalendarApi = {
@@ -9,4 +12,13 @@ export type CalendarApi = {
   create: (input: CalendarEntryCreateInput) => Promise<CalendarEntry>
   update: (args: { id: string; updates: CalendarEntryUpdateInput }) => Promise<CalendarEntry>
   delete: (args: { id: string }) => Promise<void>
+  categories: {
+    list: () => Promise<CalendarCategoryInfo[]>
+    create: (input: CalendarCategoryCreateInput) => Promise<CalendarCategoryInfo>
+    update: (args: {
+      id: string
+      updates: CalendarCategoryUpdateInput
+    }) => Promise<CalendarCategoryInfo>
+    delete: (args: { id: string }) => Promise<void>
+  }
 }

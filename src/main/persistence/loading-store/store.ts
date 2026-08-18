@@ -31,9 +31,17 @@ import { normalizeCalendarEntry } from '../../../shared/calendar-types'
 import type {
   CalendarEntry,
   CalendarEntryCreateInput,
-  CalendarEntryUpdateInput
+  CalendarEntryUpdateInput,
+  CalendarCategoryCreateInput,
+  CalendarCategoryInfo,
+  CalendarCategoryUpdateInput
 } from '../../../shared/calendar-types'
-import { CalendarTable, CALENDAR_ENTRIES_TABLE_MIGRATION } from '../../custom-db/calendar-table'
+import {
+  CalendarTable,
+  CALENDAR_ENTRIES_TABLE_MIGRATION,
+  CALENDAR_CATEGORIES_TABLE_MIGRATION
+} from '../../custom-db/calendar-table'
+import { CalendarCategoriesTable } from '../../custom-db/calendar-categories-table'
 import { CustomDb } from '../../custom-db/custom-db'
 import { normalizeProxyUrl } from '../../../shared/network-proxy'
 import { normalizeKagiSessionLink } from '../../../shared/browser-url'
@@ -522,6 +530,7 @@ export class Store {
   private readonly dataFile: string
   private readonly customDb: CustomDb
   private readonly calendarTable: CalendarTable
+  private readonly calendarCategoriesTable: CalendarCategoriesTable
   private readonly activeViewPreference: ActiveViewPreference
   private readonly terminalScrollbackSnapshotStorage: TerminalScrollbackSnapshotStorage
   private writeTimer: ReturnType<typeof setTimeout> | null = null
@@ -563,9 +572,11 @@ export class Store {
     // Why: fork business data lives in its own sqlite next to the profile state
     // file, so a profile switch carries its calendar (and future tables) along.
     this.customDb = new CustomDb(join(dirname(this.dataFile), 'orca-custom.db'), [
-      CALENDAR_ENTRIES_TABLE_MIGRATION
+      CALENDAR_ENTRIES_TABLE_MIGRATION,
+      CALENDAR_CATEGORIES_TABLE_MIGRATION
     ])
     this.calendarTable = new CalendarTable(this.customDb.database)
+    this.calendarCategoriesTable = new CalendarCategoriesTable(this.customDb.database)
     this.staleTempCleanup = removeStaleDurableWriteTempFiles(this.dataFile, {
       minimumAgeMs: STALE_DURABLE_WRITE_TEMP_AGE_MS
     })
@@ -2486,6 +2497,22 @@ export class Store {
 
   deleteCalendarEntry(id: string): void {
     this.calendarTable.delete(id)
+  }
+
+  listCalendarCategories(): CalendarCategoryInfo[] {
+    return this.calendarCategoriesTable.list()
+  }
+
+  createCalendarCategory(input: CalendarCategoryCreateInput): CalendarCategoryInfo {
+    return this.calendarCategoriesTable.create(input)
+  }
+
+  updateCalendarCategory(id: string, updates: CalendarCategoryUpdateInput): CalendarCategoryInfo {
+    return this.calendarCategoriesTable.update(id, updates)
+  }
+
+  deleteCalendarCategory(id: string): void {
+    this.calendarCategoriesTable.delete(id)
   }
 
   // Why: pre-sqlite builds kept calendar entries in the JSON state file; move

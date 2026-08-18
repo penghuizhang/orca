@@ -4,7 +4,10 @@ import type { Store } from '../persistence'
 import type {
   CalendarEntry,
   CalendarEntryCreateInput,
-  CalendarEntryUpdateInput
+  CalendarEntryUpdateInput,
+  CalendarCategoryCreateInput,
+  CalendarCategoryInfo,
+  CalendarCategoryUpdateInput
 } from '../../shared/calendar-types'
 
 export function registerCalendarHandlers(store: Store): void {
@@ -20,5 +23,22 @@ export function registerCalendarHandlers(store: Store): void {
   )
   ipcMain.handle('calendar:delete', (_event, args: { id: string }): void => {
     store.deleteCalendarEntry(args.id)
+  })
+
+  ipcMain.handle('calendar:categories:list', (): CalendarCategoryInfo[] =>
+    store.listCalendarCategories()
+  )
+  ipcMain.handle(
+    'calendar:categories:create',
+    (_event, input: CalendarCategoryCreateInput): CalendarCategoryInfo =>
+      store.createCalendarCategory(input)
+  )
+  ipcMain.handle(
+    'calendar:categories:update',
+    (_event, args: { id: string; updates: CalendarCategoryUpdateInput }): CalendarCategoryInfo =>
+      store.updateCalendarCategory(args.id, args.updates)
+  )
+  ipcMain.handle('calendar:categories:delete', (_event, args: { id: string }): void => {
+    store.deleteCalendarCategory(args.id)
   })
 }

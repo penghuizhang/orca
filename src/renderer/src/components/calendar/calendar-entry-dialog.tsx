@@ -3,14 +3,12 @@ import { Trash2 } from 'lucide-react'
 
 import type {
   CalendarCategory,
+  CalendarCategoryInfo,
   CalendarEntry,
   CalendarEntryCreateInput
 } from '../../../../shared/calendar-types'
-import { CALENDAR_CATEGORIES, isValidCalendarDate } from '../../../../shared/calendar-types'
-import {
-  CALENDAR_CATEGORY_DOT_CLASSES,
-  CALENDAR_CATEGORY_LABEL_FALLBACKS
-} from './calendar-category-display'
+import { isValidCalendarDate } from '../../../../shared/calendar-types'
+import { allCategoryInfos, categoryColor, categoryName } from './calendar-category-display'
 import { LUNAR_MONTH_NAMES, lunarToGregorianDate } from './lunar-date'
 import { toDateKey, todayDateKey } from './calendar-time'
 import { Button } from '@/components/ui/button'
@@ -69,6 +67,7 @@ export function CalendarEntryDialog({
   entry,
   defaultDate,
   isSaving,
+  categories,
   onOpenChange,
   onSave,
   onRequestDelete
@@ -78,6 +77,8 @@ export function CalendarEntryDialog({
   entry: CalendarEntry | null
   defaultDate: string
   isSaving: boolean
+  /** Built-in + user-defined categories for the picker. */
+  categories: readonly CalendarCategoryInfo[]
   onOpenChange: (open: boolean) => void
   onSave: (input: CalendarEntryCreateInput) => void
   onRequestDelete: (entry: CalendarEntry) => void
@@ -258,18 +259,17 @@ export function CalendarEntryDialog({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {CALENDAR_CATEGORIES.map((category) => (
-                      <SelectItem key={category} value={category}>
+                    {allCategoryInfos(categories).map((info) => (
+                      <SelectItem key={info.id} value={info.id}>
                         <span className="flex items-center gap-2">
                           <span
                             className={cn(
                               'size-2 rounded-full',
-                              CALENDAR_CATEGORY_DOT_CLASSES[category]
+                              categoryColor(info.id, categories)
                             )}
                           />
-                          {translate(
-                            `auto.components.calendar.category.${category}`,
-                            CALENDAR_CATEGORY_LABEL_FALLBACKS[category]
+                          {categoryName(info.id, categories, (key, fallback) =>
+                            translate(key, fallback)
                           )}
                         </span>
                       </SelectItem>

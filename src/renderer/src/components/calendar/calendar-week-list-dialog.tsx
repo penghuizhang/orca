@@ -2,8 +2,6 @@ import React from 'react'
 import { toast } from 'sonner'
 
 import type { CalendarCategory, CalendarEntry } from '../../../../shared/calendar-types'
-import { CALENDAR_CATEGORIES } from '../../../../shared/calendar-types'
-import { CALENDAR_CATEGORY_LABEL_FALLBACKS } from './calendar-category-display'
 import { buildWeekListMarkdown, type WeekListStrings } from './calendar-week-list'
 import { Button } from '@/components/ui/button'
 import {
@@ -36,19 +34,7 @@ export function CalendarWeekListDialog({
 }): React.JSX.Element {
   const strings: WeekListStrings = {
     workList: translate('auto.components.calendar.weekListWorkList', 'work list'),
-    subtotal: translate('auto.components.calendar.weekListSubtotal', 'Subtotal'),
-    total: translate('auto.components.calendar.weekListTotal', 'Total'),
-    untimed: translate('auto.components.calendar.weekListUntimed', 'untimed'),
-    hourUnit: translate('auto.components.calendar.weekListHourUnit', 'h'),
-    categories: Object.fromEntries(
-      CALENDAR_CATEGORIES.map((category) => [
-        category,
-        translate(
-          `auto.components.calendar.category.${category}`,
-          CALENDAR_CATEGORY_LABEL_FALLBACKS[category]
-        )
-      ])
-    ) as WeekListStrings['categories']
+    untitled: translate('auto.components.calendar.untitled', 'Untitled')
   }
 
   const markdown = buildWeekListMarkdown(

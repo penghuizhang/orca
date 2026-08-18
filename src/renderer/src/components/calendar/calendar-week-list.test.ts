@@ -25,11 +25,7 @@ function entry(partial: Partial<CalendarEntry> & { id: string; date: string }): 
 
 const WEEK_STRINGS: WeekListStrings = {
   workList: 'work list',
-  subtotal: 'Subtotal',
-  total: 'Total',
-  untimed: 'untimed',
-  hourUnit: 'h',
-  categories: { meeting: 'Meeting', feature: 'Feature', milestone: 'Milestone', other: 'Other' }
+  untitled: 'Untitled'
 }
 
 describe('weekRangeDates', () => {
@@ -165,13 +161,19 @@ describe('groupWeekEntriesByDay / buildWeekListMarkdown', () => {
     expect(groups.get('2026-08-18')?.[0].timed).toBe(false)
   })
 
-  it('renders the copy-paste markdown with subtotals and a grand total', () => {
+  it('renders the copy-paste markdown with numbered items only (no times/durations', () => {
     const md = buildWeekListMarkdown(week, entries, new Set(), 2026, 'en-US', WEEK_STRINGS)
     expect(md).toContain('## Monday 8/17')
-    expect(md).toContain('- 09:00-10:30 Review docs 1.5h [Meeting]')
-    expect(md).toContain('Subtotal 2.0h')
-    expect(md).toContain('On call [Other] (untimed)')
-    expect(md).toContain('**Total 3.0h (4)**')
+    expect(md).toContain('1. Review docs')
+    expect(md).toContain('2. Bug fix')
+    // all-day entry still appears — numbered like any other, sorted first that day
+    expect(md).toContain('1. On call')
+    // no times, durations, categories, subtotals, or grand totals
+    expect(md).not.toContain('09:00-10:30')
+    expect(md).not.toContain('1.5h')
+    expect(md).not.toContain('[Meeting]')
+    expect(md).not.toContain('Subtotal')
+    expect(md).not.toContain('Total')
   })
 
   it('excludes out-of-week entries and respects the category filter', () => {

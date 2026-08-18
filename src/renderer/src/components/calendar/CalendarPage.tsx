@@ -4,10 +4,11 @@ import { toast } from 'sonner'
 
 import type {
   CalendarCategory,
+  CalendarCategoryColor,
+  CalendarCategoryInfo,
   CalendarEntry,
   CalendarEntryCreateInput
 } from '../../../../shared/calendar-types'
-import { CALENDAR_CATEGORIES } from '../../../../shared/calendar-types'
 import { CalendarMonthGrid } from './calendar-month-grid'
 import { CalendarMonthPicker } from './calendar-month-picker'
 import { CalendarSidePanel } from './calendar-side-panel'
@@ -15,6 +16,7 @@ import { CalendarDayPanel } from './calendar-day-panel'
 import { CalendarEntryDialog } from './calendar-entry-dialog'
 import { CalendarWeekSummary } from './calendar-week-summary'
 import { CalendarWeekListDialog } from './calendar-week-list-dialog'
+import { CalendarCategoryManagerDialog } from './calendar-category-manager-dialog'
 import { addMonths, fromDateKey, isInMonth, todayDateKey, weekRangeDates } from './calendar-time'
 import { Button } from '@/components/ui/button'
 import {
@@ -33,6 +35,7 @@ export default function CalendarPage(): React.JSX.Element {
   const showLunarInfo = useAppStore((s) => s.settings?.showCalendarLunarInfo !== false)
   const updateSettings = useAppStore((s) => s.updateSettings)
   const [entries, setEntries] = useState<CalendarEntry[]>([])
+  const [categoryInfos, setCategoryInfos] = useState<CalendarCategoryInfo[]>([])
   const [isSaving, setIsSaving] = useState(false)
   const now = useMemo(() => new Date(), [])
   const [viewYear, setViewYear] = useState(now.getFullYear())
@@ -43,10 +46,24 @@ export default function CalendarPage(): React.JSX.Element {
   )
   const [dialogOpen, setDialogOpen] = useState(false)
   const [weekListOpen, setWeekListOpen] = useState(false)
+  const [categoryManagerOpen, setCategoryManagerOpen] = useState(false)
   const [editingEntry, setEditingEntry] = useState<CalendarEntry | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<CalendarEntry | null>(null)
   const todayKey = useMemo(() => todayDateKey(), [])
   const weekDates = useMemo(() => weekRangeDates(selectedDateKey), [selectedDateKey])
+
+  const refreshCategories = useCallback(async (): Promise<void> => {
+    try {
+      setCategoryInfos(await window.api.calendar.categories.list())
+    } catch {
+      toast.error(
+        translate(
+          'auto.components.calendar.categoriesLoadFailed',
+          'Failed to load calendar categories.'
+        )
+      )
+    }
+  }, [])
 
   const refresh = useCallback(async (): Promise<void> => {
     try {
@@ -62,7 +79,8 @@ export default function CalendarPage(): React.JSX.Element {
 
   useEffect(() => {
     void refresh()
-  }, [refresh])
+    void refreshCategories()
+  }, [refresh, refreshCategories])
 
   const selectDate = useCallback(
     (dateKey: string): void => {
@@ -76,18 +94,78 @@ export default function CalendarPage(): React.JSX.Element {
     [viewYear, viewMonth]
   )
 
-  const toggleCategory = useCallback((category: CalendarCategory): void => {
-    setVisibleCategories((current) => {
-      const next = new Set(current)
-      if (next.has(category)) {
-        next.delete(category)
-      } else {
-        next.add(category)
+  const toggleCategory = useCallback(
+    (category: CalendarCategory): void => {
+      setVisibleCategories((current) => {
+        const next = new Set(current)
+        if (next.has(category)) {
+          next.delete(category)
+        } else {
+          next.add(category)
+        }
+        // Why: a full set means "all visible", same as the empty starting state.
+        return next.size === categoryInfos.length ? new Set() : next
+      })
+    },
+    [categoryInfos]
+  )
+
+  const createCategory = useCallback(
+    async (input: { name: string; color: CalendarCategoryColor }): Promise<void> => {
+      try {
+        await window.api.calendar.categories.create(input)
+        await refreshCategories()
+        toast.success(translate('auto.components.calendar.categoryCreated', 'Category added.'))
+      } catch (error) {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : translate('auto.components.calendar.categorySaveFailed', 'Failed to save category.')
+        )
       }
-      // Why: a full set means "all visible", same as the empty starting state.
-      return next.size === CALENDAR_CATEGORIES.length ? new Set() : next
-    })
-  }, [])
+    },
+    [refreshCategories]
+  )
+
+  const updateCategory = useCallback(
+    async (
+      id: string,
+      updates: { name?: string; color?: CalendarCategoryColor }
+    ): Promise<void> => {
+      try {
+        await window.api.calendar.categories.update({ id, updates })
+        await refreshCategories()
+        toast.success(translate('auto.components.calendar.categoryUpdated', 'Category updated.'))
+      } catch (error) {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : translate('auto.components.calendar.categorySaveFailed', 'Failed to save category.')
+        )
+      }
+    },
+    [refreshCategories]
+  )
+
+  const deleteCategory = useCallback(
+    async (id: string): Promise<void> => {
+      try {
+        await window.api.calendar.categories.delete({ id })
+        await refreshCategories()
+        setVisibleCategories(
+          (current) => new Set([...current].filter((category) => category !== id))
+        )
+        toast.success(translate('auto.components.calendar.categoryDeleted', 'Category deleted.'))
+      } catch (error) {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : translate('auto.components.calendar.categorySaveFailed', 'Failed to save category.')
+        )
+      }
+    },
+    [refreshCategories]
+  )
 
   const toggleLunarInfo = useCallback((): void => {
     void updateSettings({ showCalendarLunarInfo: !showLunarInfo })
@@ -232,6 +310,8 @@ export default function CalendarPage(): React.JSX.Element {
             <CalendarSidePanel
               visibleCategories={visibleCategories}
               onToggleCategory={toggleCategory}
+              onRequestManageCategories={() => setCategoryManagerOpen(true)}
+              categories={categoryInfos}
               year={viewYear}
               month={viewMonth}
               selectedDateKey={selectedDateKey}
@@ -252,6 +332,7 @@ export default function CalendarPage(): React.JSX.Element {
               selectedDateKey={selectedDateKey}
               todayKey={todayKey}
               visibleCategories={visibleCategories}
+              categories={categoryInfos}
               locale={locale}
               showLunarInfo={showLunarInfo}
               onSelectDate={selectDate}
@@ -263,6 +344,7 @@ export default function CalendarPage(): React.JSX.Element {
               dateKey={selectedDateKey}
               entries={entries}
               visibleCategories={visibleCategories}
+              categories={categoryInfos}
               locale={locale}
               showLunarInfo={showLunarInfo}
               onCreateEntry={openCreateDialog}
@@ -273,6 +355,7 @@ export default function CalendarPage(): React.JSX.Element {
             weekDates={weekDates}
             entries={entries}
             visibleCategories={visibleCategories}
+            categories={categoryInfos}
             viewYear={viewYear}
             onRequestCopy={() => setWeekListOpen(true)}
           />
@@ -294,9 +377,19 @@ export default function CalendarPage(): React.JSX.Element {
         entry={editingEntry}
         defaultDate={selectedDateKey}
         isSaving={isSaving}
+        categories={categoryInfos}
         onOpenChange={setDialogOpen}
         onSave={(input) => void saveEntry(input)}
         onRequestDelete={setDeleteTarget}
+      />
+
+      <CalendarCategoryManagerDialog
+        open={categoryManagerOpen}
+        categories={categoryInfos}
+        onOpenChange={setCategoryManagerOpen}
+        onCreate={createCategory}
+        onUpdate={updateCategory}
+        onDelete={deleteCategory}
       />
 
       <Dialog open={deleteTarget !== null} onOpenChange={(open) => !open && setDeleteTarget(null)}>

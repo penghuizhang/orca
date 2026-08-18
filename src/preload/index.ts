@@ -7,7 +7,10 @@ import type { AppIdentity } from '../shared/app-identity'
 import type {
   CalendarEntry,
   CalendarEntryCreateInput,
-  CalendarEntryUpdateInput
+  CalendarEntryUpdateInput,
+  CalendarCategoryInfo,
+  CalendarCategoryCreateInput,
+  CalendarCategoryUpdateInput
 } from '../shared/calendar-types'
 import type { MacCapturedDigitRowChord } from '../shared/macos-symbolic-hotkeys'
 import type { ComputerAwakeStatus } from '../shared/computer-awake-mode'
@@ -1857,17 +1860,11 @@ const api = {
       number: string
     }): Promise<unknown> => ipcRenderer.invoke('gitee:itemComments', args),
 
-    pullFiles: (args: {
-      owner: string
-      repo: string
-      number: string
-    }): Promise<unknown> => ipcRenderer.invoke('gitee:pullFiles', args),
+    pullFiles: (args: { owner: string; repo: string; number: string }): Promise<unknown> =>
+      ipcRenderer.invoke('gitee:pullFiles', args),
 
-    pullCommits: (args: {
-      owner: string
-      repo: string
-      number: string
-    }): Promise<unknown> => ipcRenderer.invoke('gitee:pullCommits', args)
+    pullCommits: (args: { owner: string; repo: string; number: string }): Promise<unknown> =>
+      ipcRenderer.invoke('gitee:pullCommits', args)
   },
 
   linear: {
@@ -4941,7 +4938,18 @@ const api = {
       ipcRenderer.invoke('calendar:create', input),
     update: (args: { id: string; updates: CalendarEntryUpdateInput }): Promise<CalendarEntry> =>
       ipcRenderer.invoke('calendar:update', args),
-    delete: (args: { id: string }): Promise<void> => ipcRenderer.invoke('calendar:delete', args)
+    delete: (args: { id: string }): Promise<void> => ipcRenderer.invoke('calendar:delete', args),
+    categories: {
+      list: (): Promise<CalendarCategoryInfo[]> => ipcRenderer.invoke('calendar:categories:list'),
+      create: (input: CalendarCategoryCreateInput): Promise<CalendarCategoryInfo> =>
+        ipcRenderer.invoke('calendar:categories:create', input),
+      update: (args: {
+        id: string
+        updates: CalendarCategoryUpdateInput
+      }): Promise<CalendarCategoryInfo> => ipcRenderer.invoke('calendar:categories:update', args),
+      delete: (args: { id: string }): Promise<void> =>
+        ipcRenderer.invoke('calendar:categories:delete', args)
+    }
   },
 
   e2e: {

@@ -58,13 +58,16 @@ describe('isValidCalendarTime', () => {
 })
 
 describe('isCalendarCategory', () => {
-  it('accepts the four categories only', () => {
+  it('accepts any non-empty string (built-ins and user-defined ids)', () => {
     expect(isCalendarCategory('meeting')).toBe(true)
     expect(isCalendarCategory('feature')).toBe(true)
     expect(isCalendarCategory('milestone')).toBe(true)
     expect(isCalendarCategory('other')).toBe(true)
-    expect(isCalendarCategory('parties')).toBe(false)
+    expect(isCalendarCategory('parties')).toBe(true)
+    expect(isCalendarCategory('review')).toBe(true)
     expect(isCalendarCategory(1)).toBe(false)
+    expect(isCalendarCategory('')).toBe(false)
+    expect(isCalendarCategory(null)).toBe(false)
   })
 })
 
@@ -83,13 +86,15 @@ describe('normalizeCalendarEntry', () => {
     expect(normalizeCalendarEntry(null)).toBeNull()
   })
 
-  it('falls back on unknown categories and non-string descriptions', () => {
+  it('keeps unknown category strings (now user-defined ids) and falls back on non-string', () => {
     const entry = normalizeCalendarEntry(
       validEntry({ category: 'vacation', description: 42, title: undefined })
     )
-    expect(entry?.category).toBe('other')
+    expect(entry?.category).toBe('vacation')
     expect(entry?.description).toBe('')
     expect(entry?.title).toBe('')
+    expect(normalizeCalendarEntry(validEntry({ category: '' }))?.category).toBe('other')
+    expect(normalizeCalendarEntry(validEntry({ category: 123 }))?.category).toBe('other')
   })
 
   it('clears times on all-day entries and keeps them on timed ones', () => {

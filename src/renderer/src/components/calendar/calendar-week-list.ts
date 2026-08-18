@@ -3,11 +3,7 @@ import { collectWeekEntries, fromDateKey, hourSpan, lunarRepeatDateKey } from '.
 
 export type WeekListStrings = {
   workList: string
-  subtotal: string
-  total: string
-  untimed: string
-  hourUnit: string
-  categories: Record<CalendarCategory, string>
+  untitled: string
 }
 
 /** Entry line fragment plus its computed hours (0 for untimed/all-day). */
@@ -66,31 +62,16 @@ export function buildWeekListMarkdown(
     day: 'numeric'
   }).format(end)
   const sections: string[] = []
-  let totalHours = 0
-  let entryCount = 0
   for (const [dateKey, dayLines] of lines) {
     if (dayLines.length === 0) {
       continue
     }
-    const dayHours = dayLines.reduce((sum, line) => sum + line.hours, 0)
-    const bullets = dayLines.map((line) => {
-      const categoryName = strings.categories[line.entry.category]
-      if (!line.timed) {
-        return `- ${line.entry.title} [${categoryName}] (${strings.untimed})`
-      }
-      const time = line.entry.startTime
-        ? `${line.entry.startTime}-${line.entry.endTime ?? ''} `
-        : ''
-      const hours = `${line.hours.toFixed(1)}${strings.hourUnit}`
-      return `- ${time}${line.entry.title} ${hours} [${categoryName}]`
-    })
     sections.push(`## ${formatDayHeading(dateKey, locale)}`)
-    sections.push(...bullets)
-    sections.push(`${strings.subtotal} ${dayHours.toFixed(1)}${strings.hourUnit}`)
-    totalHours += dayHours
-    entryCount += dayLines.length
+    dayLines.forEach((line, index) => {
+      const title = line.entry.title.trim() || strings.untitled
+      sections.push(`${index + 1}. ${title}`)
+    })
     sections.push('')
   }
-  const totalLine = `**${strings.total} ${totalHours.toFixed(1)}${strings.hourUnit} (${entryCount})**`
-  return `# ${startText} – ${endText} ${strings.workList}\n\n${sections.join('\n')}\n${totalLine}`
+  return `# ${startText} – ${endText} ${strings.workList}\n\n${sections.join('\n').trimEnd()}`
 }

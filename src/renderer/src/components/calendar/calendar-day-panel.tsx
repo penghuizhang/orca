@@ -1,11 +1,12 @@
 import React from 'react'
 import { Plus } from 'lucide-react'
 
-import type { CalendarEntry, CalendarCategory } from '../../../../shared/calendar-types'
-import {
-  CALENDAR_CATEGORY_DOT_CLASSES,
-  CALENDAR_CATEGORY_LABEL_FALLBACKS
-} from './calendar-category-display'
+import type {
+  CalendarCategory,
+  CalendarCategoryInfo,
+  CalendarEntry
+} from '../../../../shared/calendar-types'
+import { categoryColor, categoryName } from './calendar-category-display'
 import {
   collectEntriesByDateKey,
   formatDayPanelTitle,
@@ -23,6 +24,7 @@ export function CalendarDayPanel({
   dateKey,
   entries,
   visibleCategories,
+  categories,
   locale,
   showLunarInfo,
   onCreateEntry,
@@ -31,6 +33,7 @@ export function CalendarDayPanel({
   dateKey: string
   entries: readonly CalendarEntry[]
   visibleCategories: ReadonlySet<CalendarCategory>
+  categories: readonly CalendarCategoryInfo[]
   locale: string
   showLunarInfo: boolean
   onCreateEntry: () => void
@@ -80,7 +83,7 @@ export function CalendarDayPanel({
                 <span
                   className={cn(
                     'mt-1.5 size-2 shrink-0 rounded-full',
-                    CALENDAR_CATEGORY_DOT_CLASSES[entry.category]
+                    categoryColor(entry.category, categories)
                   )}
                 />
                 <span className="min-w-0 flex-1">
@@ -94,9 +97,8 @@ export function CalendarDayPanel({
                       <span className="font-medium">{formatEntryStart(entry)}</span>
                     )}
                     <span className="truncate">
-                      {translate(
-                        `auto.components.calendar.category.${entry.category}`,
-                        CALENDAR_CATEGORY_LABEL_FALLBACKS[entry.category]
+                      {categoryName(entry.category, categories, (key, fallback) =>
+                        translate(key, fallback)
                       )}
                     </span>
                   </span>
