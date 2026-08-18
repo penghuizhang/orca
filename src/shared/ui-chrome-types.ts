@@ -114,5 +114,6 @@ export type TopLevelView =
   | 'automations'
   | 'calendar'
   | 'space'
+  | 'skills'
   | 'artifacts'
   | 'mobile'

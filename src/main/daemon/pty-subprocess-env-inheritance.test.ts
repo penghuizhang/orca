@@ -52,7 +52,8 @@ vi.mock('../providers/local-pty-utils', async (importOriginal) => {
   return {
     ...actual,
     resolveUnixShellPath: resolveUnixShellPathMock,
-    validateWorkingDirectory: validateWorkingDirectoryMock
+    validateWorkingDirectory: validateWorkingDirectoryMock,
+    validateWorkingDirectoryAsync: validateWorkingDirectoryMock
   }
 })
 
@@ -89,13 +90,13 @@ describe('createPtySubprocess', () => {
     validateWorkingDirectoryMock
   })
 
-  it('expands variables in PATH before spawning a Windows shell', () => {
+  it('expands variables in PATH before spawning a Windows shell', async () => {
     spawnMock.mockReturnValue(mockPtyProcess())
     const platform = Object.getOwnPropertyDescriptor(process, 'platform')
     Object.defineProperty(process, 'platform', { value: 'win32' })
 
     try {
-      createPtySubprocess({
+      await createPtySubprocess({
         sessionId: 'test',
         cols: 80,
         rows: 24,
@@ -117,7 +118,7 @@ describe('createPtySubprocess', () => {
     )
   })
 
-  it('does not inherit parent Orca pane identity when caller omits pane env', () => {
+  it('does not inherit parent Orca pane identity when caller omits pane env', async () => {
     const proc = mockPtyProcess()
     spawnMock.mockReturnValue(proc)
     const saved = {
@@ -130,7 +131,7 @@ describe('createPtySubprocess', () => {
     process.env.ORCA_WORKTREE_ID = 'parent-worktree'
 
     try {
-      createPtySubprocess({ sessionId: 'test', cols: 80, rows: 24 })
+      await createPtySubprocess({ sessionId: 'test', cols: 80, rows: 24 })
     } finally {
       for (const [key, value] of Object.entries(saved)) {
         if (value === undefined) {
@@ -147,7 +148,7 @@ describe('createPtySubprocess', () => {
     expect(env.ORCA_WORKTREE_ID).toBeUndefined()
   })
 
-  it('preserves explicit child Orca pane identity over parent env', () => {
+  it('preserves explicit child Orca pane identity over parent env', async () => {
     const proc = mockPtyProcess()
     spawnMock.mockReturnValue(proc)
     const saved = {
@@ -160,7 +161,7 @@ describe('createPtySubprocess', () => {
     process.env.ORCA_WORKTREE_ID = 'parent-worktree'
 
     try {
-      createPtySubprocess({
+      await createPtySubprocess({
         sessionId: 'test',
         cols: 80,
         rows: 24,
@@ -186,7 +187,37 @@ describe('createPtySubprocess', () => {
     expect(env.ORCA_WORKTREE_ID).toBe('child-worktree')
   })
 
-  it('does not inherit ELECTRON_RUN_AS_NODE from the daemon process env', () => {
+  it.each([
+    // fish EXPORTS fish_history, so a daemon started from a fish pane would hand
+    // every session the launching worktree's history file (STA-4682). Only the
+    // name this spawn asked for — the isolated one, or the user's — may stand.
+    ['drops an inherited Orca fish_history', undefined, undefined],
+    ['keeps the session this spawn injected', 'orca_c0ffee', 'orca_c0ffee'],
+    ['keeps a caller-supplied value', 'mine', 'mine']
+  ])('%s', async (_name, requested, expected) => {
+    spawnMock.mockReturnValue(mockPtyProcess())
+    const saved = process.env.fish_history
+    process.env.fish_history = 'orca_abc123'
+
+    try {
+      await createPtySubprocess({
+        sessionId: 'test',
+        cols: 80,
+        rows: 24,
+        ...(requested === undefined ? {} : { env: { fish_history: requested } })
+      })
+    } finally {
+      if (saved === undefined) {
+        delete process.env.fish_history
+      } else {
+        process.env.fish_history = saved
+      }
+    }
+
+    expect(spawnMock.mock.calls.at(-1)?.[2].env.fish_history).toBe(expected)
+  })
+
+  it('does not inherit ELECTRON_RUN_AS_NODE from the daemon process env', async () => {
     // Why: the daemon is forked with ELECTRON_RUN_AS_NODE=1. If that flag
     // reaches user shells, nested Electron commands run as plain Node.
     const proc = mockPtyProcess()
@@ -195,7 +226,7 @@ describe('createPtySubprocess', () => {
     process.env.ELECTRON_RUN_AS_NODE = '1'
 
     try {
-      createPtySubprocess({ sessionId: 'test', cols: 80, rows: 24 })
+      await createPtySubprocess({ sessionId: 'test', cols: 80, rows: 24 })
     } finally {
       if (previous === undefined) {
         delete process.env.ELECTRON_RUN_AS_NODE
@@ -208,7 +239,7 @@ describe('createPtySubprocess', () => {
     expect(env.ELECTRON_RUN_AS_NODE).toBeUndefined()
   })
 
-  it('does not inherit legacy attribution state from a pre-upgrade daemon', () => {
+  it('does not inherit legacy attribution state from a pre-upgrade daemon', async () => {
     const proc = mockPtyProcess()
     spawnMock.mockReturnValue(proc)
     const saved = Object.fromEntries(
@@ -219,7 +250,7 @@ describe('createPtySubprocess', () => {
     process.env.PATH = `/tmp/orca-terminal-attribution/posix${delimiter}/usr/bin`
 
     try {
-      createPtySubprocess({ sessionId: 'test', cols: 80, rows: 24 })
+      await createPtySubprocess({ sessionId: 'test', cols: 80, rows: 24 })
     } finally {
       for (const [key, value] of Object.entries(saved)) {
         if (value === undefined) {
@@ -237,7 +268,7 @@ describe('createPtySubprocess', () => {
     }
   })
 
-  it('does not inherit NODE_ENV from the daemon process env', () => {
+  it('does not inherit NODE_ENV from the daemon process env', async () => {
     // Why: a dev-mode Orca forks the daemon with NODE_ENV=development; leaking
     // Orca's build mode into user shells breaks `next build` and Vitest.
     const proc = mockPtyProcess()
@@ -246,7 +277,7 @@ describe('createPtySubprocess', () => {
     process.env.NODE_ENV = 'development'
 
     try {
-      createPtySubprocess({ sessionId: 'test', cols: 80, rows: 24 })
+      await createPtySubprocess({ sessionId: 'test', cols: 80, rows: 24 })
     } finally {
       if (previous === undefined) {
         delete process.env.NODE_ENV
@@ -262,7 +293,7 @@ describe('createPtySubprocess', () => {
     expect(env.PATH).toBe(expectedEnv.PATH)
   })
 
-  it('keeps an explicitly requested NODE_ENV for daemon PTY shells', () => {
+  it('keeps an explicitly requested NODE_ENV for daemon PTY shells', async () => {
     // Why: only the ambient value is stripped; a caller-supplied NODE_ENV still wins.
     const proc = mockPtyProcess()
     spawnMock.mockReturnValue(proc)
@@ -270,7 +301,7 @@ describe('createPtySubprocess', () => {
     process.env.NODE_ENV = 'development'
 
     try {
-      createPtySubprocess({
+      await createPtySubprocess({
         sessionId: 'test',
         cols: 80,
         rows: 24,
@@ -288,7 +319,7 @@ describe('createPtySubprocess', () => {
     expect(env.NODE_ENV).toBe('production')
   })
 
-  it('does not inherit AppImage runtime env into daemon PTY shells', () => {
+  it('does not inherit AppImage runtime env into daemon PTY shells', async () => {
     const proc = mockPtyProcess()
     spawnMock.mockReturnValue(proc)
     const platform = Object.getOwnPropertyDescriptor(process, 'platform')
@@ -313,7 +344,7 @@ describe('createPtySubprocess', () => {
     process.env.LD_LIBRARY_PATH = ['/tmp/.mount_orca123/usr/lib', '/opt/audio/lib'].join(delimiter)
 
     try {
-      createPtySubprocess({ sessionId: 'test', cols: 80, rows: 24 })
+      await createPtySubprocess({ sessionId: 'test', cols: 80, rows: 24 })
     } finally {
       if (platform) {
         Object.defineProperty(process, 'platform', platform)
@@ -337,14 +368,14 @@ describe('createPtySubprocess', () => {
     expect(env.LD_LIBRARY_PATH).toBe('/opt/audio/lib')
   })
 
-  it('does not inherit parent agent hook endpoint for development hook env', () => {
+  it('does not inherit parent agent hook endpoint for development hook env', async () => {
     const proc = mockPtyProcess()
     spawnMock.mockReturnValue(proc)
     const previousEndpoint = process.env.ORCA_AGENT_HOOK_ENDPOINT
     process.env.ORCA_AGENT_HOOK_ENDPOINT = '/tmp/stale-endpoint.env'
 
     try {
-      createPtySubprocess({
+      await createPtySubprocess({
         sessionId: 'test',
         cols: 80,
         rows: 24,
@@ -370,14 +401,14 @@ describe('createPtySubprocess', () => {
     expect(env.ORCA_AGENT_HOOK_TOKEN).toBe('token')
   })
 
-  it('preserves explicit development agent hook endpoint files', () => {
+  it('preserves explicit development agent hook endpoint files', async () => {
     const proc = mockPtyProcess()
     spawnMock.mockReturnValue(proc)
     const previousEndpoint = process.env.ORCA_AGENT_HOOK_ENDPOINT
     process.env.ORCA_AGENT_HOOK_ENDPOINT = '/tmp/stale-endpoint.env'
 
     try {
-      createPtySubprocess({
+      await createPtySubprocess({
         sessionId: 'test',
         cols: 80,
         rows: 24,
@@ -404,11 +435,11 @@ describe('createPtySubprocess', () => {
     expect(env.ORCA_AGENT_HOOK_TOKEN).toBe('token')
   })
 
-  it('passes custom env to spawned process', () => {
+  it('passes custom env to spawned process', async () => {
     const proc = mockPtyProcess()
     spawnMock.mockReturnValue(proc)
 
-    createPtySubprocess({
+    await createPtySubprocess({
       sessionId: 'test',
       cols: 80,
       rows: 24,
@@ -420,11 +451,11 @@ describe('createPtySubprocess', () => {
     expect(spawnEnv.MY_VAR).toBe('test-value')
   })
 
-  it('honors explicit terminal env overrides after deleting requested defaults', () => {
+  it('honors explicit terminal env overrides after deleting requested defaults', async () => {
     const proc = mockPtyProcess()
     spawnMock.mockReturnValue(proc)
 
-    createPtySubprocess({
+    await createPtySubprocess({
       sessionId: 'test',
       cols: 80,
       rows: 24,
@@ -444,14 +475,14 @@ describe('createPtySubprocess', () => {
     expect(lastCall[2].env.TERM_PROGRAM).toBeUndefined()
   })
 
-  it('collapses its own env merge onto the requested Windows `Path` spelling', () => {
+  it('collapses its own env merge onto the requested Windows `Path` spelling', async () => {
     const proc = mockPtyProcess()
     spawnMock.mockReturnValue(proc)
     const platform = Object.getOwnPropertyDescriptor(process, 'platform')
 
     Object.defineProperty(process, 'platform', { value: 'win32' })
     try {
-      createPtySubprocess({
+      await createPtySubprocess({
         sessionId: 'test',
         cols: 80,
         rows: 24,
@@ -473,7 +504,7 @@ describe('createPtySubprocess', () => {
     expect(env.Path.split(':')[0]).toBe('/tmp/orca-agent-teams-bin')
   })
 
-  it('keeps the daemon `PATH` block when the requested env has no path key', () => {
+  it('keeps the daemon `PATH` block when the requested env has no path key', async () => {
     const proc = mockPtyProcess()
     spawnMock.mockReturnValue(proc)
     const platform = Object.getOwnPropertyDescriptor(process, 'platform')
@@ -482,7 +513,7 @@ describe('createPtySubprocess', () => {
 
     Object.defineProperty(process, 'platform', { value: 'win32' })
     try {
-      createPtySubprocess({ sessionId: 'test', cols: 80, rows: 24, env: { FOO: 'bar' } })
+      await createPtySubprocess({ sessionId: 'test', cols: 80, rows: 24, env: { FOO: 'bar' } })
     } finally {
       if (platform) {
         Object.defineProperty(process, 'platform', platform)
@@ -493,14 +524,14 @@ describe('createPtySubprocess', () => {
     expect(env.PATH).toBe(expectedEnv.PATH)
   })
 
-  it('preserves a duplicated path block supplied by main', () => {
+  it('preserves a duplicated path block supplied by main', async () => {
     const proc = mockPtyProcess()
     spawnMock.mockReturnValue(proc)
     const platform = Object.getOwnPropertyDescriptor(process, 'platform')
 
     Object.defineProperty(process, 'platform', { value: 'win32' })
     try {
-      createPtySubprocess({
+      await createPtySubprocess({
         sessionId: 'test',
         cols: 80,
         rows: 24,
