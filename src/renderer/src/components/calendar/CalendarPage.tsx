@@ -13,7 +13,9 @@ import { CalendarMonthPicker } from './calendar-month-picker'
 import { CalendarSidePanel } from './calendar-side-panel'
 import { CalendarDayPanel } from './calendar-day-panel'
 import { CalendarEntryDialog } from './calendar-entry-dialog'
-import { addMonths, fromDateKey, isInMonth, todayDateKey } from './calendar-time'
+import { CalendarWeekSummary } from './calendar-week-summary'
+import { CalendarWeekListDialog } from './calendar-week-list-dialog'
+import { addMonths, fromDateKey, isInMonth, todayDateKey, weekRangeDates } from './calendar-time'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -40,9 +42,11 @@ export default function CalendarPage(): React.JSX.Element {
     () => new Set()
   )
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [weekListOpen, setWeekListOpen] = useState(false)
   const [editingEntry, setEditingEntry] = useState<CalendarEntry | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<CalendarEntry | null>(null)
   const todayKey = useMemo(() => todayDateKey(), [])
+  const weekDates = useMemo(() => weekRangeDates(selectedDateKey), [selectedDateKey])
 
   const refresh = useCallback(async (): Promise<void> => {
     try {
@@ -223,48 +227,67 @@ export default function CalendarPage(): React.JSX.Element {
       {/* Why: match other pages (Automations etc.): padded page gutter + one
           rounded card so the grid never runs into the window edges. */}
       <div className="flex min-h-0 flex-1 px-3 pb-4 md:px-5">
-        <div className="flex min-h-0 flex-1 overflow-hidden rounded-lg border border-border">
-          <CalendarSidePanel
-            visibleCategories={visibleCategories}
-            onToggleCategory={toggleCategory}
-            year={viewYear}
-            month={viewMonth}
-            selectedDateKey={selectedDateKey}
-            todayKey={todayKey}
-            locale={locale}
-            showLunarInfo={showLunarInfo}
-            onToggleLunarInfo={toggleLunarInfo}
-            onMonthChange={(year, month) => {
-              setViewYear(year)
-              setViewMonth(month)
-            }}
-            onSelectDate={selectDate}
-          />
-          <CalendarMonthGrid
-            year={viewYear}
-            month={viewMonth}
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-border">
+          <div className="flex min-h-0 flex-1">
+            <CalendarSidePanel
+              visibleCategories={visibleCategories}
+              onToggleCategory={toggleCategory}
+              year={viewYear}
+              month={viewMonth}
+              selectedDateKey={selectedDateKey}
+              todayKey={todayKey}
+              locale={locale}
+              showLunarInfo={showLunarInfo}
+              onToggleLunarInfo={toggleLunarInfo}
+              onMonthChange={(year, month) => {
+                setViewYear(year)
+                setViewMonth(month)
+              }}
+              onSelectDate={selectDate}
+            />
+            <CalendarMonthGrid
+              year={viewYear}
+              month={viewMonth}
+              entries={entries}
+              selectedDateKey={selectedDateKey}
+              todayKey={todayKey}
+              visibleCategories={visibleCategories}
+              locale={locale}
+              showLunarInfo={showLunarInfo}
+              onSelectDate={selectDate}
+              onEditEntry={openEditDialog}
+              // Why: onSelectDate above set the dialog's default date to the clicked day.
+              onRequestCreate={openCreateDialog}
+            />
+            <CalendarDayPanel
+              dateKey={selectedDateKey}
+              entries={entries}
+              visibleCategories={visibleCategories}
+              locale={locale}
+              showLunarInfo={showLunarInfo}
+              onCreateEntry={openCreateDialog}
+              onEditEntry={openEditDialog}
+            />
+          </div>
+          <CalendarWeekSummary
+            weekDates={weekDates}
             entries={entries}
-            selectedDateKey={selectedDateKey}
-            todayKey={todayKey}
             visibleCategories={visibleCategories}
-            locale={locale}
-            showLunarInfo={showLunarInfo}
-            onSelectDate={selectDate}
-            onEditEntry={openEditDialog}
-            // Why: onSelectDate above set the dialog's default date to the clicked day.
-            onRequestCreate={openCreateDialog}
-          />
-          <CalendarDayPanel
-            dateKey={selectedDateKey}
-            entries={entries}
-            visibleCategories={visibleCategories}
-            locale={locale}
-            showLunarInfo={showLunarInfo}
-            onCreateEntry={openCreateDialog}
-            onEditEntry={openEditDialog}
+            viewYear={viewYear}
+            onRequestCopy={() => setWeekListOpen(true)}
           />
         </div>
       </div>
+
+      <CalendarWeekListDialog
+        open={weekListOpen}
+        weekDates={weekDates}
+        entries={entries}
+        visibleCategories={visibleCategories}
+        viewYear={viewYear}
+        locale={locale}
+        onOpenChange={setWeekListOpen}
+      />
 
       <CalendarEntryDialog
         open={dialogOpen}

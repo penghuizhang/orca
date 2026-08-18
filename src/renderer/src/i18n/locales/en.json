@@ -15967,7 +15967,20 @@
         "holidayDays": "{{count}} days",
         "pickMonth": "Pick a month",
         "previousYear": "Previous year",
-        "nextYear": "Next year"
+        "nextYear": "Next year",
+        "weekSummary": "This week",
+        "copyWeekList": "Copy week list",
+        "weekListDescription": "One week of work, grouped by day, ready to paste into your timesheet.",
+        "weekListWorkList": "work list",
+        "weekListSubtotal": "Subtotal",
+        "weekListTotal": "Total",
+        "weekListUntimed": "untimed",
+        "weekListHourUnit": "h",
+        "copyToClipboard": "Copy to clipboard",
+        "weekListCopied": "Week list copied.",
+        "weekListCopyFailed": "Copy failed — select the text manually.",
+        "weekEntryCount": "{{count}} items",
+        "weekTotalHours": "{{hours}}h total"
       },
       "GiteeItemDialog": {
         "createdAt": "Created",

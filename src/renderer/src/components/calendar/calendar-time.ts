@@ -1,4 +1,4 @@
-import type { CalendarEntry } from '../../../../shared/calendar-types'
+import type { CalendarCategory, CalendarEntry } from '../../../../shared/calendar-types'
 import { compareCalendarEntriesByStart } from '../../../../shared/calendar-types'
 import { lunarToGregorianDate } from './lunar-date'
 
@@ -127,4 +127,84 @@ export function formatEntryStart(entry: CalendarEntry): string {
     return ''
   }
   return entry.endTime ? `${entry.startTime}–${entry.endTime}` : entry.startTime
+}
+
+/** The Monday-anchored week (inclusive) containing the given date key. */
+export function weekRangeDates(dateKey: string): string[] {
+  const date = fromDateKey(dateKey)
+  const mondayOffset = (date.getDay() + 6) % 7
+  const monday = new Date(date)
+  monday.setDate(date.getDate() - mondayOffset)
+  return Array.from({ length: 7 }, (_, index) => {
+    const day = new Date(monday)
+    day.setDate(monday.getDate() + index)
+    return toDateKey(day)
+  })
+}
+
+/** Week range title like "2026年8月17日 – 8月23日" / "Aug 17 – Aug 23, 2026". */
+export function formatWeekRangeTitle(dateKeys: readonly string[], locale: string): string {
+  const start = fromDateKey(dateKeys[0])
+  const end = fromDateKey(dateKeys.at(-1) ?? dateKeys[0])
+  const startFormat = new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric' }).format(
+    start
+  )
+  const endFormat = new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric' }).format(end)
+  const year = new Intl.DateTimeFormat(locale, { year: 'numeric' }).format(start)
+  return `${startFormat} – ${endFormat}, ${year}`
+}
+
+/** Decimal hours for a timed entry, floored to the nearest half hour. */
+export function hourSpan(entry: CalendarEntry): number {
+  if (entry.allDay || !entry.startTime || !entry.endTime) {
+    return 0
+  }
+  if (entry.endTime <= entry.startTime) {
+    return 0
+  }
+  const [startHour, startMinute] = entry.startTime.split(':').map(Number)
+  const [endHour, endMinute] = entry.endTime.split(':').map(Number)
+  const minutes = endHour * 60 + endMinute - (startHour * 60 + startMinute)
+  return Math.floor(minutes / 30) / 2
+}
+
+/** Total decimal hours across entries in the week, honoring a visible-category filter. */
+export function summarizeWeekHours(
+  entries: readonly CalendarEntry[],
+  weekDates: readonly string[],
+  visibleCategories: ReadonlySet<CalendarCategory>,
+  viewYear: number
+): number {
+  const inWeek = new Set(weekDates)
+  return entries.reduce((total, entry) => {
+    const targetKey = entry.lunarRepeat
+      ? lunarRepeatDateKey(entry.lunarRepeat, viewYear)
+      : entry.date
+    if (targetKey === null || !inWeek.has(targetKey)) {
+      return total
+    }
+    if (visibleCategories.size > 0 && !visibleCategories.has(entry.category)) {
+      return total
+    }
+    return total + hourSpan(entry)
+  }, 0)
+}
+
+/** Entries that fall within the given week (inclusive), honoring the visible-category filter. */
+export function collectWeekEntries(
+  entries: readonly CalendarEntry[],
+  weekDates: readonly string[],
+  visibleCategories: ReadonlySet<CalendarCategory>,
+  viewYear: number
+): CalendarEntry[] {
+  const inWeek = new Set(weekDates)
+  return entries
+    .filter((entry) => {
+      const targetKey = entry.lunarRepeat
+        ? lunarRepeatDateKey(entry.lunarRepeat, viewYear)
+        : entry.date
+      return targetKey !== null && inWeek.has(targetKey)
+    })
+    .filter((entry) => visibleCategories.size === 0 || visibleCategories.has(entry.category))
+    .sort(compareCalendarEntriesByStart)
 }
