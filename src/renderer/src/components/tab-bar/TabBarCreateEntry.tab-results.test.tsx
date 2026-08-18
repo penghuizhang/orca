@@ -80,7 +80,8 @@ const tabSearchMock = vi.hoisted(() => {
             }),
             agentMetadata: [],
             isCurrentTab: false,
-            isCurrentWorktree: true
+            isCurrentWorktree: true,
+            occupantAgent: null
           }))
       }
     }
