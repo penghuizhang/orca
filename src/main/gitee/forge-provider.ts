@@ -1,11 +1,12 @@
 import type { ForgeProvider } from '../source-control/forge-provider'
 import { hostedReviewExecutionArgs } from '../source-control/forge-provider'
 import { mapGiteeReview } from '../source-control/forge-review-mappers'
+import { createGiteePullRequest } from './pull-request-creation'
 import { getGiteePullRequest, getGiteePullRequestForBranch, getGiteeRepoSlug } from './client'
 
 export const giteeForgeProvider = {
   id: 'gitee',
-  supportsReviewCreation: false,
+  supportsReviewCreation: true,
   resolveRepository: (context) =>
     getGiteeRepoSlug(context.repoPath, context.connectionId, ...hostedReviewExecutionArgs(context)),
   async getReviewForBranch(input) {
@@ -26,5 +27,6 @@ export const giteeForgeProvider = {
       ...hostedReviewExecutionArgs(input)
     )
     return pr ? mapGiteeReview(pr) : null
-  }
+  },
+  createReview: createGiteePullRequest
 } satisfies ForgeProvider
