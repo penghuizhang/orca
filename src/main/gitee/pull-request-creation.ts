@@ -11,8 +11,10 @@ import { readHostedPullRequestTemplate } from '../source-control/pull-request-te
 import { getGiteePullRequestForBranch } from './client'
 import { mapGiteePull } from './pull-request-mappers'
 import type { RawGiteePull } from '../../shared/gitee-api'
-import { getGiteeRepoSlug, type GiteeRepoRef } from './repository-ref'
-import { authHeaders, resolveGiteeAuthConfig, type GiteeAuthConfig } from './gitee-auth-config'
+import type { GiteeRepoRef } from './repository-ref'
+import { getGiteeRepoSlug } from './client'
+import { authHeaders, type GiteeAuthConfig } from './gitee-auth-config'
+import { resolveGiteeAuthConfig } from './resolve-auth'
 
 const CREATE_REQUEST_TIMEOUT_MS = 60_000
 

@@ -17,10 +17,8 @@ import {
   type HostedReviewCreationProvider
 } from '../../shared/hosted-review-creation-providers'
 import { isAzureDevOpsReviewCreationAuthenticated } from '../azure-devops/pull-request-creation'
-import {
-  isGiteaReviewCreationAuthenticated,
-  isGiteeReviewCreationAuthenticated
-} from '../gitea/pull-request-creation'
+import { isGiteaReviewCreationAuthenticated } from '../gitea/pull-request-creation'
+import { isGiteeReviewCreationAuthenticated } from '../gitee/pull-request-creation'
 import { isBitbucketReviewCreationAuthenticated } from '../bitbucket/pull-request-creation'
 import { getEnterpriseGitHubRepoSlug } from '../github/github-enterprise-repository'
 import { getRepoSlug } from '../github/client'
