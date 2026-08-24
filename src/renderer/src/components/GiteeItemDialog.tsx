@@ -25,7 +25,7 @@ function Avatar({ url, login }: { url: string | null; login: string | null }): R
   return url ? (
     <img src={url} alt="" className="size-5 shrink-0 rounded-full" />
   ) : (
-    <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] font-medium text-muted-foreground">
+    <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground">
       {(login ?? '?').slice(0, 1).toUpperCase()}
     </span>
   )
@@ -35,9 +35,9 @@ function StateBadge({ state }: { state: string }): React.JSX.Element {
   return (
     <span
       className={cn(
-        'rounded px-1.5 py-0.5 text-[10px] font-medium',
-        state === 'open' && 'bg-emerald-500/15 text-emerald-600',
-        state === 'merged' && 'bg-purple-500/15 text-purple-600',
+        'rounded px-1.5 py-0.5 text-xs font-medium',
+        state === 'open' && 'bg-status-success-background text-status-success',
+        state === 'merged' && 'bg-status-merged-background text-status-merged',
         (state === 'closed' ||
           state === 'draft' ||
           state === 'rejected' ||
@@ -231,16 +231,14 @@ export default function GiteeItemDialog({
                     <FileText className="size-3.5" />
                     {translate('auto.components.GitHubItemDialog.999b5ad7d9', 'Files')}
                     {files.length > 0 ? (
-                      <span className="ml-1 text-[10px] text-muted-foreground">{files.length}</span>
+                      <span className="ml-1 text-xs text-muted-foreground">{files.length}</span>
                     ) : null}
                   </TabsTrigger>
                   <TabsTrigger value="commits" className="px-2">
                     <GitCommitHorizontal className="size-3.5" />
                     {translate('auto.components.GiteeItemDialog.commits', 'Commits')}
                     {commits.length > 0 ? (
-                      <span className="ml-1 text-[10px] text-muted-foreground">
-                        {commits.length}
-                      </span>
+                      <span className="ml-1 text-xs text-muted-foreground">{commits.length}</span>
                     ) : null}
                   </TabsTrigger>
                 </>
@@ -278,16 +276,16 @@ export default function GiteeItemDialog({
                           <span className="min-w-0 flex-1 truncate font-mono text-foreground">
                             {file.filename}
                           </span>
-                          <span className="shrink-0 text-emerald-600">+{file.additions}</span>
+                          <span className="shrink-0 text-status-success">+{file.additions}</span>
                           <span className="shrink-0 text-destructive">-{file.deletions}</span>
                           {file.status ? (
-                            <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                            <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
                               {file.status}
                             </span>
                           ) : null}
                         </div>
                         {file.patch ? (
-                          <pre className="mt-1.5 max-h-40 overflow-hidden rounded-md bg-muted/50 p-2 text-[10px] leading-relaxed text-muted-foreground">
+                          <pre className="mt-1.5 max-h-40 overflow-hidden rounded-md bg-muted/50 p-2 text-xs leading-relaxed text-muted-foreground">
                             {file.patch.slice(0, 1200)}
                           </pre>
                         ) : null}
@@ -310,7 +308,7 @@ export default function GiteeItemDialog({
                         className="flex items-center gap-2.5 border-b border-border/50 py-2.5"
                       >
                         <GitCommitHorizontal className="size-4 shrink-0 text-muted-foreground" />
-                        <span className="shrink-0 font-mono text-[10px] text-muted-foreground">
+                        <span className="shrink-0 font-mono text-xs text-muted-foreground">
                           {commit.sha.slice(0, 7)}
                         </span>
                         <span className="min-w-0 flex-1 truncate text-sm text-foreground">
