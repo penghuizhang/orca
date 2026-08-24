@@ -10788,7 +10788,7 @@ export default function TaskPage(): React.JSX.Element {
             </div>
           ) : taskSource === 'gitlab' && gitlabView === 'todos' ? (
             <div className="flex min-h-0 max-h-full flex-col rounded-md border border-t-0 border-border/50 bg-muted/50 overflow-hidden rounded-t-none shadow-sm">
-              <div className="flex-none grid grid-cols-[110px_minmax(0,3fr)_minmax(120px,1.2fr)_110px_50px] gap-3 border-b border-border/50 px-3 py-2 text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+              <div className="flex-none grid grid-cols-[110px_minmax(0,3fr)_minmax(120px,1.2fr)_110px_50px] gap-3 border-b border-border/50 px-3 py-2 text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
                 <span>{translate('auto.components.TaskPage.8396825a14', 'Action')}</span>
                 <span>{translate('auto.components.TaskPage.16cba35bee', 'Title')}</span>
                 <span>{translate('auto.components.TaskPage.00022ec0ba', 'Project')}</span>
@@ -10879,7 +10879,7 @@ export default function TaskPage(): React.JSX.Element {
             </div>
           ) : taskSource === 'gitlab' ? (
             <div className="flex min-h-0 max-h-full flex-col rounded-md border border-t-0 border-border/50 bg-muted/50 overflow-hidden rounded-t-none shadow-sm">
-              <div className="flex-none grid grid-cols-[80px_minmax(0,3fr)_120px_110px_50px] gap-3 border-b border-border/50 px-3 py-2 text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+              <div className="flex-none grid grid-cols-[80px_minmax(0,3fr)_120px_110px_50px] gap-3 border-b border-border/50 px-3 py-2 text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
                 <span>{translate('auto.components.TaskPage.eb10c32872', 'ID')}</span>
                 <span>{translate('auto.components.TaskPage.16cba35bee', 'Title')}</span>
                 <span>{translate('auto.components.TaskPage.00b7ffb952', 'Type / State')}</span>
@@ -11192,7 +11192,7 @@ export default function TaskPage(): React.JSX.Element {
                   ) : null}
                 </div>
               </div>
-              <div className="flex-none grid grid-cols-[70px_minmax(0,3fr)_minmax(90px,1fr)_90px_110px_40px] gap-3 border-b border-border/50 px-3 py-2 text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+              <div className="flex-none grid grid-cols-[70px_minmax(0,3fr)_minmax(90px,1fr)_90px_110px_40px] gap-3 border-b border-border/50 px-3 py-2 text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
                 <span>{translate('auto.components.TaskPage.eb10c32872', 'ID')}</span>
                 <span>{translate('auto.components.TaskPage.5eccb3c841', 'Title / Context')}</span>
                 <span>{translate('auto.components.TaskPage.d2a876ca53', 'Assignee')}</span>
@@ -11268,9 +11268,9 @@ export default function TaskPage(): React.JSX.Element {
                             className={cn(
                               'size-3.5 shrink-0',
                               item.state === 'open'
-                                ? 'text-emerald-600'
+                                ? 'text-status-success'
                                 : item.state === 'merged'
-                                  ? 'text-purple-600'
+                                  ? 'text-status-merged'
                                   : 'text-muted-foreground'
                             )}
                           />
@@ -11283,29 +11283,14 @@ export default function TaskPage(): React.JSX.Element {
                       </span>
                       <span className="min-w-0">
                         <span className="flex min-w-0 items-center gap-2">
-                          <span className="truncate text-[13px] font-medium text-foreground">
+                          <span className="truncate text-sm font-medium text-foreground">
                             {item.title}
                           </span>
-                          {item.state !== 'open' ? (
-                            <span
-                              className={cn(
-                                'shrink-0 rounded px-1.5 py-0 text-[10px] font-medium',
-                                item.state === 'merged' && 'bg-purple-500/15 text-purple-600',
-                                (item.state === 'closed' ||
-                                  item.state === 'draft' ||
-                                  item.state === 'rejected' ||
-                                  item.state === 'processing') &&
-                                  'bg-muted text-muted-foreground'
-                              )}
-                            >
-                              {item.state}
-                            </span>
-                          ) : null}
-                          <span className="truncate text-[11px] text-muted-foreground">
+                          <span className="truncate text-xs text-muted-foreground">
                             {item.repoFullName}
                           </span>
                         </span>
-                        <span className="mt-0.5 flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-[12px] text-muted-foreground">
+                        <span className="mt-0.5 flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-xs text-muted-foreground">
                           <span>
                             {item.authorLogin ??
                               translate('auto.components.TaskPage.6430594b18', 'unknown author')}
@@ -11313,7 +11298,7 @@ export default function TaskPage(): React.JSX.Element {
                           {item.labels.slice(0, 3).map((label) => (
                             <span
                               key={label.name}
-                              className="inline-flex items-center gap-1 rounded-full border border-border/40 px-1.5 py-0 text-[10px] text-muted-foreground"
+                              className="inline-flex items-center gap-1 rounded-full border border-border/40 px-1.5 py-0 text-xs text-muted-foreground"
                               style={
                                 label.color
                                   ? {
@@ -11350,9 +11335,11 @@ export default function TaskPage(): React.JSX.Element {
                       <span>
                         <span
                           className={cn(
-                            'rounded px-1.5 py-0.5 text-[10px] font-medium',
-                            item.state === 'open' && 'bg-emerald-500/15 text-emerald-600',
-                            item.state === 'merged' && 'bg-purple-500/15 text-purple-600',
+                            'rounded px-1.5 py-0.5 text-xs font-medium',
+                            item.state === 'open' &&
+                              'bg-status-success-background text-status-success',
+                            item.state === 'merged' &&
+                              'bg-status-merged-background text-status-merged',
                             (item.state === 'closed' ||
                               item.state === 'draft' ||
                               item.state === 'rejected' ||
