@@ -5,7 +5,7 @@ import { normalizeRightSidebarRoute } from '../right-sidebar-route'
 import { settleEvictedModalData } from './modal-slot-dismissal'
 import {
   findPrevLiveNonTaskStackHistoryIndex,
-  findPrevLiveWorktreeHistoryIndex
+  rewindHistoryIndexPastView
 } from './worktree-nav-history'
 import type { GitHubWorkItem } from '../../../../shared/github/work-item-types'
 import type { JiraIssue } from '../../../../shared/jira-types'
@@ -617,7 +617,6 @@ export type UISlice = {
     | 'settings'
     | 'activity'
     | 'automations'
-    | 'calendar'
     | 'space'
     | 'skills'
     | 'artifacts'
@@ -627,7 +626,6 @@ export type UISlice = {
     | 'tasks'
     | 'activity'
     | 'automations'
-    | 'calendar'
     | 'space'
     | 'skills'
     | 'artifacts'
@@ -637,7 +635,6 @@ export type UISlice = {
     | 'settings'
     | 'tasks'
     | 'automations'
-    | 'calendar'
     | 'space'
     | 'skills'
     | 'artifacts'
@@ -647,7 +644,6 @@ export type UISlice = {
     | 'settings'
     | 'tasks'
     | 'activity'
-    | 'calendar'
     | 'space'
     | 'skills'
     | 'artifacts'
@@ -658,7 +654,6 @@ export type UISlice = {
     | 'tasks'
     | 'activity'
     | 'automations'
-    | 'calendar'
     | 'skills'
     | 'artifacts'
     | 'mobile'
@@ -669,7 +664,6 @@ export type UISlice = {
     | 'activity'
     | 'automations'
     | 'space'
-    | 'calendar'
     | 'artifacts'
     | 'mobile'
   previousViewBeforeMobile:
@@ -678,7 +672,6 @@ export type UISlice = {
     | 'tasks'
     | 'activity'
     | 'automations'
-    | 'calendar'
     | 'space'
     | 'skills'
     | 'artifacts'
@@ -688,19 +681,8 @@ export type UISlice = {
     | 'tasks'
     | 'activity'
     | 'automations'
-    | 'calendar'
     | 'space'
     | 'skills'
-    | 'mobile'
-  previousViewBeforeCalendar:
-    | 'terminal'
-    | 'settings'
-    | 'tasks'
-    | 'activity'
-    | 'automations'
-    | 'space'
-    | 'skills'
-    | 'artifacts'
     | 'mobile'
   setActiveView: (view: UISlice['activeView']) => void
   taskPageData: {
@@ -778,8 +760,6 @@ export type UISlice = {
   ) => void
   openAutomationsPage: () => void
   closeAutomationsPage: () => void
-  openCalendarPage: () => void
-  closeCalendarPage: () => void
   openSpacePage: () => void
   closeSpacePage: () => void
   openSkillsPage: () => void
@@ -1292,7 +1272,6 @@ export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set, get)
   pendingSkillsSharedView: false,
   previousViewBeforeMobile: 'terminal',
   previousViewBeforeArtifacts: 'terminal',
-  previousViewBeforeCalendar: 'terminal',
   setActiveView: (view) => set({ activeView: view }),
   taskPageData: {},
   taskResumeState: undefined,
@@ -1504,43 +1483,10 @@ export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set, get)
     }))
   },
   closeAutomationsPage: () =>
-    set((state) => {
-      const currentEntry = state.worktreeNavHistory[state.worktreeNavHistoryIndex]
-      let nextHistoryIndex = state.worktreeNavHistoryIndex
-      if (currentEntry === 'automations') {
-        const prev = findPrevLiveWorktreeHistoryIndex(state)
-        if (prev !== null) {
-          nextHistoryIndex = prev
-        }
-      }
-      return {
-        activeView: state.previousViewBeforeAutomations,
-        worktreeNavHistoryIndex: nextHistoryIndex
-      }
-    }),
-  openCalendarPage: () => {
-    get().recordViewVisit('calendar')
     set((state) => ({
-      activeView: 'calendar',
-      previousViewBeforeCalendar:
-        state.activeView === 'calendar' ? state.previousViewBeforeCalendar : state.activeView
-    }))
-  },
-  closeCalendarPage: () =>
-    set((state) => {
-      const currentEntry = state.worktreeNavHistory[state.worktreeNavHistoryIndex]
-      let nextHistoryIndex = state.worktreeNavHistoryIndex
-      if (currentEntry === 'calendar') {
-        const prev = findPrevLiveWorktreeHistoryIndex(state)
-        if (prev !== null) {
-          nextHistoryIndex = prev
-        }
-      }
-      return {
-        activeView: state.previousViewBeforeCalendar,
-        worktreeNavHistoryIndex: nextHistoryIndex
-      }
-    }),
+      activeView: state.previousViewBeforeAutomations,
+      worktreeNavHistoryIndex: rewindHistoryIndexPastView(state, 'automations')
+    })),
   openSpacePage: () => {
     get().recordFeatureInteraction?.('workspace-cleanup')
     set((state) => ({
@@ -1553,41 +1499,51 @@ export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set, get)
     set((state) => ({
       activeView: state.previousViewBeforeSpace
     })),
-  openSkillsPage: () =>
+  openSkillsPage: () => {
+    get().recordViewVisit('skills')
     set((state) => ({
       activeView: 'skills',
       previousViewBeforeSkills:
         state.activeView === 'skills' ? state.previousViewBeforeSkills : state.activeView
-    })),
+    }))
+  },
   closeSkillsPage: () =>
     set((state) => ({
-      activeView: state.previousViewBeforeSkills
+      activeView: state.previousViewBeforeSkills,
+      worktreeNavHistoryIndex: rewindHistoryIndexPastView(state, 'skills')
     })),
-  openSkillShare: (shareId) =>
+  openSkillShare: (shareId) => {
+    get().recordViewVisit('skills')
     set((state) => ({
       activeView: 'skills',
       previousViewBeforeSkills:
         state.activeView === 'skills' ? state.previousViewBeforeSkills : state.activeView,
       pendingSkillShareId: shareId
-    })),
+    }))
+  },
   clearPendingSkillShare: () => set({ pendingSkillShareId: null }),
-  openSkillsSharedLinks: () =>
+  openSkillsSharedLinks: () => {
+    get().recordViewVisit('skills')
     set((state) => ({
       activeView: 'skills',
       previousViewBeforeSkills:
         state.activeView === 'skills' ? state.previousViewBeforeSkills : state.activeView,
       pendingSkillsSharedView: true
-    })),
+    }))
+  },
   clearPendingSkillsSharedView: () => set({ pendingSkillsSharedView: false }),
-  openArtifactsPage: () =>
+  openArtifactsPage: () => {
+    get().recordViewVisit('artifacts')
     set((state) => ({
       activeView: 'artifacts',
       previousViewBeforeArtifacts:
         state.activeView === 'artifacts' ? state.previousViewBeforeArtifacts : state.activeView
-    })),
+    }))
+  },
   closeArtifactsPage: () =>
     set((state) => ({
-      activeView: state.previousViewBeforeArtifacts
+      activeView: state.previousViewBeforeArtifacts,
+      worktreeNavHistoryIndex: rewindHistoryIndexPastView(state, 'artifacts')
     })),
   openMobilePage: () =>
     set((state) => ({
@@ -2676,7 +2632,11 @@ export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set, get)
         // Why the normalizer rather than a cast: this blob is hand-editable and
         // may come from an older or newer build; it degrades field by field
         // instead of bricking the cleanup dialog.
-        workspaceCleanupBrowse: normalizeWorkspaceCleanupBrowseState(ui.workspaceCleanup?.browse),
+        // Why: a sync broadcast can carry stale browse state while its writer is debounced.
+        workspaceCleanupBrowse:
+          source === 'startup'
+            ? normalizeWorkspaceCleanupBrowseState(ui.workspaceCleanup?.browse)
+            : s.workspaceCleanupBrowse,
         // Why: restore only on startup; on 'sync' broadcasts it would clobber the window's current per-window view.
         activeView:
           source === 'startup'

@@ -20,20 +20,12 @@ describe('agent session resume metadata', () => {
     expect(isResumableTuiAgent('prime-agent')).toBe(true)
   })
 
-  it('treats zcode as a resumable TUI agent', () => {
-    expect(isResumableTuiAgent('zcode')).toBe(true)
+  it('treats copilot as a resumable TUI agent', () => {
+    expect(isResumableTuiAgent('copilot')).toBe(true)
   })
 
-  it('builds zcode resume argv from a session_id provider session', () => {
-    expect(getAgentResumeArgv('zcode', { key: 'session_id', id: 'sess_abc' })).toEqual([
-      'zcode',
-      '--resume',
-      'sess_abc'
-    ])
-  })
-
-  it('rejects zcode resume when provider session key is not session_id', () => {
-    expect(getAgentResumeArgv('zcode', { key: 'conversation_id', id: 'x' })).toBeNull()
+  it('treats Kimi Code as a resumable TUI agent', () => {
+    expect(isResumableTuiAgent('kimi')).toBe(true)
   })
 
   it.each([
@@ -60,6 +52,17 @@ describe('agent session resume metadata', () => {
       'prime-agent',
       { session_id: 'prime-session', session_file: '/tmp/prime-session.jsonl' },
       { key: 'session_id', id: 'prime-session', transcriptPath: '/tmp/prime-session.jsonl' }
+    ],
+    [
+      'copilot',
+      { session_id: '940237d9-c712-48e8-bca1-fd75fc4a8d4b' },
+      { key: 'session_id', id: '940237d9-c712-48e8-bca1-fd75fc4a8d4b' }
+    ],
+    ['copilot', { sessionId: 'copilot-camel' }, { key: 'session_id', id: 'copilot-camel' }],
+    [
+      'kimi',
+      { session_id: 'session_431324d7-2165-42f0-9ecd-9f93437b3201' },
+      { key: 'session_id', id: 'session_431324d7-2165-42f0-9ecd-9f93437b3201' }
     ]
   ] as const)('extracts %s provider session ids', (source, payload, expected) => {
     expect(extractAgentProviderSession(source, payload)).toEqual(expected)
@@ -85,6 +88,12 @@ describe('agent session resume metadata', () => {
       'prime-agent',
       { key: 'session_id', id: 's1', transcriptPath: '/tmp/prime-session.jsonl' },
       ['prime-agent', '--resume', '/tmp/prime-session.jsonl']
+    ],
+    ['copilot', { key: 'session_id', id: 's1' }, ['copilot', '--resume=s1']],
+    [
+      'kimi',
+      { key: 'session_id', id: 'session_431324d7' },
+      ['kimi', '--session', 'session_431324d7']
     ]
   ] as const)('builds %s resume argv', (agent, providerSession, expected) => {
     expect(getAgentResumeArgv(agent, providerSession)).toEqual(expected)

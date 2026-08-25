@@ -64,6 +64,7 @@ import {
   clearWebSessionFocusIntent,
   clearWebSessionFocusIntentsForOwner,
   peekWebSessionFocusIntent,
+  resolveWebSessionSiblingVisibleTabId,
   resolveWebSessionVisibleTabId
 } from './web-session-focus-intent'
 import {
@@ -1395,6 +1396,9 @@ function buildMirroredAgentStatusPatch(
       existing && (clientOwnsEntry || existing.updatedAt > entry.updatedAt)
         ? {
             ...normalizeCompatibleAgentStatusEntryForOwner(existing, entry.agentType),
+            ...(clientOwnsEntry && existing.state === 'working' && entry.state === 'working'
+              ? { workingMode: entry.workingMode }
+              : {}),
             paneKey: entry.paneKey,
             worktreeId: entry.worktreeId ?? existing.worktreeId,
             tabId: entry.tabId,
@@ -1471,6 +1475,7 @@ function buildMirroredAgentStatusPatch(
       existing?.state === 'done' &&
       entry.state === 'done' &&
       agentEntryCompletionAt(existing) !== agentEntryCompletionAt(entry)
+    const workingModeChanged = existing?.workingMode !== entry.workingMode
     const entrySortRelevantChange =
       !existing ||
       existing.state !== entry.state ||
@@ -1479,7 +1484,8 @@ function buildMirroredAgentStatusPatch(
       entryAttributionChanged ||
       doneAttentionChanged ||
       isMirroredCommandCodeTurnBump(existing, entry)
-    aggregateRelevantChange = aggregateRelevantChange || entrySortRelevantChange
+    aggregateRelevantChange =
+      aggregateRelevantChange || entrySortRelevantChange || workingModeChanged
     sortRelevantChange = sortRelevantChange || entrySortRelevantChange
   }
 
@@ -2131,6 +2137,7 @@ function agentStatusEntryEqual(a: AgentStatusEntry | undefined, b: AgentStatusEn
   }
   return (
     a.state === b.state &&
+    a.workingMode === b.workingMode &&
     a.prompt === b.prompt &&
     a.updatedAt === b.updatedAt &&
     a.stateStartedAt === b.stateStartedAt &&
@@ -2908,6 +2915,16 @@ function applyWebSessionTabsSnapshotWithContext(
     worktreeId,
     nextUnifiedTabs ?? []
   )
+  const activeGroupId = state.activeGroupIdByWorktree[worktreeId]
+  // Why: Open Preview to the Side can activate an empty reserved group before the host
+  // browser lands. A snapshot that still has the host terminal active must not treat
+  // that emptiness as a terminal focus change.
+  const reservedEmptyPreviewFallbackTabId =
+    currentVisibleUnifiedTabId == null &&
+    activeGroupId != null &&
+    isWebSessionBrowserPlacementGroupReserved({ worktreeId, groupId: activeGroupId })
+      ? resolveWebSessionSiblingVisibleTabId(state, worktreeId, nextUnifiedTabs ?? [])
+      : null
   // Why: a client-initiated activation also drives the visible unified tab, overriding the sticky current-visible tab.
   const intentUnifiedTabId = honorSnapshotActiveFocus
     ? navigationIntentTab?.type === 'browser'
@@ -2921,6 +2938,7 @@ function applyWebSessionTabsSnapshotWithContext(
   const nextActiveUnifiedTabId =
     intentUnifiedTabId ??
     currentVisibleUnifiedTabId ??
+    reservedEmptyPreviewFallbackTabId ??
     (snapshot.activeTabType === 'browser'
       ? (activeMirroredBrowserTabId ??
         mirroredBrowserTabs[0]?.unifiedTab.id ??
