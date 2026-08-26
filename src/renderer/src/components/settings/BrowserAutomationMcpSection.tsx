@@ -67,7 +67,7 @@ export function BrowserAutomationMcpSection({
       }
     }
     try {
-      await navigator.clipboard.writeText(JSON.stringify(config, null, 2))
+      await window.api.ui.writeClipboardText(JSON.stringify(config, null, 2))
       toast.success(
         translate(
           'auto.components.settings.BrowserAutomationMcpSection.c9d0e1f2a3',
