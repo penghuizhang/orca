@@ -14,10 +14,16 @@ import { CalendarMonthPicker } from './calendar-month-picker'
 import { CalendarSidePanel } from './calendar-side-panel'
 import { CalendarDayPanel } from './calendar-day-panel'
 import { CalendarEntryDialog } from './calendar-entry-dialog'
-import { CalendarWeekSummary } from './calendar-week-summary'
-import { CalendarWeekListDialog } from './calendar-week-list-dialog'
+import { CalendarRangeSummary } from './calendar-range-summary'
+import { CalendarWorkListDialog } from './calendar-work-list-dialog'
 import { CalendarCategoryManagerDialog } from './calendar-category-manager-dialog'
-import { addMonths, fromDateKey, isInMonth, todayDateKey, weekRangeDates } from './calendar-time'
+import {
+  addMonths,
+  fromDateKey,
+  isInMonth,
+  todayDateKey,
+  type WorkListRange
+} from './calendar-time'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -50,7 +56,9 @@ export default function CalendarPage(): React.JSX.Element {
   const [editingEntry, setEditingEntry] = useState<CalendarEntry | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<CalendarEntry | null>(null)
   const todayKey = useMemo(() => todayDateKey(), [])
-  const weekDates = useMemo(() => weekRangeDates(selectedDateKey), [selectedDateKey])
+  // Why: the work-list range is independent of the selected day — switching
+  // days edits the right-hand panel, not the reporting range.
+  const [range, setRange] = useState<WorkListRange>({ kind: 'week', anchor: todayDateKey() })
 
   const refreshCategories = useCallback(async (): Promise<void> => {
     try {
@@ -351,20 +359,23 @@ export default function CalendarPage(): React.JSX.Element {
               onEditEntry={openEditDialog}
             />
           </div>
-          <CalendarWeekSummary
-            weekDates={weekDates}
+          <CalendarRangeSummary
+            range={range}
             entries={entries}
             visibleCategories={visibleCategories}
             categories={categoryInfos}
             viewYear={viewYear}
+            locale={locale}
+            onRangeChange={setRange}
             onRequestCopy={() => setWeekListOpen(true)}
           />
         </div>
       </div>
 
-      <CalendarWeekListDialog
+      <CalendarWorkListDialog
         open={weekListOpen}
-        weekDates={weekDates}
+        range={range}
+        onRangeChange={setRange}
         entries={entries}
         visibleCategories={visibleCategories}
         viewYear={viewYear}

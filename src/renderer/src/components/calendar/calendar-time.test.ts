@@ -9,7 +9,11 @@ import {
   getDayEntries,
   isInMonth,
   lunarRepeatDateKey,
+  rangeDates,
+  rangeLabel,
+  shiftRange,
   toDateKey,
+  weekRangeDates,
   WEEKDAY_COLUMNS,
   MONTH_GRID_ROWS
 } from './calendar-time'
@@ -127,6 +131,78 @@ describe('formatMonthTitle', () => {
   it('follows the given locale', () => {
     expect(formatMonthTitle(2026, 8, 'zh-CN')).toBe('2026年8月')
     expect(formatMonthTitle(2026, 8, 'en-US')).toBe('August 2026')
+  })
+})
+
+describe('rangeDates', () => {
+  it('expands a week to the same Monday-anchored 7 days', () => {
+    expect(rangeDates({ kind: 'week', anchor: '2026-08-18' })).toEqual(weekRangeDates('2026-08-18'))
+  })
+
+  it('expands a month to its calendar days (leap-year aware)', () => {
+    const aug = rangeDates({ kind: 'month', year: 2026, month: 8 })
+    expect(aug).toHaveLength(31)
+    expect(aug[0]).toBe('2026-08-01')
+    expect(aug.at(-1)).toBe('2026-08-31')
+    expect(rangeDates({ kind: 'month', year: 2026, month: 2 })).toHaveLength(28)
+    expect(rangeDates({ kind: 'month', year: 2024, month: 2 })).toHaveLength(29)
+  })
+
+  it('expands a custom span inclusively, auto-swapping reversed endpoints', () => {
+    expect(rangeDates({ kind: 'custom', start: '2026-08-01', end: '2026-08-10' })).toHaveLength(10)
+    expect(rangeDates({ kind: 'custom', start: '2026-08-10', end: '2026-08-01' })[0]).toBe(
+      '2026-08-01'
+    )
+  })
+})
+
+describe('rangeLabel', () => {
+  it('labels a week like the week-range title', () => {
+    expect(rangeLabel({ kind: 'week', anchor: '2026-08-18' }, 'en-US')).toBe(
+      'Aug 17 – Aug 23, 2026'
+    )
+  })
+
+  it('labels a month by its title', () => {
+    expect(rangeLabel({ kind: 'month', year: 2026, month: 8 }, 'en-US')).toBe('August 2026')
+    expect(rangeLabel({ kind: 'month', year: 2026, month: 8 }, 'zh-CN')).toBe('2026年8月')
+  })
+
+  it('labels a custom span with start and end', () => {
+    expect(rangeLabel({ kind: 'custom', start: '2026-08-01', end: '2026-08-31' }, 'en-US')).toBe(
+      'Aug 1, 2026 – Aug 31, 2026'
+    )
+  })
+})
+
+describe('shiftRange', () => {
+  it('moves a week by ±7 days', () => {
+    expect(shiftRange({ kind: 'week', anchor: '2026-08-18' }, 1)).toEqual({
+      kind: 'week',
+      anchor: '2026-08-25'
+    })
+    expect(shiftRange({ kind: 'week', anchor: '2026-08-18' }, -1)).toEqual({
+      kind: 'week',
+      anchor: '2026-08-11'
+    })
+  })
+
+  it('moves a month by ±1', () => {
+    expect(shiftRange({ kind: 'month', year: 2026, month: 8 }, 1)).toEqual({
+      kind: 'month',
+      year: 2026,
+      month: 9
+    })
+    expect(shiftRange({ kind: 'month', year: 2026, month: 1 }, -1)).toEqual({
+      kind: 'month',
+      year: 2025,
+      month: 12
+    })
+  })
+
+  it('shifts a custom span by its own length + 1 day gap', () => {
+    const shifted = shiftRange({ kind: 'custom', start: '2026-08-01', end: '2026-08-10' }, 1)
+    expect(shifted).toEqual({ kind: 'custom', start: '2026-08-11', end: '2026-08-20' })
   })
 })
 

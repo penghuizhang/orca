@@ -6498,6 +6498,16 @@
           "8f2675c2f3": "Imported {{value0}} cookies from file.",
           "5301857d88": "From {{value0}}"
         },
+        "BrowserAutomationMcpSection": {
+          "a1b2c3d4e5": "Browser Automation MCP Server",
+          "b2c3d4e5f6": "Expose Orca browser tabs to an external agent CLI (zcode/codex) over a localhost MCP server.",
+          "d4e5f6a7b8": "Add the config below to your agent CLI\u2019s MCP settings, then ask it to read or drive the open browser tab.",
+          "c9d0e1f2a3": "Copied MCP config to clipboard.",
+          "c3d4e5f6a7": "Failed to copy MCP config.",
+          "e5f6a7b8c9": "Copy MCP config",
+          "f6a7b8c9d0": "Starting server\u2026",
+          "a7b8c9d0e1": "Bound to 127.0.0.1 only. The token is stored locally and required by the client."
+        },
         "BrowserUseSkillStep": {
           "0871b6998d": "Enables agents to navigate and verify pages in Orca's browser.",
           "459e24eebc": "Browser Use skill"
@@ -16020,7 +16030,7 @@
         "nextYear": "Next year",
         "weekSummary": "This week",
         "copyWeekList": "Copy week list",
-        "weekListDescription": "One week of work, grouped by day, ready to paste into your timesheet.",
+        "weekListDescription": "Work records grouped by day, ready to paste into your timesheet.",
         "weekListWorkList": "work list",
         "weekListSubtotal": "Subtotal",
         "weekListTotal": "Total",
@@ -16031,6 +16041,16 @@
         "weekListCopyFailed": "Copy failed — select the text manually.",
         "weekEntryCount": "{{count}} items",
         "weekTotalHours": "{{hours}}h total",
+        "rangeWeek": "This week",
+        "rangeLastWeek": "Last week",
+        "rangeMonth": "This month",
+        "rangeLastMonth": "Last month",
+        "rangeCustom": "Custom range",
+        "rangeStart": "Start",
+        "rangeEnd": "End",
+        "rangePrev": "Previous period",
+        "rangeNext": "Next period",
+        "copyList": "Copy list",
         "manageCategories": "Manage",
         "manageCategoriesTitle": "Manage categories",
         "manageCategoriesDescription": "Add your own categories or rename the ones you created.",

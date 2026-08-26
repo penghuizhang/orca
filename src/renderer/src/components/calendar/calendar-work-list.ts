@@ -1,5 +1,13 @@
 import type { CalendarCategory, CalendarEntry } from '../../../../shared/calendar-types'
-import { collectWeekEntries, fromDateKey, hourSpan, lunarRepeatDateKey } from './calendar-time'
+import {
+  collectWeekEntries,
+  fromDateKey,
+  hourSpan,
+  lunarRepeatDateKey,
+  rangeDates,
+  rangeLabel,
+  type WorkListRange
+} from './calendar-time'
 
 export type WeekListStrings = {
   workList: string
@@ -16,18 +24,18 @@ function formatDayHeading(dateKey: string, locale: string): string {
   return `${weekday} ${day}`
 }
 
-/** Group week entries by day (Monday first) preserving start-time order. */
-export function groupWeekEntriesByDay(
-  weekDates: readonly string[],
+/** Group entries by day (ordered like the range) preserving start-time order. */
+export function groupEntriesByDay(
+  rangeDates: readonly string[],
   entries: readonly CalendarEntry[],
   visibleCategories: ReadonlySet<CalendarCategory>,
   viewYear: number
 ): Map<string, ListLine[]> {
   const lines = new Map<string, ListLine[]>()
-  for (const dateKey of weekDates) {
+  for (const dateKey of rangeDates) {
     lines.set(dateKey, [])
   }
-  for (const entry of collectWeekEntries(entries, weekDates, visibleCategories, viewYear)) {
+  for (const entry of collectWeekEntries(entries, rangeDates, visibleCategories, viewYear)) {
     const targetKey = entry.lunarRepeat
       ? lunarRepeatDateKey(entry.lunarRepeat, viewYear)
       : entry.date
@@ -40,27 +48,38 @@ export function groupWeekEntriesByDay(
   return lines
 }
 
-/** Build the copy-paste Markdown list for one week, e.g. Friday timesheet prep. */
-export function buildWeekListMarkdown(
-  weekDates: readonly string[],
+/** Markdown title for a week range keeps the long-form "start – end" heading. */
+function weekMarkdownTitle(
+  dates: readonly string[],
+  locale: string,
+  strings: WeekListStrings
+): string {
+  const start = fromDateKey(dates[0])
+  const end = fromDateKey(dates.at(-1) ?? dates[0])
+  const startText = new Intl.DateTimeFormat(locale, {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  }).format(start)
+  const endText = new Intl.DateTimeFormat(locale, { month: 'long', day: 'numeric' }).format(end)
+  return `# ${startText} – ${endText} ${strings.workList}`
+}
+
+/** Build the copy-paste Markdown list for any range, grouped by day. */
+export function buildWorkListMarkdown(
+  range: WorkListRange,
   entries: readonly CalendarEntry[],
   visibleCategories: ReadonlySet<CalendarCategory>,
   viewYear: number,
   locale: string,
   strings: WeekListStrings
 ): string {
-  const lines = groupWeekEntriesByDay(weekDates, entries, visibleCategories, viewYear)
-  const start = fromDateKey(weekDates[0])
-  const end = fromDateKey(weekDates.at(-1) ?? weekDates[0])
-  const startText = new Intl.DateTimeFormat(locale, {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  }).format(start)
-  const endText = new Intl.DateTimeFormat(locale, {
-    month: 'long',
-    day: 'numeric'
-  }).format(end)
+  const dates = rangeDates(range)
+  const lines = groupEntriesByDay(dates, entries, visibleCategories, viewYear)
+  const title =
+    range.kind === 'week'
+      ? weekMarkdownTitle(dates, locale, strings)
+      : `# ${rangeLabel(range, locale)} ${strings.workList}`
   const sections: string[] = []
   for (const [dateKey, dayLines] of lines) {
     if (dayLines.length === 0) {
@@ -68,10 +87,10 @@ export function buildWeekListMarkdown(
     }
     sections.push(`## ${formatDayHeading(dateKey, locale)}`)
     dayLines.forEach((line, index) => {
-      const title = line.entry.title.trim() || strings.untitled
-      sections.push(`${index + 1}. ${title}`)
+      const titleText = line.entry.title.trim() || strings.untitled
+      sections.push(`${index + 1}. ${titleText}`)
     })
     sections.push('')
   }
-  return `# ${startText} – ${endText} ${strings.workList}\n\n${sections.join('\n').trimEnd()}`
+  return `${title}\n\n${sections.join('\n').trimEnd()}`
 }

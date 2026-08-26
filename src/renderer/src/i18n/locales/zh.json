@@ -5668,6 +5668,16 @@
           "8f2675c2f3": "已从文件导入 {{value0}} 个 Cookie。",
           "5301857d88": "从 {{value0}}"
         },
+        "BrowserAutomationMcpSection": {
+          "a1b2c3d4e5": "浏览器自动化 MCP 服务",
+          "b2c3d4e5f6": "通过本地 MCP 服务，把 Orca 的浏览器标签页暴露给外部 agent CLI（zcode/codex）。",
+          "d4e5f6a7b8": "把下面的配置加入你的 agent CLI 的 MCP 设置，然后让它读取或驱动已打开的浏览器标签页。",
+          "c9d0e1f2a3": "已复制 MCP 配置到剪贴板。",
+          "c3d4e5f6a7": "复制 MCP 配置失败。",
+          "e5f6a7b8c9": "复制 MCP 配置",
+          "f6a7b8c9d0": "正在启动服务…",
+          "a7b8c9d0e1": "仅绑定 127.0.0.1。Token 仅本地保存，客户端连接时需要携带。"
+        },
         "BrowserUseSkillStep": {
           "0871b6998d": "使智能体能够在 Orca 浏览器中导航和验证页面。",
           "459e24eebc": "浏览器使用技能"
@@ -14378,7 +14388,7 @@
         "nextYear": "下一年",
         "weekSummary": "本周概览",
         "copyWeekList": "复制本周清单",
-        "weekListDescription": "按天分组的一周工作记录，可直接粘贴到工时系统。",
+        "weekListDescription": "按天分组的工作记录，可直接粘贴到工时系统。",
         "weekListWorkList": "工作清单",
         "weekListSubtotal": "小计",
         "weekListTotal": "合计",
@@ -14389,6 +14399,16 @@
         "weekListCopyFailed": "复制失败，请手动选中文本复制。",
         "weekEntryCount": "共 {{count}} 条",
         "weekTotalHours": "合计 {{hours}} 小时",
+        "rangeWeek": "本周",
+        "rangeLastWeek": "上周",
+        "rangeMonth": "本月",
+        "rangeLastMonth": "上月",
+        "rangeCustom": "自定义区间",
+        "rangeStart": "开始",
+        "rangeEnd": "结束",
+        "rangePrev": "上一期",
+        "rangeNext": "下一期",
+        "copyList": "复制清单",
         "manageCategories": "管理",
         "manageCategoriesTitle": "管理分类",
         "manageCategoriesDescription": "新增你的自定义分类，或重命名已创建的分类。",

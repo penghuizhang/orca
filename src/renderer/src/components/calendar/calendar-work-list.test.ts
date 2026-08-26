@@ -3,10 +3,10 @@ import { describe, expect, it } from 'vitest'
 import type { CalendarEntry } from '../../../../shared/calendar-types'
 import { hourSpan, summarizeWeekHours, weekRangeDates } from './calendar-time'
 import {
-  buildWeekListMarkdown,
-  groupWeekEntriesByDay,
+  buildWorkListMarkdown,
+  groupEntriesByDay,
   type WeekListStrings
-} from './calendar-week-list'
+} from './calendar-work-list'
 
 function entry(partial: Partial<CalendarEntry> & { id: string; date: string }): CalendarEntry {
   return {
@@ -119,7 +119,7 @@ describe('summarizeWeekHours', () => {
   })
 })
 
-describe('groupWeekEntriesByDay / buildWeekListMarkdown', () => {
+describe('groupEntriesByDay / buildWorkListMarkdown', () => {
   const week = weekRangeDates('2026-08-18')
   const entries: CalendarEntry[] = [
     entry({
@@ -150,7 +150,7 @@ describe('groupWeekEntriesByDay / buildWeekListMarkdown', () => {
   ]
 
   it('groups entries by day in week order with computed hours', () => {
-    const groups = groupWeekEntriesByDay(week, entries, new Set(), 2026)
+    const groups = groupEntriesByDay(week, entries, new Set(), 2026)
     expect([...groups.keys()]).toEqual(week)
     expect(groups.get('2026-08-17')?.map((line) => line.entry.title)).toEqual([
       'Review docs',
@@ -162,12 +162,21 @@ describe('groupWeekEntriesByDay / buildWeekListMarkdown', () => {
   })
 
   it('renders the copy-paste markdown with numbered items only (no times/durations', () => {
-    const md = buildWeekListMarkdown(week, entries, new Set(), 2026, 'en-US', WEEK_STRINGS)
+    const md = buildWorkListMarkdown(
+      { kind: 'week', anchor: '2026-08-18' },
+      entries,
+      new Set(),
+      2026,
+      'en-US',
+      WEEK_STRINGS
+    )
     expect(md).toContain('## Monday 8/17')
     expect(md).toContain('1. Review docs')
     expect(md).toContain('2. Bug fix')
     // all-day entry still appears — numbered like any other, sorted first that day
     expect(md).toContain('1. On call')
+    // week title keeps the long-form heading
+    expect(md).toContain('# August 17, 2026 – August 23 work list')
     // no times, durations, categories, subtotals, or grand totals
     expect(md).not.toContain('09:00-10:30')
     expect(md).not.toContain('1.5h')
@@ -187,8 +196,8 @@ describe('groupWeekEntriesByDay / buildWeekListMarkdown', () => {
         title: 'Next week'
       })
     ]
-    const md = buildWeekListMarkdown(
-      week,
+    const md = buildWorkListMarkdown(
+      { kind: 'week', anchor: '2026-08-18' },
       withOut,
       new Set(['meeting']),
       2026,
@@ -198,5 +207,36 @@ describe('groupWeekEntriesByDay / buildWeekListMarkdown', () => {
     expect(md).not.toContain('Next week')
     expect(md).not.toContain('Bug fix')
     expect(md).toContain('Review docs')
+  })
+
+  it('renders a month range with the month title and every in-range day', () => {
+    const md = buildWorkListMarkdown(
+      { kind: 'month', year: 2026, month: 7 },
+      [entry({ id: 'j', date: '2026-07-01', title: 'Quarter plan', category: 'meeting' })],
+      new Set(),
+      2026,
+      'en-US',
+      WEEK_STRINGS
+    )
+    expect(md).toContain('# July 2026 work list')
+    expect(md).toContain('## Wednesday 7/1')
+    expect(md).toContain('1. Quarter plan')
+  })
+
+  it('renders a custom range with a start–end title', () => {
+    const md = buildWorkListMarkdown(
+      { kind: 'custom', start: '2026-07-01', end: '2026-07-02' },
+      [
+        entry({ id: 'x', date: '2026-07-01', title: 'Day one', category: 'feature' }),
+        entry({ id: 'y', date: '2026-07-02', title: 'Day two', category: 'feature' })
+      ],
+      new Set(),
+      2026,
+      'en-US',
+      WEEK_STRINGS
+    )
+    expect(md).toContain('# Jul 1, 2026 – Jul 2, 2026 work list')
+    expect(md).toContain('1. Day one')
+    expect(md).toContain('1. Day two')
   })
 })
