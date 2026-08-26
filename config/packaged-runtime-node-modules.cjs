@@ -17,6 +17,8 @@ const PACKAGED_RUNTIME_PACKAGE_ROOTS = [
   '@electron-toolkit/utils',
   '@linear/sdk',
   '@parcel/watcher',
+  'ajv',
+  'ajv-formats',
   'electron-updater',
   'i18next',
   'jsonc-parser',

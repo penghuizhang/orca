@@ -226,6 +226,8 @@ productName: 'orca-s',
     'node_modules/tweetnacl/**',
     'node_modules/zod/**',
     'node_modules/yaml/**',
+    'node_modules/ajv/**',
+    'node_modules/ajv-formats/**',
     'node_modules/sherpa-onnx*/**'
   ],
   afterPack: async (context) => {
