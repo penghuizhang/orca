@@ -2,7 +2,9 @@ import React from 'react'
 import { toast } from 'sonner'
 
 import type { CalendarCategory, CalendarEntry } from '../../../../shared/calendar-types'
-import { buildWeekListMarkdown, type WeekListStrings } from './calendar-week-list'
+import { CalendarRangePicker } from './calendar-range-picker'
+import { buildWorkListMarkdown, type WeekListStrings } from './calendar-work-list'
+import type { WorkListRange } from './calendar-time'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -14,10 +16,11 @@ import {
 } from '@/components/ui/dialog'
 import { translate } from '@/i18n/i18n'
 
-/** Preview + copy dialog for the per-week work list (Friday timesheet prep). */
-export function CalendarWeekListDialog({
+/** Preview + copy dialog for the work list over any chosen range. */
+export function CalendarWorkListDialog({
   open,
-  weekDates,
+  range,
+  onRangeChange,
   entries,
   visibleCategories,
   viewYear,
@@ -25,7 +28,8 @@ export function CalendarWeekListDialog({
   onOpenChange
 }: {
   open: boolean
-  weekDates: readonly string[]
+  range: WorkListRange
+  onRangeChange: (range: WorkListRange) => void
   entries: readonly CalendarEntry[]
   visibleCategories: ReadonlySet<CalendarCategory>
   viewYear: number
@@ -37,8 +41,8 @@ export function CalendarWeekListDialog({
     untitled: translate('auto.components.calendar.untitled', 'Untitled')
   }
 
-  const markdown = buildWeekListMarkdown(
-    weekDates,
+  const markdown = buildWorkListMarkdown(
+    range,
     entries,
     visibleCategories,
     viewYear,
@@ -65,15 +69,16 @@ export function CalendarWeekListDialog({
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle className="text-sm">
-            {translate('auto.components.calendar.copyWeekList', 'Copy week list')}
+            {translate('auto.components.calendar.workListWorkList', 'Work list')}
           </DialogTitle>
           <DialogDescription className="text-xs">
             {translate(
               'auto.components.calendar.weekListDescription',
-              'One week of work, grouped by day, ready to paste into your timesheet.'
+              'Work records grouped by day, ready to paste into your timesheet.'
             )}
           </DialogDescription>
         </DialogHeader>
+        <CalendarRangePicker value={range} onChange={onRangeChange} variant="dialog" />
         <pre className="scrollbar-sleek max-h-[50vh] overflow-auto rounded-md border border-border bg-muted p-3 text-xs leading-5 whitespace-pre-wrap">
           {markdown}
         </pre>
@@ -82,7 +87,7 @@ export function CalendarWeekListDialog({
             {translate('auto.components.calendar.cancel', 'Cancel')}
           </Button>
           <Button onClick={() => void copyToClipboard()}>
-            {translate('auto.components.calendar.copyToClipboard', 'Copy to clipboard')}
+            {translate('auto.components.calendar.copyList', 'Copy list')}
           </Button>
         </DialogFooter>
       </DialogContent>
