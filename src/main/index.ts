@@ -306,6 +306,10 @@ import { getRepoIdFromWorktreeId } from '../shared/worktree/id'
 import { parseWorkspaceKey } from '../shared/workspace-scope'
 import { setMigrationUnsupportedPtyListener } from './agent-hooks/migration-unsupported-pty-state'
 import { AgentBrowserBridge } from './browser/agent-browser-bridge'
+import {
+  startBrowserAutomationMcpServer,
+  stopBrowserAutomationMcpServer
+} from './browser/mcp/browser-mcp-server'
 import { EmulatorBridge } from './emulator/emulator-bridge'
 import { browserCertificateTrustController, browserManager } from './browser/browser-manager'
 import { OffscreenBrowserBackend } from './browser/offscreen-browser-backend'
@@ -2996,6 +3000,11 @@ void app.whenReady().then(async () => {
     })
   )
 
+  // Browser automation MCP server — localhost bridge that exposes orca's browser tabs to external agent CLIs (zcode/codex).
+  void startBrowserAutomationMcpServer(runtimeService, store).catch((error) => {
+    console.warn('[browser-automation-mcp] Failed to start:', error)
+  })
+
   // Emulator bridge (serve-sim). macOS-only feature (gated in CLI/runtime); always ship like agent-browser.
   // Why: externally started serve-sim processes must stay independent — only Orca-managed/attached helpers belong to a workspace.
   const emulatorBridge = new EmulatorBridge()
@@ -3379,6 +3388,7 @@ app.on('before-quit', () => {
   agentAwakeService = null
   // Why: defer PTY cleanup to will-quit so the renderer captures scrollback before PTY-exit events unmount TerminalPane (dropping its capture callbacks).
   rateLimits?.stop()
+  void stopBrowserAutomationMcpServer()
 })
 
 // Why: will-quit fires twice — first pass preventDefaults and runs teardown; second pass exits.

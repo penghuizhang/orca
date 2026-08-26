@@ -462,6 +462,12 @@ export type GlobalSettings = {
   tabSwitchKeybindingSeed?: 'pending' | 'done'
   /** Local voice/dictation config. Optional for pre-voice profiles; getDefaultSettings() hydrates defaults via the persistence merge. */
   voice?: VoiceSettings
+  /** Local MCP server that exposes orca's browser tabs to external agent CLIs (zcode/codex) over localhost. Opt-in. */
+  browserAutomationMcp?: {
+    enabled: boolean
+    /** Preferred port; 0 means auto-pick a free localhost port at startup. */
+    port: number
+  }
 }
 
 export type OrcaWorkspaceLayout = {
