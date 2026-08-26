@@ -621,6 +621,7 @@ export type UISlice = {
     | 'skills'
     | 'artifacts'
     | 'mobile'
+    | 'calendar'
   previousViewBeforeSettings:
     | 'terminal'
     | 'tasks'
@@ -630,6 +631,7 @@ export type UISlice = {
     | 'skills'
     | 'artifacts'
     | 'mobile'
+    | 'calendar'
   previousViewBeforeActivity:
     | 'terminal'
     | 'settings'
@@ -639,6 +641,7 @@ export type UISlice = {
     | 'skills'
     | 'artifacts'
     | 'mobile'
+    | 'calendar'
   previousViewBeforeAutomations:
     | 'terminal'
     | 'settings'
@@ -648,6 +651,7 @@ export type UISlice = {
     | 'skills'
     | 'artifacts'
     | 'mobile'
+    | 'calendar'
   previousViewBeforeSpace:
     | 'terminal'
     | 'settings'
@@ -657,6 +661,7 @@ export type UISlice = {
     | 'skills'
     | 'artifacts'
     | 'mobile'
+    | 'calendar'
   previousViewBeforeSkills:
     | 'terminal'
     | 'settings'
@@ -666,6 +671,7 @@ export type UISlice = {
     | 'space'
     | 'artifacts'
     | 'mobile'
+    | 'calendar'
   previousViewBeforeMobile:
     | 'terminal'
     | 'settings'
@@ -675,6 +681,7 @@ export type UISlice = {
     | 'space'
     | 'skills'
     | 'artifacts'
+    | 'calendar'
   previousViewBeforeArtifacts:
     | 'terminal'
     | 'settings'
@@ -683,6 +690,17 @@ export type UISlice = {
     | 'automations'
     | 'space'
     | 'skills'
+    | 'mobile'
+    | 'calendar'
+  previousViewBeforeCalendar:
+    | 'terminal'
+    | 'settings'
+    | 'tasks'
+    | 'activity'
+    | 'automations'
+    | 'space'
+    | 'skills'
+    | 'artifacts'
     | 'mobile'
   setActiveView: (view: UISlice['activeView']) => void
   taskPageData: {
@@ -760,6 +778,8 @@ export type UISlice = {
   ) => void
   openAutomationsPage: () => void
   closeAutomationsPage: () => void
+  openCalendarPage: () => void
+  closeCalendarPage: () => void
   openSpacePage: () => void
   closeSpacePage: () => void
   openSkillsPage: () => void
@@ -1268,6 +1288,7 @@ export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set, get)
   previousViewBeforeAutomations: 'terminal',
   previousViewBeforeSpace: 'terminal',
   previousViewBeforeSkills: 'terminal',
+  previousViewBeforeCalendar: 'terminal',
   pendingSkillShareId: null,
   pendingSkillsSharedView: false,
   previousViewBeforeMobile: 'terminal',
@@ -1486,6 +1507,19 @@ export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set, get)
     set((state) => ({
       activeView: state.previousViewBeforeAutomations,
       worktreeNavHistoryIndex: rewindHistoryIndexPastView(state, 'automations')
+    })),
+  openCalendarPage: () => {
+    get().recordViewVisit('calendar')
+    set((state) => ({
+      activeView: 'calendar',
+      previousViewBeforeCalendar:
+        state.activeView === 'calendar' ? state.previousViewBeforeCalendar : state.activeView
+    }))
+  },
+  closeCalendarPage: () =>
+    set((state) => ({
+      activeView: state.previousViewBeforeCalendar,
+      worktreeNavHistoryIndex: rewindHistoryIndexPastView(state, 'calendar')
     })),
   openSpacePage: () => {
     get().recordFeatureInteraction?.('workspace-cleanup')
