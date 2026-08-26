@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi, type Mock } from 'vitest'
 import { BROWSER_MCP_TOOLS, callBrowserMcpTool } from './browser-mcp-tool-definitions'
 import type { OrcaRuntimeService } from '../../runtime/orca-runtime'
 
@@ -80,7 +80,7 @@ describe('callBrowserMcpTool dispatch', () => {
 
   it('returns an error result when the runtime throws', async () => {
     const runtime = makeRuntime()
-    ;(runtime.browserSnapshot as unknown as vi.Mock).mockRejectedValueOnce(new Error('boom'))
+    ;(runtime.browserSnapshot as unknown as Mock).mockRejectedValueOnce(new Error('boom'))
     const result = await callBrowserMcpTool(runtime, 'browser_snapshot', {})
     expect(result.isError).toBe(true)
     expect(textOf(result as never)).toContain('boom')
