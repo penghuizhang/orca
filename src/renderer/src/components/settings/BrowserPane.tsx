@@ -15,6 +15,7 @@ import { BrowserLinkRoutingModifierSetting } from './BrowserLinkRoutingModifierS
 import { BrowserTerminalLinkActionsSetting } from './BrowserTerminalLinkActionsSetting'
 import { BrowserLocalhostWorktreeLabelsSetting } from './BrowserLocalhostWorktreeLabelsSetting'
 import { BrowserSessionCookiesSection } from './BrowserSessionCookiesSection'
+import { BrowserAutomationMcpSection } from './BrowserAutomationMcpSection'
 import { BrowserNewProfileDialog } from './BrowserNewProfileDialog'
 import {
   createBrowserHomePageDraftState,
@@ -290,6 +291,8 @@ export function BrowserPane({
       ) : null}
 
       <BrowserNewProfileDialog open={newProfileDialogOpen} onOpenChange={setNewProfileDialogOpen} />
+
+      <BrowserAutomationMcpSection settings={settings} updateSettings={updateSettings} />
     </div>
   )
 }

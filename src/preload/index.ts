@@ -2604,6 +2604,10 @@ const api = {
     reset: (): Promise<unknown> => ipcRenderer.invoke('computerUsePermissions:reset')
   },
 
+  browserAutomationMcp: {
+    getStatus: (): Promise<unknown> => ipcRenderer.invoke('browserAutomationMcp:getStatus')
+  },
+
   shell: {
     openPath: (path: string): Promise<void> => ipcRenderer.invoke('shell:openPath', path),
 

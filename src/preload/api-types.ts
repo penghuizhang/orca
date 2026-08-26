@@ -47,6 +47,7 @@ import type {
 import type { PetApi } from './api/pet-api'
 import type { PluginsApi } from './api/plugin-host-api'
 import type { PreflightApi } from './api/preflight-api'
+import type { BrowserAutomationMcpApi } from './api/browser-automation-mcp-api'
 import type { PtyApi } from './api/pty-api'
 import type { ProjectGroupsApi, ProjectsApi, RepositoryApi } from './api/repository-api'
 import type { RuntimeApi } from './api/runtime-api'
@@ -144,6 +145,7 @@ export type PreloadApi = {
   grokAccounts: GrokAccountsApi
   ssh: SshApi
   automations: AutomationsApi
+  browserAutomationMcp: BrowserAutomationMcpApi
   calendar: CalendarApi
   wsl: RuntimeApi['wsl']
   pwsh: RuntimeApi['pwsh']
