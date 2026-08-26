@@ -129,6 +129,81 @@ export function formatEntryStart(entry: CalendarEntry): string {
   return entry.endTime ? `${entry.startTime}–${entry.endTime}` : entry.startTime
 }
 
+/** A work-list reporting range: a week, a natural month, or a custom span. */
+export type WorkListRange =
+  | { kind: 'week'; anchor: string }
+  | { kind: 'month'; year: number; month: number }
+  | { kind: 'custom'; start: string; end: string }
+
+/** All date keys (inclusive, ordered) covered by the range. */
+export function rangeDates(range: WorkListRange): string[] {
+  if (range.kind === 'week') {
+    return weekRangeDates(range.anchor)
+  }
+  if (range.kind === 'month') {
+    return monthDates(range.year, range.month)
+  }
+  // custom: inclusive endpoints, auto-swap when reversed.
+  let start = fromDateKey(range.start)
+  let end = fromDateKey(range.end)
+  if (start > end) {
+    ;[start, end] = [end, start]
+  }
+  const days: string[] = []
+  for (let date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
+    days.push(toDateKey(date))
+  }
+  return days
+}
+
+/** Human label for a range, following the app locale. */
+export function rangeLabel(range: WorkListRange, locale: string): string {
+  const keys = rangeDates(range)
+  const start = fromDateKey(keys[0])
+  const end = fromDateKey(keys.at(-1) ?? keys[0])
+  if (range.kind === 'month') {
+    return formatMonthTitle(range.year, range.month, locale)
+  }
+  if (range.kind === 'week') {
+    return formatWeekRangeTitle(keys, locale)
+  }
+  const format = new Intl.DateTimeFormat(locale, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  })
+  return `${format.format(start)} – ${format.format(end)}`
+}
+
+/** Step the range forward (+1) or backward (-1) one period. */
+export function shiftRange(range: WorkListRange, dir: -1 | 1): WorkListRange {
+  if (range.kind === 'week') {
+    const anchor = fromDateKey(range.anchor)
+    anchor.setDate(anchor.getDate() + dir * 7)
+    return { kind: 'week', anchor: toDateKey(anchor) }
+  }
+  if (range.kind === 'month') {
+    return { kind: 'month', ...addMonths(range.year, range.month, dir) }
+  }
+  // custom: shift the whole span forward/back by its length + 1 day gap.
+  const start = fromDateKey(range.start)
+  const end = fromDateKey(range.end)
+  const span = Math.round((end.getTime() - start.getTime()) / 86_400_000)
+  const nextStart = new Date(start)
+  nextStart.setDate(nextStart.getDate() + dir * (span + 1))
+  const nextEnd = new Date(nextStart)
+  nextEnd.setDate(nextEnd.getDate() + span)
+  return { kind: 'custom', start: toDateKey(nextStart), end: toDateKey(nextEnd) }
+}
+
+/** Date keys for every day of a natural month (1st → last day). */
+function monthDates(year: number, month: number): string[] {
+  const lastDay = new Date(year, month, 0).getDate()
+  return Array.from({ length: lastDay }, (_, index) =>
+    toDateKey(new Date(year, month - 1, index + 1))
+  )
+}
+
 /** The Monday-anchored week (inclusive) containing the given date key. */
 export function weekRangeDates(dateKey: string): string[] {
   const date = fromDateKey(dateKey)
