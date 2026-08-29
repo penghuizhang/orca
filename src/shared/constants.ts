@@ -1,4 +1,3 @@
-/* eslint-disable max-lines -- Why: default persisted settings live in one schema-shaped object so migrations and tests compare against one source of truth. */
 import type { GlobalSettings } from './global-settings-types'
 import type { NotificationSettings } from './notification-settings-types'
 import type { OnboardingChecklistState, OnboardingState } from './onboarding-state-types'
@@ -9,28 +8,14 @@ import type { AgentActivityDisplayMode } from './ui-chrome-types'
 import type { WorkspaceSessionState } from './workspace-session-state-types'
 import { EMPTY_CODEX_RESET_CREDIT_ATTEMPT_LEDGER } from './codex-reset-credit-attempt-ledger'
 import { DEFAULT_STATUS_BAR_ITEMS } from './status-bar-defaults'
-import { DEFAULT_TERMINAL_FONT_WEIGHT, DEFAULT_TERMINAL_FONT_WEIGHT_BOLD } from './terminal-fonts'
-import { getDefaultTerminalQuickCommands } from './terminal-quick-commands'
 import type { VoiceSettings } from './speech-types'
 import { cloneDefaultWorkspaceStatuses } from './workspace-statuses'
-import { TASK_PROVIDERS } from './task-providers'
 import { DEFAULT_WORKTREE_CARD_PROPERTIES } from './worktree/card-properties'
-import { getDefaultSourceControlAiSettings } from './source-control-ai'
-import { DEFAULT_APP_ICON_ID } from './app-icon'
-import { DEFAULT_OPEN_IN_APPLICATIONS } from './open-in-applications'
-import { DEFAULT_BROWSER_PAGE_ZOOM_LEVEL } from './browser-page-zoom'
-import { DEFAULT_DISABLED_TUI_AGENTS } from './tui-agent-selection'
-import { DEFAULT_TUI_AGENT_ARGS, DEFAULT_TUI_AGENT_ENV } from './tui-agent-launch-defaults'
-import { UI_LANGUAGE_SYSTEM } from './ui-language'
-import {
-  DEFAULT_LEFT_SIDEBAR_TINT_COLOR,
-  DEFAULT_LEFT_SIDEBAR_TINT_OPACITY
-} from './left-sidebar-appearance'
-import { DEFAULT_SOURCE_CONTROL_GROUP_ORDER } from './source-control-group-order'
-import { DEFAULT_SETUP_AGENT_STARTUP_POLICY } from './setup-agent-startup-policy'
-import { DESKTOP_TERMINAL_SCROLLBACK_ROWS_DEFAULT } from './terminal-scrollback-policy'
 import { DEFAULT_USAGE_PERCENTAGE_DISPLAY } from './usage-percentage-display'
 import { DEFAULT_STATUS_BAR_USAGE_MODE } from './status-bar-usage-mode'
+import { buildDefaultSettings } from './default-global-settings'
+import { DEFAULT_SETUP_AGENT_STARTUP_POLICY } from './setup-agent-startup-policy'
+import { DEFAULT_BROWSER_PAGE_ZOOM_LEVEL } from './browser-page-zoom'
 
 export { DEFAULT_STATUS_BAR_ITEMS } from './status-bar-defaults'
 export {
@@ -98,7 +83,15 @@ export const getDefaultTerminalRightClickToPaste = (
   platform = typeof process !== 'undefined' ? process.platform : ''
 ): boolean => platform === 'win32'
 
-/** Why: ProseMirror's full-document tree lags on large files; above this, fall back to source mode (Monaco). */
+/** Why: ProseMirror renders the whole document — no virtualization — so opening
+ *  one blocks the main thread for as long as it takes to build the DOM. Measured
+ *  in a packaged build (M-series) on a doc with a code block every ~570 bytes,
+ *  blocking mount / median keystroke: 300 KB 1.7 s / 59 ms · 600 KB 4.2 s / 201 ms
+ *  · 900 KB 8.8 s / 431 ms. The same 300 KB as pure prose is 0.8 s / 16 ms, so
+ *  node-view count drives the cost far more than byte size — but bytes are the
+ *  only thing cheap enough to test before parsing. The blocking mount is what
+ *  pins this ceiling; past it, fall back to source mode (Monaco) with a per-file
+ *  "Open anyway" escape hatch. Real headroom needs #7056. */
 export const RICH_MARKDOWN_MAX_SIZE_BYTES = 300 * 1024
 
 export const DEFAULT_EDITOR_AUTO_SAVE_DELAY_MS = 1000
@@ -162,71 +155,24 @@ export function getDefaultOnboardingState(): OnboardingState {
   }
 }
 
-function getDefaultWorkspaceDir(homeDir: string): string {
+/** The stock worktree root. Exported so callers can tell an untouched default apart
+ *  from a workspace directory the user actually chose. */
+export function getDefaultWorkspaceDir(homeDir: string): string {
   const separator = homeDir.includes('\\') ? '\\' : '/'
   const trimmedHomeDir = homeDir.replace(/[\\/]+$/, '')
   return [trimmedHomeDir, 'orca', 'workspaces'].join(separator)
 }
 
 export function getDefaultSettings(homedir: string): GlobalSettings {
-  return {
+  return buildDefaultSettings({
     workspaceDir: getDefaultWorkspaceDir(homedir),
-    worktreeVisibilityDefaults: { external: 'hide' },
-    nestWorkspaces: true,
-    workspaceDirHistory: [],
-    refreshLocalBaseRefOnWorktreeCreate: false,
-    localBaseRefSuggestionDismissed: false,
-    autoRenameBranchFromWork: true,
-    autoRenameBranchFromWorkDefaultedOn: true,
-    branchPrefix: 'git-username',
-    branchPrefixCustom: '',
-    theme: 'system',
-    leftSidebarAppearanceMode: 'default',
-    leftSidebarTintColor: DEFAULT_LEFT_SIDEBAR_TINT_COLOR,
-    leftSidebarTintOpacity: DEFAULT_LEFT_SIDEBAR_TINT_OPACITY,
-    uiLanguage: UI_LANGUAGE_SYSTEM,
-    appIcon: DEFAULT_APP_ICON_ID,
     appFontFamily: DEFAULT_APP_FONT_FAMILY,
-    editorAutoSave: false,
     editorAutoSaveDelayMs: DEFAULT_EDITOR_AUTO_SAVE_DELAY_MS,
-    editorMinimapEnabled: false,
-    // Why empty: the editor keeps following the terminal font unless the user opts in.
-    editorFontFamily: '',
-    editorWordWrap: true,
-    richMarkdownSpellcheckEnabled: true,
-    markdownReviewToolsEnabled: true,
     primarySelectionMiddleClickPaste: getDefaultPrimarySelectionMiddleClickPaste(),
-    primarySelectionMiddleClickPasteDefaultedForLinux:
+    primarySelectionDefaultedForLinux:
       typeof process !== 'undefined' && process.platform === 'linux',
-    primarySelectionMiddleClickPasteDefaultedForTerminalDefaults:
-      getDefaultPrimarySelectionMiddleClickPaste(),
-    terminalFontSize: 14,
     terminalFontFamily: defaultTerminalFontFamily(),
-    terminalFontWeight: DEFAULT_TERMINAL_FONT_WEIGHT,
-    terminalFontWeightBold: DEFAULT_TERMINAL_FONT_WEIGHT_BOLD,
-    terminalLineHeight: 1,
-    terminalScrollSensitivity: 1.15,
-    terminalFastScrollSensitivity: 5,
-    terminalTuiScrollSensitivity: 1,
-    terminalTuiScrollSensitivityDefaultedToOne: true,
-    // Why: "auto" uses WebGL when supported, falling back to DOM on renderer failure or software/unknown GPU.
-    terminalGpuAcceleration: 'auto',
-    // Why 'auto': enable ligatures only for known ligature fonts, never forced. Resolver in shared/terminal-ligatures.ts.
-    terminalLigatures: 'auto',
-    terminalCursorStyle: 'block',
-    terminalCursorStyleDefaultedToBlock: true,
-    terminalCursorBlink: true,
-    terminalThemeDark: 'Ghostty Default Style Dark',
-    terminalDividerColorDark: '#3f3f46',
-    terminalUseSeparateLightTheme: true,
-    terminalThemeLight: 'Builtin Tango Light',
-    terminalCustomThemes: [],
-    terminalDividerColorLight: '#d4d4d8',
     terminalInactivePaneOpacity: DEFAULT_TERMINAL_INACTIVE_PANE_OPACITY,
-    terminalActivePaneOpacity: 1,
-    terminalPaneOpacityTransitionMs: 140,
-    terminalDividerThicknessPx: 3,
-    // Why: Windows paste-on-right-click matches native convention; macOS/Linux keep right-click for the context menu.
     terminalRightClickToPaste: getDefaultTerminalRightClickToPaste(),
     terminalRightClickToPasteDefaultedForPlatform: true,
     terminalWindowsShell: 'powershell.exe',
@@ -395,7 +341,7 @@ export function getDefaultSettings(homedir: string): GlobalSettings {
     sourceControlAi: getDefaultSourceControlAiSettings(),
     voice: getDefaultVoiceSettings(),
     browserAutomationMcp: { enabled: false, port: 0 }
-  }
+  })
 }
 
 export function getDefaultVoiceSettings(): VoiceSettings {
@@ -445,6 +391,7 @@ export function getDefaultPersistedState(homedir: string): PersistedState {
     workspaceSession: getDefaultWorkspaceSession(),
     workspaceSessionsByHostId: {},
     sshTargets: [],
+    sshTargetGenerationCounter: 0,
     deletedSshConfigAliases: [],
     sshRemotePtyLeases: [],
     sshPtyConsumerRecoveries: [],
@@ -479,6 +426,7 @@ export function getDefaultUIState(): PersistedUIState {
     workspaceHostScope: 'all',
     visibleWorkspaceHostIds: null,
     workspaceHostOrder: [],
+    automationHostFilter: { kind: 'all' },
     manualRepoOrder: [],
     showSleepingWorkspaces: DEFAULT_SHOW_SLEEPING_WORKSPACES,
     hideDefaultBranchWorkspace: false,
