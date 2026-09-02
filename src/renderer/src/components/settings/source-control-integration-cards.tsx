@@ -9,4 +9,3 @@ export {
   AzureDevOpsIntegrationCard,
   GiteaIntegrationCard
 } from './token-source-control-integration-cards'
-export { GiteeIntegrationCard } from './gitee-integration-card'

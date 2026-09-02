@@ -191,59 +191,6 @@ const api = {
   agentStatus: agentStatusApi,
   speech: speechApi,
 
-  // Fork-specific: Gitee integration (no upstream bridge module yet)
-  gitee: {
-    connect: (args: {
-      accessToken: string
-    }): Promise<{ ok: true; account: string | null } | { ok: false; error: string }> =>
-      ipcRenderer.invoke('gitee:connect', args),
-
-    disconnect: (): Promise<void> => ipcRenderer.invoke('gitee:disconnect'),
-
-    status: (): Promise<unknown> => ipcRenderer.invoke('gitee:status'),
-
-    listRepos: (args?: { page?: number }): Promise<unknown> =>
-      ipcRenderer.invoke('gitee:listRepos', args),
-
-    listPulls: (args: {
-      owner: string
-      repo: string
-      state?: 'open' | 'closed' | 'all'
-      page?: number
-    }): Promise<unknown> => ipcRenderer.invoke('gitee:listPulls', args),
-
-    listIssues: (args: {
-      owner: string
-      repo: string
-      state?: 'open' | 'closed' | 'all'
-      page?: number
-    }): Promise<unknown> => ipcRenderer.invoke('gitee:listIssues', args),
-
-    listAccountPulls: (): Promise<unknown> => ipcRenderer.invoke('gitee:listAccountPulls'),
-
-    listAccountIssues: (): Promise<unknown> => ipcRenderer.invoke('gitee:listAccountIssues'),
-
-    itemDetail: (args: {
-      kind: 'pull' | 'issue'
-      owner: string
-      repo: string
-      number: string
-    }): Promise<unknown> => ipcRenderer.invoke('gitee:itemDetail', args),
-
-    itemComments: (args: {
-      kind: 'pull' | 'issue'
-      owner: string
-      repo: string
-      number: string
-    }): Promise<unknown> => ipcRenderer.invoke('gitee:itemComments', args),
-
-    pullFiles: (args: { owner: string; repo: string; number: string }): Promise<unknown> =>
-      ipcRenderer.invoke('gitee:pullFiles', args),
-
-    pullCommits: (args: { owner: string; repo: string; number: string }): Promise<unknown> =>
-      ipcRenderer.invoke('gitee:pullCommits', args)
-  },
-
   // Fork-specific: Browser automation MCP server status
   browserAutomationMcp: {
     getStatus: (): Promise<unknown> => ipcRenderer.invoke('browserAutomationMcp:getStatus')

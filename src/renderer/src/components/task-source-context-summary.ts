@@ -64,13 +64,6 @@ export function getTaskSourceContextSummary(args: {
         hostLabelById: args.hostLabelById,
         hostAvailability: args.hostAvailability
       })
-    case 'gitee':
-      return getAccountBackedTaskSourceSummary(args.providerLabel, {
-        accountLabel: null,
-        accountHostId: args.accountHostId,
-        hostLabelById: args.hostLabelById,
-        hostAvailability: args.hostAvailability
-      })
   }
 }
 

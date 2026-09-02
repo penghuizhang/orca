@@ -24,12 +24,6 @@ export type PreflightStatus = {
     baseUrl: string | null
     tokenConfigured: boolean
   }
-  gitee?: {
-    configured: boolean
-    authenticated: boolean
-    account: string | null
-    tokenConfigured: boolean
-  }
 }
 
 export type RefreshAgentsResult = {

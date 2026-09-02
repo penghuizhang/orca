@@ -47,7 +47,7 @@ export type WorkspaceIntentWorkItem = {
   type: 'issue' | 'pr' | 'mr'
   number: number
   title: string
-  provider?: 'github' | 'gitlab' | 'linear' | 'jira' | 'gitee'
+  provider?: 'github' | 'gitlab' | 'linear' | 'jira'
   linearIdentifier?: string
   jiraIdentifier?: string
 }

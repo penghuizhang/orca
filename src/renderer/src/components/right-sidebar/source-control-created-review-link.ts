@@ -39,8 +39,6 @@ export function resolveCreatedHostedReviewLink(
       }
     case 'gitea':
       return { worktree: { linkedGiteaPR: number }, lookup: { linkedGiteaPR: number } }
-    case 'gitee':
-      return { worktree: { linkedGiteePR: number }, lookup: { linkedGiteePR: number } }
     case 'bitbucket':
       return { worktree: { linkedBitbucketPR: number }, lookup: { linkedBitbucketPR: number } }
     case 'unsupported':

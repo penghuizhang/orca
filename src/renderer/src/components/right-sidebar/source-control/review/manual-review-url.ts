@@ -190,8 +190,5 @@ export function buildSourceControlManualReviewUrl(input: ManualReviewUrlInput): 
       })
     case 'gitea':
       return `${baseRepo.webBaseUrl}/compare/${encodeCompareRef(baseBranch)}...${encodeCompareRef(headBranch)}`
-    case 'gitee':
-      // Why: Gitee 新建 PR 页面；带参 URL 待 L1 按实测补齐。
-      return `${baseRepo.webBaseUrl}/pulls/new`
   }
 }
