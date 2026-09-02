@@ -9,6 +9,7 @@ import type {
   CalendarCategoryCreateInput,
   CalendarCategoryUpdateInput
 } from '../shared/calendar-types'
+import type { BrowserAutomationMcpStatus } from './api/browser-automation-mcp-api'
 import {
   installBrowserFindListener,
   installNativeFileDropHandlers
@@ -193,7 +194,8 @@ const api = {
 
   // Fork-specific: Browser automation MCP server status
   browserAutomationMcp: {
-    getStatus: (): Promise<unknown> => ipcRenderer.invoke('browserAutomationMcp:getStatus')
+    getStatus: (): Promise<BrowserAutomationMcpStatus> =>
+      ipcRenderer.invoke('browserAutomationMcp:getStatus')
   },
 
   // Fork-specific: Calendar feature
