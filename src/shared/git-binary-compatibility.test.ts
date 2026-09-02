@@ -15,6 +15,7 @@ import {
   isUnsupportedWorktreeListZError
 } from './git-worktree-command-capabilities'
 import { gitCredentialPromptGuardEnv } from './git-credential-prompt-env'
+import { GIT_HISTORY_COMMIT_FORMAT, parseGitHistoryLog } from './git-history-log-parser'
 import {
   githubPullRequestHeadLocalRef,
   gitlabMergeRequestHeadLocalRef,
@@ -151,6 +152,36 @@ describeBinaryCompatibility('real Git binary compatibility', () => {
     await rm(join(repoPath, 'deferred-trash'), { recursive: true, force: true })
   })
 
+  it('supports prepared worktree creation and finalization', async () => {
+    await runGit(['worktree', 'add', '--detach', '--no-checkout', 'compat-prepared', 'HEAD'])
+    await runGit(['-C', 'compat-prepared', 'reset', '--hard', 'HEAD'])
+    await runGit([
+      'worktree',
+      'lock',
+      '--reason',
+      'orca-create-preparation:v1:compat',
+      'compat-prepared'
+    ])
+    // Why: `-f -f` moves a locked preparation while preserving its lock reason (Git >=2.25).
+    await runGit(['worktree', 'move', '-f', '-f', 'compat-prepared', 'compat-final'])
+    await runGit([
+      '-C',
+      'compat-final',
+      'checkout',
+      '--no-track',
+      '-b',
+      'compat-prepared-final',
+      'HEAD'
+    ])
+
+    await expect(runGit(['-C', 'compat-final', 'branch', '--show-current'])).resolves.toMatchObject(
+      { stdout: 'compat-prepared-final\n' }
+    )
+    await runGit(['worktree', 'unlock', 'compat-final'])
+    await runGit(['worktree', 'remove', '--force', 'compat-final'])
+    await runGit(['branch', '-D', 'compat-prepared-final'])
+  })
+
   it('recognizes ref and merge-tree compatibility boundaries', async () => {
     const fetchHeadPath = join(repoPath, '.git', 'FETCH_HEAD')
     await writeFile(fetchHeadPath, 'sentinel\n')
@@ -160,11 +191,51 @@ describeBinaryCompatibility('real Git binary compatibility', () => {
       isNoWriteFetchHeadUnsupportedError
     )
     await expect(readFile(fetchHeadPath, 'utf-8')).resolves.toBe('sentinel\n')
+    // Why: ref search ships the excludes built by `getRemoteHeadExcludes`
+    // (src/main/git/repo-base-ref-search.ts) — a single-component wildcard plus
+    // an exact exclude per slash-containing remote name. The correctness of
+    // that split rests on `*` not crossing `/` under wildmatch, which only a
+    // real binary can prove.
+    const commitOid = (await runGit(['rev-parse', 'HEAD'])).stdout.trim()
+    for (const ref of [
+      'refs/remotes/origin/main',
+      'refs/remotes/origin/compat-nested/HEAD',
+      'refs/remotes/foo/bar/main',
+      'refs/remotes/foo/bar/compat-nested/HEAD'
+    ]) {
+      await runGit(['update-ref', ref, commitOid])
+    }
+    await runGit(['symbolic-ref', 'refs/remotes/origin/HEAD', 'refs/remotes/origin/main'])
+    await runGit(['symbolic-ref', 'refs/remotes/foo/bar/HEAD', 'refs/remotes/foo/bar/main'])
+    const exactRemoteHeadExclude = '--exclude=refs/remotes/foo/bar/HEAD'
+    const shippedExcludeArgv = [
+      'for-each-ref',
+      '--format=%(refname)',
+      '--exclude=refs/remotes/*/HEAD',
+      exactRemoteHeadExclude,
+      '--count=100',
+      'refs/remotes/**'
+    ]
+    const wildcardExcludeArgv = shippedExcludeArgv.filter((arg) => arg !== exactRemoteHeadExclude)
     await expectPreferredOrRecognizedFallback(
-      ['for-each-ref', '--format=%(refname)', '--exclude=refs/remotes/**/HEAD', '--count=10'],
+      shippedExcludeArgv,
       supports(2, 42),
       isForEachRefExcludeUnsupportedError
     )
+    if (supports(2, 42)) {
+      const listRefs = async (argv: string[]): Promise<string[]> =>
+        (await runGit(argv)).stdout.split(/\r?\n/).filter(Boolean)
+
+      expect(await listRefs(shippedExcludeArgv)).toEqual([
+        'refs/remotes/foo/bar/compat-nested/HEAD',
+        'refs/remotes/foo/bar/main',
+        'refs/remotes/origin/compat-nested/HEAD',
+        'refs/remotes/origin/main'
+      ])
+      // The wildcard cannot reach a slash-containing remote's HEAD slot, which
+      // is the whole reason the exact excludes are emitted alongside it.
+      expect(await listRefs(wildcardExcludeArgv)).toContain('refs/remotes/foo/bar/HEAD')
+    }
     await expect(
       runGit(['for-each-ref', '--format=%(refname)', '--count=10'])
     ).resolves.toBeDefined()
@@ -184,6 +255,26 @@ describeBinaryCompatibility('real Git binary compatibility', () => {
       )
       await expect(runGit([...legacyArgs, head, head])).resolves.toBeDefined()
     }
+  })
+
+  it('supports exact show-ref probes', async () => {
+    const head = (await runGit(['rev-parse', 'HEAD'])).stdout.trim()
+    const originRef = 'refs/remotes/origin/compat-exact'
+    const missingRef = 'refs/remotes/missing/compat-exact'
+    await runGit(['update-ref', originRef, head])
+
+    await expect(
+      runGit(['show-ref', '--verify', '--quiet', '--', originRef])
+    ).resolves.toBeDefined()
+    await expect(
+      runGit(['show-ref', '--verify', '--quiet', '--', missingRef])
+    ).rejects.toMatchObject({ code: 1 })
+
+    const nestedRef = 'refs/remotes/origin/compat-parent/nested'
+    await runGit(['update-ref', nestedRef, head])
+    await expect(
+      runGit(['show-ref', '--verify', '--quiet', '--', 'refs/remotes/origin/compat-parent'])
+    ).rejects.toMatchObject({ code: 1 })
   })
 
   it('fetches hosted review heads into dedicated refs', async () => {
@@ -287,5 +378,30 @@ describeBinaryCompatibility('real Git binary compatibility', () => {
     await expect(
       runGit(['show', '--end-of-options', `${pinnedOid}:absent.txt`])
     ).rejects.toBeDefined()
+  })
+  // Why pin this: an older Git echoes %(decorate:…) and exits zero, so only %D
+  // in the same record carries the badges (#15507). Asserts the echo and the recovery.
+  it('reads commit decorations on both sides of the %(decorate:...) boundary', async () => {
+    await writeFile(join(repoPath, 'decorated.txt'), 'decorated\n')
+    await runGit(['add', 'decorated.txt'])
+    await runGit(['commit', '-qm', 'decorated commit'])
+    await runGit(['tag', 'compat-decorated'])
+    const head = (await runGit(['rev-parse', 'HEAD'])).stdout.trim()
+
+    const log = await runGit([
+      'log',
+      `--format=${GIT_HISTORY_COMMIT_FORMAT}`,
+      '-z',
+      '--decorate=full',
+      '-n1',
+      head
+    ])
+
+    expect(log.stdout.includes('%(decorate')).toBe(!supports(2, 43))
+
+    const [item] = parseGitHistoryLog(log.stdout)
+    expect(item?.id).toBe(head)
+    expect(item?.subject).toBe('decorated commit')
+    expect(item?.references?.map((ref) => ref.id)).toContain('refs/tags/compat-decorated')
   })
 })

@@ -1,1586 +1,270 @@
-/* eslint-disable max-lines -- Why: preload is the audited renderer/Electron IPC contract; co-locating the surface eases security and type-drift review. */
-import { contextBridge, ipcRenderer, webFrame, webUtils } from 'electron'
+import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
-import { preloadE2EConfig } from './e2e-config'
-import { glApi } from './gitlab'
-import type {
-  SkillDeletePlan,
-  SkillDeleteRequest,
-  SkillDeleteResult
-} from '../shared/skill-delete-contract'
+import type { PreloadApi } from './api-types'
 import {
-  DOC_PREVIEW_EXTERNAL_LINK_CHANNEL,
-  DOC_PREVIEW_LOAD_FAILURE_CHANNEL,
-  DOC_PREVIEW_AUTHORIZE_DIRECTORY_CHANNEL,
-  DOC_PREVIEW_MINT_GRANT_CHANNEL,
-  DOC_PREVIEW_REVOKE_GRANT_CHANNEL,
-  type DocPreviewFailure
-} from '../shared/doc-preview-scheme'
-import type { DocPreviewGrantRequest } from './api/doc-preview-api'
-import type { AppIdentity } from '../shared/app-identity'
-import type {
-  CalendarEntry,
-  CalendarEntryCreateInput,
-  CalendarEntryUpdateInput,
-  CalendarCategoryInfo,
-  CalendarCategoryCreateInput,
-  CalendarCategoryUpdateInput
-} from '../shared/calendar-types'
-import type { MacCapturedDigitRowChord } from '../shared/macos-symbolic-hotkeys'
-import type { ComputerAwakeStatus } from '../shared/computer-awake-mode'
-import type {
-  DashboardRevealAgentArgs,
-  DashboardSleepWorkspaceArgs,
-  DashboardSnapshot,
-  DashboardSpawnAgentArgs
-} from '../shared/dashboard-snapshot'
-import type {
-  TerminalPreviewConnectResult,
-  TerminalPreviewDataPayload
-} from '../shared/terminal-preview'
-import type { AgentSessionPtyWriteRefusal } from '../shared/agent-session-pty-write-admission'
-import type { CliInstallStatus } from '../shared/cli-install-types'
-import type { AgentHookInstallStatus } from '../shared/agent-hook-types'
-import type { CodexConfigSyncStatus } from '../shared/codex-config-sync-types'
-import type { TerminalPaneSplitSource } from '../shared/feature-education-telemetry'
-import type { TerminalTabCreateReply } from '../shared/terminal-reveal-identity'
-import type { ProjectExecutionRuntimeResolution } from '../shared/project-execution-runtime'
-import type { StartupCommandDelivery } from '../shared/codex-startup-delivery'
-import type {
-  AgentProviderSessionMetadata,
-  SleepingAgentLaunchConfig
-} from '../shared/agent-session-resume'
-import type { MobileRelayStatus } from '../shared/mobile-relay-status'
-import type { MobilePairingConnectionMode } from '../shared/mobile-pairing-connection-mode'
-import type { RuntimePairingReach } from '../shared/runtime-pairing-reach'
-import type { MobileRelayMintFailure } from '../shared/mobile-relay-mint-failure'
-import type { VerifyAndAddRuntimeEnvironmentResult } from '../shared/remote-pairing-verification'
-import type {
-  SshMutationExpectation,
-  SshConnectionState,
-  SshConfigHostListArgs,
-  SshConfigHostListResult,
-  SshConfigHostResolution,
-  SshConfigImportResult,
-  SshTargetAddResult,
-  SshTargetCreateInput,
-  SshTarget,
-  SshTargetUpdateInput,
-  PortForwardEntry,
-  EnrichedDetectedPort
-} from '../shared/ssh-types'
-import {
-  admitSshConnectionStateForAuthorityReconciliation,
-  admitSshDetectedPorts
-} from '../shared/ssh-retained-payload-admission'
-import type {
-  HostRepoCatalogSnapshot,
-  ListReposForExecutionHostArgs
-} from '../shared/host-repo-catalog-contract'
-import type {
-  HostLineageSnapshot,
-  ListDesktopLineageForHostArgs
-} from '../shared/host-lineage-contract'
-import type {
-  PluginPanelActionOutcome,
-  PluginPanelEntry
-} from '../shared/plugins/plugin-panel-bridge'
-import type { PluginConsentRequest } from '../shared/plugins/plugin-consent-request'
-import type { PluginChangeEvent } from '../shared/plugins/plugin-change-event'
-import type { BrowserViewportOverride } from '../shared/browser-workspace-types'
-import type {
-  BrowserWebAuthnAccountRequest,
-  BrowserWebAuthnAccountResponse
-} from '../shared/browser-webauthn-account'
-import type { SearchResult } from '../shared/code-search-types'
-import type {
-  FilesystemPathFlavor,
-  FsChangedPayload,
-  MarkdownDocument
-} from '../shared/filesystem-entry-types'
-import type { GitForkSyncExpectedUpstream, GitForkSyncResult } from '../shared/git-fork-sync'
-import type { GitStagingArea, GitUpstreamStatus } from '../shared/git-status-types'
-import type { GitHubCommentResult, GitHubReactionContent } from '../shared/github/comment-types'
-import type {
-  GitHubPRRefreshCandidate,
-  GitHubPRRefreshEvent,
-  GitHubPRRefreshReason
-} from '../shared/github/pull-request-refresh-types'
-import type { GitHubAssignableUser, GitHubOwnerRepo } from '../shared/github/pull-request-types'
-import type { GetRateLimitResult } from '../shared/github/rate-limit-types'
-import type { GitHubWorkItem, ListWorkItemsResult } from '../shared/github/work-item-types'
-import type { GhosttyImportPreview } from '../shared/global-settings-types'
-import type { GitHubCreateIssueResult } from '../shared/issue-mutation-types'
-import type { JiraProjectStatusOrder } from '../shared/jira-types'
-import type { LinearProjectDetail } from '../shared/linear/project-types'
-import type {
-  NotificationDeliveryProbeResult,
-  NotificationDismissResult,
-  NotificationDispatchResult,
-  NotificationPermissionStatusResult,
-  NotificationSoundDataResult,
-  NotificationSoundPathResult,
-  NotificationSoundResult
-} from '../shared/notification-settings-types'
-import type { OnboardingState } from '../shared/onboarding-state-types'
-import type { PersistedUIState } from '../shared/persisted-ui-state-types'
-import type { CustomPet } from '../shared/pet-types'
-import type { MemorySnapshot } from '../shared/process-stats-types'
-import type { NestedRepoScanResult } from '../shared/project-group-types'
-import type { BaseRefDefaultResult, BaseRefSearchResult } from '../shared/repo-types'
-import type { TuiAgent } from '../shared/tui-agent'
-import type { FloatingTerminalCwdRequest } from '../shared/ui-chrome-types'
-import type { UpdateStatus } from '../shared/update-status-types'
-import type {
-  WorktreeBaseStatusEvent,
-  WorktreeRemoteBranchConflictEvent
-} from '../shared/worktree/base-ref-drift-types'
-import type {
-  WorktreeDefaultTabsLaunch,
-  WorktreeSetupLaunch
-} from '../shared/worktree/launch-types'
-import type { GitPushTarget, WorktreeHeadIdentity } from '../shared/worktree/types'
-import type { PtyModelRestoreNeededEvent } from '../shared/pty-model-restore-marker'
-import type { PtyListedSession } from '../shared/pty-listed-session'
-import type {
-  PtyRendererDeliveryHealthReply,
-  PtyRendererDeliveryStateReport
-} from '../shared/pty-renderer-delivery-health'
-import type { TerminalViewAttributes } from '../shared/terminal-view-attributes'
-import type { WriteTerminalRenderDesyncEvidenceArgs } from '../shared/terminal-render-desync-evidence'
-import type { PtyMainDeliveryDiagnostics } from '../shared/pty-delivery-diagnostics'
-import type {
-  WarpThemeImportPreview,
-  WarpThemeImportSource
-} from '../shared/terminal-custom-themes'
-import type { GitHistoryOptions, GitHistoryResult } from '../shared/git-history'
-import type {
-  ShellOpenExternalEditorRequest,
-  ShellOpenExternalEditorResult,
-  ShellOpenLocalPathResult
-} from '../shared/shell-open-types'
-import type { SkillDiscoveryResult, SkillDiscoveryTarget } from '../shared/skills'
-import type {
-  SkillCloudOwnedShare,
-  SkillCloudOperation,
-  SkillCloudPackageDetails
-} from '../shared/skill-cloud-contract'
-import type {
-  SkillBundleInstallPreviewInput,
-  SkillBundleInstallPreviewOperation,
-  SkillBundlePackageVersionInstallInput,
-  SkillBundleShareInstallInput,
-  SkillBundleShareInstallOperation,
-  SkillInstallPreviewInput,
-  SkillInstallPreviewOperation,
-  ManagedSkillInstallListOperation,
-  SkillPackageVersionInstallInput,
-  SkillRemoveInput,
-  SkillRemoveOperation,
-  SkillShareInstallInput,
-  SkillShareInstallOperation,
-  SkillInstallCancelInput,
-  SkillInstallProgress,
-  SkillSharePreview,
-  SkillShareProgress,
-  SkillSharePublishInput,
-  SkillSharePublishOperation,
-  SkillShareResolvedOperation
-} from '../shared/skill-sharing-contract'
-import type {
-  SkillFreshnessInventory,
-  SkillUpdateRun,
-  SkillUpdateStartResult
-} from '../shared/skill-freshness'
-import type { ClientHostedBrowserRowsEvent } from '../shared/client-hosted-browser-rows'
-import type {
-  RuntimeBrowserDriverState,
-  RuntimeMobileSessionTabMove,
-  RuntimeRendererSyncWindowGraph,
-  RuntimeStatus,
-  RuntimeSyncWindowGraphResult,
-  RuntimeTerminalCreateRequestPayload,
-  RuntimeTerminalDriverState,
-  RuntimeTerminalPresentation
-} from '../shared/runtime-types'
-import type { RuntimeRpcResponse } from '../shared/runtime-rpc-envelope'
-import type { PublicKnownRuntimeEnvironment } from '../shared/runtime-environments'
-import type { RemoteWorkspaceChangedEvent } from '../shared/remote-workspace-types'
-import type {
-  RuntimeMobileMarkdownRequest,
-  RuntimeMobileMarkdownResponse
-} from '../shared/mobile-markdown-document'
-import type {
-  CodexRateLimitResetResult,
-  GrokAccountStatus,
-  RateLimitRuntimeTarget,
-  RateLimitState
-} from '../shared/rate-limit-types'
-import type { WorkspaceSpaceScanProgress } from '../shared/workspace-space-types'
-import type { WorkspaceCleanupScanProgress } from '../shared/workspace-cleanup'
-import type { WorkspacePortAdvertisedUrlChangedEvent } from '../shared/workspace-ports'
-import type { GhAuthDiagnostic } from '../shared/github/auth-types'
-import type { TaskSourceContext } from '../shared/task-source-context'
-import type {
-  GetProjectViewTableResult,
-  GitHubProjectCommentMutationResult,
-  GitHubProjectMutationResult,
-  ListAccessibleProjectsResult,
-  ListAssignableUsersBySlugResult,
-  ListIssueTypesBySlugResult,
-  ListLabelsBySlugResult,
-  ListProjectViewsResult,
-  ProjectWorkItemDetailsBySlugResult,
-  ResolveProjectRefResult
-} from '../shared/github/project-result-types'
-import type {
-  AddIssueCommentBySlugArgs,
-  ClearProjectItemFieldArgs,
-  DeleteIssueCommentBySlugArgs,
-  GetProjectViewTableArgs,
-  ListAccessibleProjectsArgs,
-  ListAssignableUsersBySlugArgs,
-  ListIssueTypesBySlugArgs,
-  ListLabelsBySlugArgs,
-  ListProjectViewsArgs,
-  ProjectWorkItemDetailsBySlugArgs,
-  ResolveProjectRefArgs,
-  UpdateIssueBySlugArgs,
-  UpdateIssueCommentBySlugArgs,
-  UpdateIssueTypeBySlugArgs,
-  UpdatePullRequestBySlugArgs,
-  UpdateProjectItemFieldArgs
-} from '../shared/github/project-request-types'
-import {
-  richMarkdownContextMenuCommandChannel,
-  richMarkdownContextMenuTargetChannel,
-  type RichMarkdownContextMenuCommandPayload,
-  type RichMarkdownContextMenuTableTarget
-} from '../shared/rich-markdown-context-menu'
-import type {
-  AgentStatusClearIpcPayload,
-  AgentStatusIpcPayload,
-  MigrationUnsupportedPtyEntry
-} from '../shared/agent-status-types'
-import type { AgentInterruptInferenceRequest } from '../shared/agent-interrupt-intent'
-import type { AgentQuestionAnsweredInferenceRequest } from '../shared/agent-question-answered-intent'
-import type { TerminalSideEffectBatch } from '../shared/terminal-side-effect-facts'
-import type {
-  SpeechErrorEvent,
-  SpeechLifecycleEvent,
-  SpeechModelManifest,
-  SpeechModelState,
-  SpeechTranscriptEvent
-} from '../shared/speech-types'
-import type { TelemetryConsentState } from '../shared/telemetry-consent-types'
-import type {
-  PreflightRuntimeContext,
-  RefreshAgentsResult,
-  NativeChatAppendedPayload,
-  NativeChatReadSessionResult,
-  NativeChatSubscriptionFrame,
-  PluginHostInstallResult,
-  PluginHostInstallSource,
-  PluginHostListEntry,
-  PluginHostLogLine,
-  ExternalAutomationManagerResult,
-  PreloadApi
-} from './api-types'
-import type { AgentKind, LaunchSource, RequestKind } from '../shared/telemetry-events'
-import {
-  KEYBOARD_LAYOUT_CHANGED_CHANNEL,
-  type KeyboardLayoutChangeEvent
-} from '../shared/keyboard-layout-events'
-import { createBrowserFindSubscriptions } from './browser-find-subscriptions'
-import { createBrowserClientPageRendererRequests } from './browser-client-page-renderer-requests'
-import { readBrowserClientHostIdArgument } from '../shared/browser-client-host-id-argument'
-import { createUsageProviderApi } from './usage-provider-api'
-import type { AppStarSource } from '../shared/gh-star-source'
-import type { ExecutionHostId } from '../shared/execution-host'
-import type {
-  AutomationDispatchRequest,
-  AutomationDispatchResult,
-  ExternalAutomationRunsPage,
-  AutomationRun,
-  AutomationPrecheckResult
-} from '../shared/automations-types'
-import type { AutomationOwnerRef } from '../shared/automation-owner-ref'
-import type {
-  ScopedExternalManagerActionRequest,
-  ScopedExternalManagerCreateRequest,
-  ScopedExternalManagerListRequest,
-  ScopedExternalManagerRunsRequest,
-  ScopedExternalManagerUpdateRequest
-} from '../shared/external-automation-scope'
-import type { AutomationsChangedPayload } from '../shared/runtime-client-events'
-import type { KeybindingActionId, KeybindingFileSnapshot } from '../shared/keybindings'
-import type {
-  AiVaultDeleteSessionArgs,
-  AiVaultDeleteSessionResult
-} from '../shared/ai-vault-session-deletion'
-import type {
-  AiVaultFirstUserPromptArgs,
-  AiVaultListArgs,
-  AiVaultSubagentListArgs
-} from '../shared/ai-vault-types'
-import type { AiVaultSessionTitlesArgs } from '../shared/ai-vault-session-title'
-import type { AiVaultPrepareSessionResumeArgs } from '../shared/ai-vault-resume-preparation'
-import type { AgentType } from '../shared/native-chat-types'
-import { ORCA_UPDATER_QUIT_AND_INSTALL_ABORTED_EVENT } from '../shared/updater-renderer-events'
-import {
-  ORCA_INTERNAL_FILE_DRAG_TYPE,
-  createNativeFileDropPayload,
-  createRejectedNativeFileDropPayload,
-  hasNativeFileDragTypes,
-  NATIVE_FILE_DROP_MAX_PATHS,
-  resolveNativeFileDropPath,
-  type NativeDropResolution,
-  type NativeFileDropPayload,
-  type NativeFileDropPathEntry
-} from '../shared/native-file-drop'
-import type {
-  LocalLogTailChangedPayload,
-  LocalLogTailReadArgs,
-  LocalLogTailReadResult,
-  LocalLogTailWatchArgs
-} from '../shared/local-log-tail-types'
-import { subscribeRuntimeEnvironmentFromPreload } from './runtime-environment-subscriptions'
-import type { RuntimeEnvironmentSubscriptionHandle } from './runtime-environment-subscriptions'
-import type { HostedReviewForBranchArgs } from '../shared/hosted-review'
-import type { ReadClipboardTextOptions } from '../shared/clipboard-text'
-import type {
-  LocalhostWorktreeLabelResult,
-  LocalhostWorktreeLabelRoute
-} from '../shared/localhost-worktree-labels'
-import type {
-  CrashReportBreadcrumbData,
-  CrashReportCopyDiagnosticsArgs,
-  CrashReportSubmitArgs,
-  CrashReportSubmitResult,
-  ReactErrorBoundaryReportArgs,
-  ReactErrorBoundaryReportResult
-} from '../shared/crash-reporting'
-import type { RendererHeapStatistics } from '../shared/renderer-heap-statistics'
-import type { RendererProcessMemory } from '../shared/renderer-process-memory'
-import { readRendererHeapStatistics } from './renderer-heap-statistics-reader'
-import { readRendererProcessMemory } from './renderer-process-memory-reader'
-import { createUpdaterQuitAbortRelay } from '../shared/renderer-restart-preparation'
-import {
-  prepareAndInvokeAppRestart,
-  prepareAndInvokeUpdaterInstall,
-  registerRendererRestartIpcRelays
-} from './renderer-restart-wiring'
+  installBrowserFindListener,
+  installNativeFileDropHandlers
+} from './preload-runtime-support'
+import { appApi } from './api/app-bridge'
+import { orcaProfilesApi } from './api/orca-profiles-bridge'
+import { platformApi } from './api/platform-bridge'
+import { wslApi } from './api/wsl-bridge'
+import { pwshApi } from './api/pwsh-bridge'
+import { gitBashApi } from './api/git-bash-bridge'
+import { pluginsApi } from './api/plugins-bridge'
+import { reposApi } from './api/repos-bridge'
+import { projectsApi } from './api/projects-bridge'
+import { projectGroupsApi } from './api/project-groups-bridge'
+import { folderWorkspacesApi } from './api/folder-workspaces-bridge'
+import { sparsePresetsApi } from './api/sparse-presets-bridge'
+import { worktreesApi } from './api/worktrees-bridge'
+import { workspaceCleanupApi } from './api/workspace-cleanup-bridge'
+import { workspaceSpaceApi } from './api/workspace-space-bridge'
+import { workspacePortsApi } from './api/workspace-ports-bridge'
+import { ptyApi } from './api/pty-bridge'
+import { feedbackApi } from './api/feedback-bridge'
+import { crashReportsApi } from './api/crash-reports-bridge'
+import { exportApi } from './api/export-bridge'
+import { ghApi } from './api/gh-bridge'
+import { hostedReviewApi } from './api/hosted-review-bridge'
+import { glApiBridge } from './api/gl-bridge'
+import { bitbucketApi } from './api/bitbucket-bridge'
+import { linearApi } from './api/linear-bridge'
+import { jiraApi } from './api/jira-bridge'
+import { starNagApi } from './api/star-nag-bridge'
+import { diagnosticsApi } from './api/diagnostics-bridge'
+import { settingsApi } from './api/settings-bridge'
+import { agentAwakeApi } from './api/agent-awake-bridge'
+import { localhostWorktreeLabelsApi } from './api/localhost-worktree-labels-bridge'
+import { keybindingsApi } from './api/keybindings-bridge'
+import { codexAccountsApi } from './api/codex-accounts-bridge'
+import { claudeAccountsApi } from './api/claude-accounts-bridge'
+import { cliApi } from './api/cli-bridge'
+import { codexConfigSyncApi } from './api/codex-config-sync-bridge'
+import { agentTrustApi } from './api/agent-trust-bridge'
+import { preflightApi } from './api/preflight-bridge'
+import { notificationsApi } from './api/notifications-bridge'
+import { onboardingApi } from './api/onboarding-bridge'
+import { dashboardApi } from './api/dashboard-bridge'
+import { terminalPreviewApi } from './api/terminal-preview-bridge'
+import { macosTccPromptsApi } from './api/macos-tcc-prompts-bridge'
+import { developerPermissionsApi } from './api/developer-permissions-bridge'
+import { computerUsePermissionsApi } from './api/computer-use-permissions-bridge'
+import { shellApi } from './api/shell-bridge'
+import { skillsApi } from './api/skills-bridge'
+import { petApi } from './api/pet-bridge'
+import { browserApi } from './api/browser-bridge'
+import { emulatorApi } from './api/emulator-bridge'
+import { hooksApi } from './api/hooks-bridge'
+import { ephemeralVmApi } from './api/ephemeral-vm-bridge'
+import { cacheApi } from './api/cache-bridge'
+import { sessionApi } from './api/session-bridge'
+import { remoteWorkspaceApi } from './api/remote-workspace-bridge'
+import { updaterApi } from './api/updater-bridge'
+import { docPreviewApi } from './api/doc-preview-bridge'
+import { notebookApi } from './api/notebook-bridge'
+import { fsApi } from './api/fs-bridge'
+import { gitApi } from './api/git-bridge'
+import { uiApi } from './api/ui-bridge'
+import { statsApi } from './api/stats-bridge'
+import { memoryApi } from './api/memory-bridge'
+import { claudeUsageApi } from './api/claude-usage-bridge'
+import { codexUsageApi } from './api/codex-usage-bridge'
+import { openCodeUsageApi } from './api/open-code-usage-bridge'
+import { aiVaultApi } from './api/ai-vault-bridge'
+import { nativeChatApi } from './api/native-chat-bridge'
+import { runtimeApi } from './api/runtime-bridge'
+import { runtimeEnvironmentsApi } from './api/runtime-environments-bridge'
+import { rateLimitsApi } from './api/rate-limits-bridge'
+import { minimaxCredentialsApi } from './api/minimax-credentials-bridge'
+import { grokAccountsApi } from './api/grok-accounts-bridge'
+import { sshApi } from './api/ssh-bridge'
+import { automationsApi } from './api/automations-bridge'
+import { e2eApi } from './api/e2e-bridge'
+import { mobileApi } from './api/mobile-bridge'
+import { agentStatusApi } from './api/agent-status-bridge'
+import { speechApi } from './api/speech-bridge'
 
-// Why: the sync checkpoint only stages; this joins its durable write so a
-// navigating path can abort instead of losing the staged session.
-async function awaitBeforeUnloadCheckpoint(): Promise<void> {
-  const result = (await ipcRenderer.invoke('app:await-before-unload-checkpoint')) as {
-    ok?: unknown
-  }
-  if (result?.ok !== true) {
-    throw new Error('Failed to persist renderer state before unload.')
-  }
-}
+installNativeFileDropHandlers()
+installBrowserFindListener()
 
-type NativeFileDropCallback = (data: NativeFileDropPayload) => void
+// Custom APIs for renderer. Each domain bridge owns its IPC contract.
+const telemetryTrackApi: PreloadApi['telemetryTrack'] = (name, props) =>
+  ipcRenderer.invoke('telemetry:track', name, props)
+const telemetrySetOptInApi: PreloadApi['telemetrySetOptIn'] = (optedIn) =>
+  ipcRenderer.invoke('telemetry:setOptIn', optedIn)
+const telemetryAcknowledgeBannerApi: PreloadApi['telemetryAcknowledgeBanner'] = () =>
+  ipcRenderer.invoke('telemetry:acknowledgeBanner')
+const telemetryGetConsentStateApi: PreloadApi['telemetryGetConsentState'] = () =>
+  ipcRenderer.invoke('telemetry:getConsentState')
 
-const nativeFileDropCallbacks: NativeFileDropCallback[] = []
-let nativeFileDropListenerRegistered = false
-const updaterQuitAbortRelay = createUpdaterQuitAbortRelay(
-  window,
-  ORCA_UPDATER_QUIT_AND_INSTALL_ABORTED_EVENT
-)
-
-registerRendererRestartIpcRelays(ipcRenderer, window, updaterQuitAbortRelay)
-
-function getLinuxDisplayServer(): 'wayland' | 'x11' | null {
-  if (process.platform !== 'linux') {
-    return null
-  }
-  if (
-    process.env.WAYLAND_DISPLAY ||
-    process.env.XDG_SESSION_TYPE?.toLowerCase() === 'wayland' ||
-    process.env.ELECTRON_OZONE_PLATFORM_HINT?.toLowerCase() === 'wayland'
-  ) {
-    return 'wayland'
-  }
-  return process.env.DISPLAY ? 'x11' : null
-}
-
-const onNativeFileDrop = (_event: Electron.IpcRendererEvent, data: NativeFileDropPayload): void => {
-  for (const callback of Array.from(nativeFileDropCallbacks)) {
-    callback(data)
-  }
-}
-
-function subscribeNativeFileDrop(callback: NativeFileDropCallback): () => void {
-  nativeFileDropCallbacks.push(callback)
-  if (!nativeFileDropListenerRegistered) {
-    // Why: keep one real IPC listener and fan out locally — panes subscribe per split group, which would otherwise trip listener warnings.
-    ipcRenderer.on('terminal:file-drop', onNativeFileDrop)
-    nativeFileDropListenerRegistered = true
-  }
-  return () => {
-    const callbackIndex = nativeFileDropCallbacks.indexOf(callback)
-    if (callbackIndex !== -1) {
-      nativeFileDropCallbacks.splice(callbackIndex, 1)
-    }
-    if (nativeFileDropCallbacks.length === 0 && nativeFileDropListenerRegistered) {
-      ipcRenderer.removeListener('terminal:file-drop', onNativeFileDrop)
-      nativeFileDropListenerRegistered = false
-    }
-  }
-}
-
-// Why: cache one shared Audio + blob URL per sound path so we don't re-read 10MB from disk and re-transfer over IPC on every notification.
-let cachedNotificationSound: {
-  path: string
-  blobUrl: string
-  audio: HTMLAudioElement
-} | null = null
-let isNotificationSoundPlaying = false
-// Why: audio.play() can reject before ended/error fires — cleanup hook prevents leaked listeners on the cached Audio.
-let cleanupNotificationSoundPlayback: (() => void) | null = null
-
-function clearNotificationSoundPlaybackState(): void {
-  cleanupNotificationSoundPlayback?.()
-  cleanupNotificationSoundPlayback = null
-  isNotificationSoundPlaying = false
-}
-
-function disposeCachedNotificationSound(): void {
-  if (cachedNotificationSound) {
-    clearNotificationSoundPlaybackState()
-    cachedNotificationSound.audio.pause()
-    cachedNotificationSound.audio.src = ''
-    URL.revokeObjectURL(cachedNotificationSound.blobUrl)
-    cachedNotificationSound = null
-  }
-}
-
-/**
- * Classify which UI surface the native OS drop landed on, and for file-explorer drops
- * extract the destination directory from `data-native-file-drop-dir`.
- *
- * Why: preload consumes the native `drop` before React can read paths, so it must capture
- * the destination dir now — otherwise the renderer can't tell "root" from "inside this folder".
- */
-function resolveNativeFileDrop(event: DragEvent): NativeDropResolution | null {
-  const pathEntries: NativeFileDropPathEntry[] = []
-  for (const entry of event.composedPath()) {
-    if (entry instanceof HTMLElement) {
-      pathEntries.push({
-        nativeFileDropTarget: entry.dataset.nativeFileDropTarget,
-        nativeFileDropDir: entry.dataset.nativeFileDropDir,
-        terminalTabId: entry.dataset.terminalTabId,
-        terminalPaneLeafId: entry.dataset.terminalPaneLeafId ?? entry.dataset.leafId
-      })
-    }
-  }
-  return resolveNativeFileDropPath(pathEntries)
-}
-
-// File drag-and-drop lives in preload because webUtils (File→path) is only available in the preload/main world, not the renderer's isolated world.
-document.addEventListener(
-  'dragover',
-  (e) => {
-    // Let in-app drags through to React handlers (their own dropEffect); only override for native OS file drops.
-    if (e.dataTransfer && !hasNativeFileDragTypes(e.dataTransfer.types)) {
-      return
-    }
-    e.preventDefault()
-    if (e.dataTransfer) {
-      e.dataTransfer.dropEffect = 'copy'
-    }
-  },
-  true
-)
-
-document.addEventListener(
-  'drop',
-  (e) => {
-    // Let in-app drags (e.g. file explorer → terminal) through to React handlers
-    if (e.dataTransfer?.types.includes(ORCA_INTERNAL_FILE_DRAG_TYPE)) {
-      return
-    }
-
-    e.preventDefault()
-    e.stopPropagation()
-    const files = e.dataTransfer?.files
-    if (!files || files.length === 0) {
-      return
-    }
-    const resolution = resolveNativeFileDrop(e)
-
-    // Why: reject oversized gestures by count before resolving every File object (path resolution is synchronous here).
-    if (files.length > NATIVE_FILE_DROP_MAX_PATHS) {
-      ipcRenderer.send(
-        'terminal:file-dropped-from-preload',
-        createRejectedNativeFileDropPayload({
-          byteLength: 0,
-          pathCount: files.length,
-          reason: 'too-many-paths',
-          status: 'rejected'
-        })
-      )
-      return
-    }
-
-    const paths: string[] = []
-    for (let i = 0; i < files.length; i++) {
-      // webUtils.getPathForFile is the Electron 28+ replacement for File.path
-      const filePath = webUtils.getPathForFile(files[i])
-      if (filePath) {
-        paths.push(filePath)
-      }
-    }
-
-    if (paths.length === 0) {
-      return
-    }
-
-    // Why: explorer marker present but no destination dir resolved → reject entirely, no editor fallback (fail-closed, design §7.1).
-    if (resolution?.target === 'rejected') {
-      return
-    }
-
-    const payload = createNativeFileDropPayload(resolution, paths)
-    if (!payload) {
-      return
-    }
-    // Why: emit exactly one native-drop event per gesture (the shared planner rejects oversized payloads without leaking path contents).
-    ipcRenderer.send('terminal:file-dropped-from-preload', payload)
-  },
-  true
-)
-
-const startupDiagnosticsEnabled = process.env.ORCA_STARTUP_DIAGNOSTICS === '1'
-const browserFindSubscriptions = createBrowserFindSubscriptions()
-const browserClientPageRendererRequests = createBrowserClientPageRendererRequests({
-  ipc: ipcRenderer,
-  isTopFrame: () => window.top === window
-})
-
-ipcRenderer.on('ui:findInBrowserPage', (_event, source: unknown) => {
-  browserFindSubscriptions.dispatch(source)
-})
-
-// Custom APIs for renderer
 const api = {
-  app: {
-    getIdentity: (): Promise<AppIdentity> => ipcRenderer.invoke('app:getIdentity'),
-    getFeatureWallAssetBaseUrl: (): Promise<string> =>
-      ipcRenderer.invoke('app:getFeatureWallAssetBaseUrl'),
-    relaunch: (): Promise<void> =>
-      prepareAndInvokeAppRestart(
-        window,
-        () => ipcRenderer.invoke('app:relaunch'),
-        awaitBeforeUnloadCheckpoint
-      ),
-    restart: (): Promise<void> =>
-      prepareAndInvokeAppRestart(
-        window,
-        () => ipcRenderer.invoke('app:restart'),
-        awaitBeforeUnloadCheckpoint
-      ),
-    reload: (): Promise<void> =>
-      prepareAndInvokeAppRestart(
-        window,
-        () => ipcRenderer.invoke('app:reload'),
-        awaitBeforeUnloadCheckpoint
-      ),
-    stageBeforeUnloadSync: (args: Parameters<PreloadApi['app']['stageBeforeUnloadSync']>[0]) => {
-      const result = ipcRenderer.sendSync('app:stage-before-unload-sync', args) as {
-        ok?: unknown
-      }
-      if (result?.ok !== true) {
-        throw new Error('Failed to stage renderer state before unload.')
-      }
-    },
-    awaitFirstWindowStartupServices: (): Promise<void> =>
-      ipcRenderer.invoke('app:awaitFirstWindowStartupServices'),
-    prepareTerminalStartupRestoration: (): Promise<void> =>
-      ipcRenderer.invoke('app:prepareTerminalStartupRestoration'),
-    recoverLegacyWorkerTerminalsForRendererStartup: (): Promise<void> =>
-      ipcRenderer.invoke('app:recoverLegacyWorkerTerminalsForRendererStartup'),
-    startupDiagnostic: (event: string, details?: Record<string, unknown>): Promise<void> =>
-      startupDiagnosticsEnabled
-        ? ipcRenderer.invoke('app:startupDiagnostic', event, details)
-        : Promise.resolve(),
-    // Why: macOS input mode (or layout ID) so keyboard workarounds can tell CJK/compose layouts from US QWERTY (issue #1205); null on non-Darwin or read failure.
-    getKeyboardInputSourceId: (): Promise<string | null> =>
-      ipcRenderer.invoke('app:getKeyboardInputSourceId'),
-    getMacCapturedDigitRowChords: (): Promise<MacCapturedDigitRowChord[]> =>
-      ipcRenderer.invoke('app:getMacCapturedDigitRowChords'),
-    getKeyboardLayoutSnapshot: () => ipcRenderer.invoke('app:getKeyboardLayoutSnapshot'),
-    onKeyboardLayoutChanged: (
-      callback: (event: KeyboardLayoutChangeEvent) => void
-    ): (() => void) => {
-      const listener = (
-        _event: Electron.IpcRendererEvent,
-        event: KeyboardLayoutChangeEvent
-      ): void => callback(event)
-      ipcRenderer.on(KEYBOARD_LAYOUT_CHANGED_CHANNEL, listener)
-      return () => ipcRenderer.removeListener(KEYBOARD_LAYOUT_CHANGED_CHANNEL, listener)
-    },
-    setUnreadDockBadgeCount: (count: number): Promise<void> =>
-      ipcRenderer.invoke('app:setUnreadDockBadgeCount', count),
-    getFloatingTerminalCwd: (args?: FloatingTerminalCwdRequest): Promise<string> =>
-      ipcRenderer.invoke('app:getFloatingTerminalCwd', args),
-    getFloatingMarkdownDirectory: (): Promise<string> =>
-      ipcRenderer.invoke('app:getFloatingMarkdownDirectory'),
-    pickFloatingMarkdownDocument: (): Promise<MarkdownDocument | null> =>
-      ipcRenderer.invoke('app:pickFloatingMarkdownDocument'),
-    pickFloatingWorkspaceDirectory: (): Promise<string | null> =>
-      ipcRenderer.invoke('app:pickFloatingWorkspaceDirectory'),
-    writeTerminalRenderDesyncEvidence: (args: WriteTerminalRenderDesyncEvidenceArgs) =>
-      ipcRenderer.invoke('terminal:writeRenderDesyncEvidence', args)
-  },
-
-  orcaProfiles: {
-    list: () => ipcRenderer.invoke('orcaProfiles:list'),
-    authStatus: () => ipcRenderer.invoke('orcaProfiles:authStatus'),
-    createLocal: (args) => ipcRenderer.invoke('orcaProfiles:createLocal', args),
-    createCloudLinked: (args) => ipcRenderer.invoke('orcaProfiles:createCloudLinked', args),
-    switchProfile: (args) => ipcRenderer.invoke('orcaProfiles:switch', args),
-    transferProject: (args) => ipcRenderer.invoke('orcaProfiles:transferProject', args),
-    findProjectProfiles: (args) => ipcRenderer.invoke('orcaProfiles:findProjectProfiles', args),
-    connectCurrent: () => ipcRenderer.invoke('orcaProfiles:connectCurrent'),
-    refreshAuth: () => ipcRenderer.invoke('orcaProfiles:refreshAuth'),
-    signOutCurrent: () => ipcRenderer.invoke('orcaProfiles:signOutCurrent'),
-    selectOrg: (args) => ipcRenderer.invoke('orcaProfiles:selectOrg', args),
-    orgMembersList: (args) => ipcRenderer.invoke('orcaProfiles:orgMembersList', args),
-    orgMemberInvite: (args) => ipcRenderer.invoke('orcaProfiles:orgMemberInvite', args),
-    orgInviteRevoke: (args) => ipcRenderer.invoke('orcaProfiles:orgInviteRevoke', args),
-    orgMemberChangeRole: (args) => ipcRenderer.invoke('orcaProfiles:orgMemberChangeRole', args),
-    orgMemberRemove: (args) => ipcRenderer.invoke('orcaProfiles:orgMemberRemove', args)
-  } satisfies PreloadApi['orcaProfiles'],
-
-  platform: {
-    get: () => ({
-      platform: process.platform,
-      // Why: sandboxed preload cannot require node:os; Electron exposes the OS
-      // version on process.getSystemVersion when available.
-      osRelease:
-        (process as NodeJS.Process & { getSystemVersion?: () => string }).getSystemVersion?.() ??
-        '',
-      arch: process.arch,
-      // Why: these identify the default shell without probing user config files.
-      // process.env is available in the sandboxed preload; node:os is not.
-      shell: process.env.SHELL?.trim() || process.env.ComSpec?.trim() || '',
-      displayServer: getLinuxDisplayServer()
-    })
-  } satisfies PreloadApi['platform'],
-
-  wsl: {
-    isAvailable: (): Promise<boolean> => ipcRenderer.invoke('wsl:isAvailable'),
-    listDistros: (): Promise<string[]> => ipcRenderer.invoke('wsl:listDistros')
-  },
-
-  pwsh: {
-    isAvailable: (): Promise<boolean> => ipcRenderer.invoke('pwsh:isAvailable')
-  },
-
-  gitBash: {
-    isAvailable: (): Promise<boolean> => ipcRenderer.invoke('gitBash:isAvailable')
-  },
-
-  plugins: {
-    list: (): Promise<PluginHostListEntry[]> => ipcRenderer.invoke('plugins:list'),
-    listLanguagePacks: () => ipcRenderer.invoke('plugins:listLanguagePacks'),
-    consent: (args: PluginConsentRequest): Promise<PluginHostListEntry[]> =>
-      ipcRenderer.invoke('plugins:consent', args),
-    setEnabled: (args: { pluginKey: string; enabled: boolean }): Promise<PluginHostListEntry[]> =>
-      ipcRenderer.invoke('plugins:setEnabled', args),
-    readPanelEntry: (args: {
-      pluginKey: string
-      panelId: string
-    }): Promise<PluginPanelEntry | null> => ipcRenderer.invoke('plugins:readPanelEntry', args),
-    invokeCommand: (args: {
-      pluginKey: string
-      commandId: string
-      args?: unknown
-    }): Promise<unknown> => ipcRenderer.invoke('plugins:invokeCommand', args),
-    panelAction: (args: {
-      sessionToken: string
-      action: string
-      params?: unknown
-    }): Promise<PluginPanelActionOutcome> => ipcRenderer.invoke('plugins:panelAction', args),
-    install: (source: PluginHostInstallSource): Promise<PluginHostInstallResult> =>
-      ipcRenderer.invoke('plugins:install', source),
-    listMarketplaces: () => ipcRenderer.invoke('plugins:listMarketplaces'),
-    addMarketplace: (source) => ipcRenderer.invoke('plugins:addMarketplace', source),
-    removeMarketplace: (args) => ipcRenderer.invoke('plugins:removeMarketplace', args),
-    refreshMarketplaces: (args = {}) => ipcRenderer.invoke('plugins:refreshMarketplaces', args),
-    listMarketplacePlugins: () => ipcRenderer.invoke('plugins:listMarketplacePlugins'),
-    previewMarketplacePlugin: (args) =>
-      ipcRenderer.invoke('plugins:previewMarketplacePlugin', args),
-    installMarketplacePlugin: (preview) =>
-      ipcRenderer.invoke('plugins:installMarketplacePlugin', preview),
-    previewMarketplaceUpdate: (args) =>
-      ipcRenderer.invoke('plugins:previewMarketplaceUpdate', args),
-    rollbackMarketplacePlugin: (args) =>
-      ipcRenderer.invoke('plugins:rollbackMarketplacePlugin', args),
-    remove: (args: { pluginKey: string }): Promise<PluginHostListEntry[]> =>
-      ipcRenderer.invoke('plugins:remove', args),
-    getLogs: (args: { pluginKey: string }): Promise<PluginHostLogLine[]> =>
-      ipcRenderer.invoke('plugins:getLogs', args),
-    refresh: (): Promise<PluginHostListEntry[]> => ipcRenderer.invoke('plugins:refresh'),
-    onChanged: (callback): (() => void) => {
-      const listener = (_event: Electron.IpcRendererEvent, change: PluginChangeEvent): void =>
-        callback(change)
-      ipcRenderer.on('plugins:changed', listener)
-      return () => {
-        ipcRenderer.removeListener('plugins:changed', listener)
-      }
-    }
-  } satisfies PreloadApi['plugins'],
-
-  repos: {
-    list: () => ipcRenderer.invoke('repos:list'),
-
-    listForExecutionHost: (args: ListReposForExecutionHostArgs): Promise<HostRepoCatalogSnapshot> =>
-      ipcRenderer.invoke('repos:listForExecutionHost', args),
-
-    add: (args) => ipcRenderer.invoke('repos:add', args),
-
-    addRemote: (args) => ipcRenderer.invoke('repos:addRemote', args),
-
-    create: (args) => ipcRenderer.invoke('repos:create', args),
-
-    isGitAvailable: (): Promise<boolean> => ipcRenderer.invoke('repos:isGitAvailable'),
-
-    getDefaultCreateProjectParent: (): Promise<string> =>
-      ipcRenderer.invoke('repos:getDefaultCreateProjectParent'),
-
-    remove: (args) => ipcRenderer.invoke('repos:remove', args),
-
-    removeForHost: (args) => ipcRenderer.invoke('repos:removeForHost', args),
-
-    reorder: (args) => ipcRenderer.invoke('repos:reorder', args),
-
-    reorderForHost: (args) => ipcRenderer.invoke('repos:reorderForHost', args),
-
-    update: (args) => ipcRenderer.invoke('repos:update', args),
-
-    pickFolder: () => ipcRenderer.invoke('repos:pickFolder'),
-
-    pickFolders: () => ipcRenderer.invoke('repos:pickFolders'),
-
-    pickDirectory: () => ipcRenderer.invoke('repos:pickDirectory'),
-
-    clone: (args) => ipcRenderer.invoke('repos:clone', args),
-
-    cloneRemote: (args) => ipcRenderer.invoke('repos:cloneRemote', args),
-
-    createRemote: (args) => ipcRenderer.invoke('repos:createRemote', args),
-
-    cloneAbort: () => ipcRenderer.invoke('repos:cloneAbort'),
-
-    onCloneProgress: (
-      callback: (data: { phase: string; percent: number }) => void
-    ): (() => void) => {
-      const listener = (
-        _event: Electron.IpcRendererEvent,
-        data: { phase: string; percent: number }
-      ) => callback(data)
-      ipcRenderer.on('repos:clone-progress', listener)
-      return () => ipcRenderer.removeListener('repos:clone-progress', listener)
-    },
-
-    getGitUsername: (args: { repoId: string }): Promise<string> =>
-      ipcRenderer.invoke('repos:getGitUsername', args),
-
-    getBaseRefDefault: (args: {
-      repoId: string
-      hostId?: ExecutionHostId
-    }): Promise<BaseRefDefaultResult> => ipcRenderer.invoke('repos:getBaseRefDefault', args),
-
-    searchBaseRefs: (args: {
-      repoId: string
-      query: string
-      limit?: number
-      hostId?: ExecutionHostId
-    }): Promise<string[]> => ipcRenderer.invoke('repos:searchBaseRefs', args),
-
-    searchBaseRefDetails: (args: {
-      repoId: string
-      query: string
-      limit?: number
-      hostId?: ExecutionHostId
-    }): Promise<BaseRefSearchResult[]> => ipcRenderer.invoke('repos:searchBaseRefDetails', args),
-
-    onChanged: (callback: () => void): (() => void) => {
-      const listener = (_event: Electron.IpcRendererEvent) => callback()
-      ipcRenderer.on('repos:changed', listener)
-      return () => ipcRenderer.removeListener('repos:changed', listener)
-    }
-  } satisfies PreloadApi['repos'],
-
-  projects: {
-    list: () => ipcRenderer.invoke('projects:list'),
-    update: (args) => ipcRenderer.invoke('projects:update', args),
-    listHostSetups: () => ipcRenderer.invoke('projectHostSetups:list'),
-    createHostSetup: (args) => ipcRenderer.invoke('projectHostSetups:create', args),
-    setupExistingFolder: (args) =>
-      ipcRenderer.invoke('projectHostSetups:setupExistingFolder', args),
-    updateHostSetup: (args) => ipcRenderer.invoke('projectHostSetups:update', args),
-    deleteHostSetup: (args) => ipcRenderer.invoke('projectHostSetups:delete', args)
-  } satisfies PreloadApi['projects'],
-
-  projectGroups: {
-    list: () => ipcRenderer.invoke('projectGroups:list'),
-    create: (args) => ipcRenderer.invoke('projectGroups:create', args),
-    update: (args) => ipcRenderer.invoke('projectGroups:update', args),
-    delete: (args) => ipcRenderer.invoke('projectGroups:delete', args),
-    moveProject: (args) => ipcRenderer.invoke('projectGroups:moveProject', args),
-    scanNested: (args) => ipcRenderer.invoke('projectGroups:scanNested', args),
-    cancelNestedScan: (args) => ipcRenderer.invoke('projectGroups:cancelNestedScan', args),
-    onNestedScanProgress: (callback) => {
-      const listener = (
-        _event: Electron.IpcRendererEvent,
-        data: { scanId: string; scan: NestedRepoScanResult }
-      ) => callback(data)
-      ipcRenderer.on('projectGroups:scanNestedProgress', listener)
-      return () => ipcRenderer.removeListener('projectGroups:scanNestedProgress', listener)
-    },
-    importNested: (args) => ipcRenderer.invoke('projectGroups:importNested', args)
-  } satisfies PreloadApi['projectGroups'],
-
-  folderWorkspaces: {
-    list: () => ipcRenderer.invoke('folderWorkspaces:list'),
-    getPathStatus: (args) => ipcRenderer.invoke('folderWorkspaces:getPathStatus', args),
-    create: (args) => ipcRenderer.invoke('folderWorkspaces:create', args),
-    update: (args) => ipcRenderer.invoke('folderWorkspaces:update', args),
-    delete: (args) => ipcRenderer.invoke('folderWorkspaces:delete', args)
-  } satisfies PreloadApi['folderWorkspaces'],
-
-  sparsePresets: {
-    list: (args) => ipcRenderer.invoke('sparsePresets:list', args),
-
-    save: (args) => ipcRenderer.invoke('sparsePresets:save', args),
-
-    remove: (args) => ipcRenderer.invoke('sparsePresets:remove', args),
-
-    onChanged: (callback: (data: { repoId: string }) => void): (() => void) => {
-      const listener = (_event: Electron.IpcRendererEvent, data: { repoId: string }) =>
-        callback(data)
-      ipcRenderer.on('sparsePresets:changed', listener)
-      return () => ipcRenderer.removeListener('sparsePresets:changed', listener)
-    }
-  } satisfies PreloadApi['sparsePresets'],
-
-  worktrees: {
-    list: (args) => ipcRenderer.invoke('worktrees:list', args),
-    listRetiredNames: (args) => ipcRenderer.invoke('worktrees:listRetiredNames', args),
-
-    listDetected: (args) => ipcRenderer.invoke('worktrees:listDetected', args),
-
-    listKnownForExecutionHost: (args) =>
-      ipcRenderer.invoke('worktrees:listKnownForExecutionHost', args),
-
-    forgetRemovedForExecutionHost: (args) =>
-      ipcRenderer.invoke('worktrees:forgetRemovedForExecutionHost', args),
-
-    cancelListDetected: (args) => ipcRenderer.invoke('worktrees:cancelListDetected', args),
-
-    listAll: () => ipcRenderer.invoke('worktrees:listAll'),
-
-    create: (args) => ipcRenderer.invoke('worktrees:create', args),
-
-    adoptProvisionedRoot: (args) => ipcRenderer.invoke('worktrees:adoptProvisionedRoot', args),
-
-    onCreateProgress: (
-      callback: (data: { creationId?: string; phase: 'fetching' | 'creating' }) => void
-    ): (() => void) => {
-      const listener = (
-        _event: Electron.IpcRendererEvent,
-        data: { creationId?: string; phase: 'fetching' | 'creating' }
-      ) => callback(data)
-      ipcRenderer.on('createWorktree:progress', listener)
-      return () => ipcRenderer.removeListener('createWorktree:progress', listener)
-    },
-
-    prefetchCreateBase: (args) => ipcRenderer.invoke('worktrees:prefetchCreateBase', args),
-
-    resolvePrBase: (args) => ipcRenderer.invoke('worktrees:resolvePrBase', args),
-
-    resolveMrBase: (args) => ipcRenderer.invoke('worktrees:resolveMrBase', args),
-
-    remove: (args) => ipcRenderer.invoke('worktrees:remove', args),
-
-    forgetLocal: (args) => ipcRenderer.invoke('worktrees:forgetLocal', args),
-
-    forceDeletePreservedBranch: (args) =>
-      ipcRenderer.invoke('worktrees:forceDeletePreservedBranch', args),
-
-    updateMeta: (args) => ipcRenderer.invoke('worktrees:updateMeta', args),
-
-    listLineage: () => ipcRenderer.invoke('worktrees:listLineage'),
-
-    listLineageForHost: (args: ListDesktopLineageForHostArgs): Promise<HostLineageSnapshot> =>
-      ipcRenderer.invoke('worktrees:listLineageForHost', args),
-
-    updateLineage: (args) => ipcRenderer.invoke('worktrees:updateLineage', args),
-
-    persistSortOrder: (args) => ipcRenderer.invoke('worktrees:persistSortOrder', args),
-
-    getBranchRenameFailureOutput: (args) =>
-      ipcRenderer.invoke('worktrees:getBranchRenameFailureOutput', args),
-
-    onChanged: (
-      callback: (data: {
-        repoId: string
-        renamed?: { oldWorktreeId: string; newWorktreeId: string }
-      }) => void
-    ): (() => void) => {
-      const listener = (
-        _event: Electron.IpcRendererEvent,
-        data: { repoId: string; renamed?: { oldWorktreeId: string; newWorktreeId: string } }
-      ) => callback(data)
-      ipcRenderer.on('worktrees:changed', listener)
-      return () => ipcRenderer.removeListener('worktrees:changed', listener)
-    },
-
-    onGitStatusMetadataChanged: (callback: (data: { repoId: string }) => void): (() => void) => {
-      const listener = (_event: Electron.IpcRendererEvent, data: { repoId: string }) =>
-        callback(data)
-      ipcRenderer.on('worktrees:gitStatusMetadataChanged', listener)
-      return () => ipcRenderer.removeListener('worktrees:gitStatusMetadataChanged', listener)
-    },
-
-    onHeadIdentitiesChanged: (
-      callback: (data: { repoId: string; identities: WorktreeHeadIdentity[] }) => void
-    ): (() => void) => {
-      const listener = (
-        _event: Electron.IpcRendererEvent,
-        data: { repoId: string; identities: WorktreeHeadIdentity[] }
-      ) => callback(data)
-      ipcRenderer.on('worktrees:headIdentitiesChanged', listener)
-      return () => ipcRenderer.removeListener('worktrees:headIdentitiesChanged', listener)
-    },
-
-    onBaseStatus: (callback: (data: WorktreeBaseStatusEvent) => void): (() => void) => {
-      const listener = (_event: Electron.IpcRendererEvent, data: WorktreeBaseStatusEvent) =>
-        callback(data)
-      ipcRenderer.on('worktree:baseStatus', listener)
-      return () => ipcRenderer.removeListener('worktree:baseStatus', listener)
-    },
-
-    onRemoteBranchConflict: (
-      callback: (data: WorktreeRemoteBranchConflictEvent) => void
-    ): (() => void) => {
-      const listener = (
-        _event: Electron.IpcRendererEvent,
-        data: WorktreeRemoteBranchConflictEvent
-      ) => callback(data)
-      ipcRenderer.on('worktree:remoteBranchConflict', listener)
-      return () => ipcRenderer.removeListener('worktree:remoteBranchConflict', listener)
-    }
-  } satisfies PreloadApi['worktrees'],
-
-  workspaceCleanup: {
-    scan: (args, onProgress) => {
-      if (!onProgress) {
-        return ipcRenderer.invoke('workspaceCleanup:scan', args)
-      }
-      const scanId = args?.scanId ?? crypto.randomUUID()
-      const listener = (
-        _event: Electron.IpcRendererEvent,
-        progress: WorkspaceCleanupScanProgress
-      ): void => {
-        if (progress.scanId === scanId) {
-          onProgress(progress)
-        }
-      }
-      ipcRenderer.on('workspaceCleanup:scanProgress', listener)
-      return ipcRenderer
-        .invoke('workspaceCleanup:scan', { ...args, scanId })
-        .finally(() => ipcRenderer.removeListener('workspaceCleanup:scanProgress', listener))
-    },
-    cancelScan: (scanId) => ipcRenderer.invoke('workspaceCleanup:cancelScan', scanId),
-    getCachedScan: () => ipcRenderer.invoke('workspaceCleanup:getCachedScan'),
-    dismiss: (args) => ipcRenderer.invoke('workspaceCleanup:dismiss', args),
-    clearDismissals: () => ipcRenderer.invoke('workspaceCleanup:clearDismissals'),
-    hasKillableLocalProcesses: (args) =>
-      ipcRenderer.invoke('workspaceCleanup:hasKillableLocalProcesses', args),
-    beginRemovalSnapshotPruneBatch: (args) =>
-      ipcRenderer.invoke('workspaceCleanup:beginRemovalSnapshotPruneBatch', args),
-    recordRemovalSnapshotPrune: (args) =>
-      ipcRenderer.invoke('workspaceCleanup:recordRemovalSnapshotPrune', args),
-    finishRemovalSnapshotPruneBatch: (args) =>
-      ipcRenderer.invoke('workspaceCleanup:finishRemovalSnapshotPruneBatch', args)
-  } satisfies PreloadApi['workspaceCleanup'],
-
-  workspaceSpace: {
-    analyze: () => ipcRenderer.invoke('workspaceSpace:analyze'),
-    getCachedAnalysis: () => ipcRenderer.invoke('workspaceSpace:getCachedAnalysis'),
-    cancel: () => ipcRenderer.invoke('workspaceSpace:cancel'),
-    onProgress: (callback) => {
-      const listener = (
-        _event: Electron.IpcRendererEvent,
-        progress: WorkspaceSpaceScanProgress
-      ): void => callback(progress)
-      ipcRenderer.on('workspaceSpace:progress', listener)
-      return () => ipcRenderer.removeListener('workspaceSpace:progress', listener)
-    }
-  } satisfies PreloadApi['workspaceSpace'],
-
-  workspacePorts: {
-    scan: (args) => ipcRenderer.invoke('workspacePorts:scan', args),
-    kill: (args) => ipcRenderer.invoke('workspacePorts:kill', args),
-    onAdvertisedUrlChanged: (callback) => {
-      const listener = (
-        _event: Electron.IpcRendererEvent,
-        event: WorkspacePortAdvertisedUrlChangedEvent
-      ): void => callback(event)
-      ipcRenderer.on('workspacePorts:advertised-url-changed', listener)
-      return () => ipcRenderer.removeListener('workspacePorts:advertised-url-changed', listener)
-    }
-  } satisfies PreloadApi['workspacePorts'],
-
-  pty: {
-    spawn: (opts: {
-      cols: number
-      rows: number
-      cwd?: string
-      cwdFallback?: 'worktree'
-      env?: Record<string, string>
-      envToDelete?: string[]
-      command?: string
-      commandDelivery?: 'renderer' | 'provider'
-      launchConfig?: SleepingAgentLaunchConfig
-      resumeProviderSession?: AgentProviderSessionMetadata
-      launchToken?: string
-      launchAgent?: TuiAgent
-      startupCommandDelivery?: StartupCommandDelivery
-      connectionId?: string | null
-      worktreeId?: string
-      sessionId?: string
-      shellOverride?: string
-      projectRuntime?: ProjectExecutionRuntimeResolution
-      terminalColorQueryReplies?: { foreground?: string; background?: string }
-      // Why: marks the PTY hidden before its first byte so the delivery gate + model responder own spawn-time queries (terminal-query-authority.md §races).
-      initiallyHidden?: boolean
-      // Why: closes the SIGKILL race (INVESTIGATION.md) — main sync-flushes the (worktreeId, tabId, leafId → ptyId) binding before pty:spawn returns.
-      tabId?: string
-      leafId?: string
-      // Why: loose typing on purpose — renderer owns launch metadata, main owns whether the launch happened and validates (telemetry-plan.md §Agent launch semantics).
-      telemetry?: { agent_kind: AgentKind; launch_source: LaunchSource; request_kind: RequestKind }
-    }): Promise<{
-      id: string
-      /** Which lifetime of `id` this reply named; absent when the execution host predates the field. */
-      incarnationId?: string
-      launchConfig?: SleepingAgentLaunchConfig
-      snapshot?: string
-      snapshotCols?: number
-      snapshotRows?: number
-      snapshotPrefixAnsi?: string
-      snapshotFrameAnsi?: string
-      snapshotFrameRestoreAnsi?: string
-      snapshotKittyKeyboardFlags?: number
-      snapshotTerminalOwner?: 'shell'
-      snapshotSeq?: number
-      isReattach?: boolean
-      isAlternateScreen?: boolean
-      replay?: string
-      sessionExpired?: boolean
-      coldRestore?: { scrollback: string; cwd: string; cols?: number; rows?: number }
-      startupCwdFallback?: { kind: 'worktree'; cwd: string }
-      agentResumeUnavailable?: true
-    }> => ipcRenderer.invoke('pty:spawn', opts),
-
-    write: (id: string, data: string): void => {
-      ipcRenderer.send('pty:write', { id, data })
-    },
-    writeAccepted: (id: string, data: string): Promise<boolean> =>
-      ipcRenderer.invoke('pty:writeAccepted', { id, data }),
-    onWriteUnavailable: (
-      callback: (payload: {
-        id: string
-        /** Set only when a durable agent-session lease refused the write; absent otherwise. */
-        agentSessionRefusal?: AgentSessionPtyWriteRefusal
-      }) => void
-    ): (() => void) => {
-      const handler = (
-        _event: Electron.IpcRendererEvent,
-        payload: { id: string; agentSessionRefusal?: AgentSessionPtyWriteRefusal }
-      ): void => callback(payload)
-      ipcRenderer.on('pty:writeUnavailable', handler)
-      return () => ipcRenderer.removeListener('pty:writeUnavailable', handler)
-    },
-
-    resize: (id: string, cols: number, rows: number): void => {
-      ipcRenderer.send('pty:resize', { id, cols, rows })
-    },
-    claimViewport: (id: string, cols: number, rows: number): void => {
-      ipcRenderer.send('pty:claimViewport', { id, cols, rows })
-    },
-
-    /** Why: measurement-only sibling of resize — keeps the runtime's restore-target baseline fresh while a mobile-fit override blocks pty:resize. Never resizes the PTY. See docs/mobile-fit-hold.md. */
-    reportGeometry: (id: string, cols: number, rows: number): void => {
-      ipcRenderer.send('pty:reportGeometry', { id, cols, rows })
-    },
-
-    signal: (id: string, signal: string): void => {
-      ipcRenderer.send('pty:signal', { id, signal })
-    },
-
-    /** Why: Cmd/Ctrl+K clears the renderer xterm, but the PTY host keeps its own screen state and would repaint the next prompt at the stale cursor row. */
-    clearBuffer: (id: string): void => {
-      ipcRenderer.send('pty:clearBuffer', { id })
-    },
-
-    ackColdRestore: (id: string): void => {
-      ipcRenderer.send('pty:ackColdRestore', { id })
-    },
-    /** charCount is the legacy per-chunk delta; processedChars is the cumulative per-pty total (self-heals under lost ACKs). */
-    ackData: (id: string, charCount: number, processedChars?: number): void => {
-      ipcRenderer.send('pty:ackData', {
-        id,
-        charCount,
-        ...(typeof processedChars === 'number' ? { processedChars } : {})
-      })
-    },
-    /** Main requests the renderer's cumulative processed totals when delivery looks stuck on lost ACKs. */
-    onDeliveryResyncRequest: (callback: (payload: { requestId: number }) => void): (() => void) => {
-      const listener = (_event: Electron.IpcRendererEvent, payload: { requestId: number }) =>
-        callback(payload)
-      ipcRenderer.on('pty:requestDeliveryResync', listener)
-      return () => ipcRenderer.removeListener('pty:requestDeliveryResync', listener)
-    },
-    respondDeliveryResync: (payload: {
-      requestId: number
-      processedCharsByPty: Record<string, number>
-    }): void => {
-      ipcRenderer.send('pty:deliveryResyncResponse', payload)
-    },
-    /** Renderer-initiated delivery health/heal lane — rides invoke because the field wedge (v1.4.121-rc.0) kills main→renderer push while invoke stays alive. */
-    reportRendererDeliveryState: (
-      report: PtyRendererDeliveryStateReport
-    ): Promise<PtyRendererDeliveryHealthReply> =>
-      ipcRenderer.invoke('pty:reportRendererDeliveryState', report),
-    /** Live pty:data listener count — the watchdog's "listener detached" vs "channel dead" discriminator. */
-    getPtyDataListenerCount: (): number => ipcRenderer.listenerCount('pty:data'),
-    rendererDispatcherReady: (): void => {
-      ipcRenderer.send('pty:rendererDispatcherReady')
-    },
-    setActiveRendererPty: (id: string, active: boolean): void => {
-      ipcRenderer.send('pty:setActiveRendererPty', { id, active })
-    },
-    setRendererPtyVisible: (id: string, visible: boolean): void => {
-      ipcRenderer.send('pty:setRendererPtyVisible', { id, visible })
-    },
-    /** Hidden-delivery gate: hidden=true lets main DROP renderer byte delivery after model ingestion; reveal restores from the model snapshot. Fire-and-forget. */
-    setHiddenRendererPty: (id: string, hidden: boolean): void => {
-      ipcRenderer.send('pty:setHiddenRendererPty', { id, hidden })
-    },
-    /** Delivery-interest signal: a renderer party needing raw bytes suppresses the hidden-delivery gate for that PTY while registered. */
-    setPtyDeliveryInterest: (id: string, interested: boolean): void => {
-      ipcRenderer.send('pty:setPtyDeliveryInterest', { id, interested })
-    },
-    /** Push composed terminal appearance so main's model responder can answer OSC 4/10/11/12 and DSR ?996n for hidden-gated PTYs with renderer-true values. */
-    publishTerminalViewAttributes: (attributes: TerminalViewAttributes): void => {
-      ipcRenderer.send('pty:terminalViewAttributes', attributes)
-    },
-
-    kill: (id: string, opts?: { keepHistory?: boolean }): Promise<void> =>
-      ipcRenderer.invoke('pty:kill', { id, keepHistory: opts?.keepHistory ?? false }),
-
-    listSessions: (): Promise<PtyListedSession[]> => ipcRenderer.invoke('pty:listSessions'),
-    getAuthoritativeBufferSnapshotCapabilities: (
-      ids: string[]
-    ): Promise<{ id: string; authoritative: boolean | null }[]> =>
-      ipcRenderer.invoke('pty:getAuthoritativeBufferSnapshotCapabilities', { ids }),
-    hasPty: (id: string): Promise<boolean | null> => ipcRenderer.invoke('pty:hasPty', { id }),
-
-    getMainBufferSnapshot: (
-      id: string,
-      opts?: { scrollbackRows?: number }
-    ): Promise<{
-      data: string
-      frameRestoreAnsi?: string
-      cols: number
-      rows: number
-      cwd?: string | null
-      seq?: number
-      pendingDeliveryStartSeq?: number
-      source?: 'headless' | 'renderer'
-      alternateScreen?: boolean
-      scrollbackAnsi?: string
-      pendingEscapeTailAnsi?: string
-      kittyKeyboardFlags?: number
-      terminalOwner?: 'shell'
-    } | null> => ipcRenderer.invoke('pty:getMainBufferSnapshot', { id, opts }),
-
-    getRendererDeliveryDebugSnapshot: (): Promise<{
-      pendingPtyCount: number
-      pendingChars: number
-      maxPendingCharsByPty: number
-      rendererInFlightPtyCount: number
-      rendererInFlightChars: number
-      maxRendererInFlightCharsByPty: number
-      activeRendererPtyCount: number
-      flushScheduled: boolean
-      peakPendingChars: number
-      peakMaxPendingCharsByPty: number
-      peakRendererInFlightChars: number
-      peakMaxRendererInFlightCharsByPty: number
-      ackGatedFlushSkipCount: number
-      hiddenDeliveryGatedPtyCount: number
-      hiddenDeliveryGatedVisiblePtyCount: number
-      hiddenDeliveryGatedActivePtyCount: number
-      deliveryInterestPtyCount: number
-      hiddenDeliveryDroppedChars: number
-      hiddenDeliveryDroppedChunks: number
-      pendingDroppedChars: number
-      diagnostics: PtyMainDeliveryDiagnostics
-      rendererLifecycleResetCount: number
-      lastLifecycleResetClearedChars: number
-      rendererPtyDispatcherReady: boolean
-      rendererDispatcherReadyForcedCount: number
-    }> => ipcRenderer.invoke('pty:getRendererDeliveryDebugSnapshot'),
-
-    resetRendererDeliveryDebug: (): Promise<void> =>
-      ipcRenderer.invoke('pty:resetRendererDeliveryDebug'),
-
-    /** True if the PTY's shell has child processes (a running command); false at an idle prompt. */
-    hasChildProcesses: (id: string): Promise<boolean> =>
-      ipcRenderer.invoke('pty:hasChildProcesses', { id }),
-
-    /** Return the PTY foreground process basename when available (e.g. "codex"). */
-    getForegroundProcess: (id: string): Promise<string | null> =>
-      ipcRenderer.invoke('pty:getForegroundProcess', { id }),
-    inspectProcess: (
-      id: string
-    ): Promise<{
-      foregroundProcess: string | null
-      hasChildProcesses: boolean
-      unavailable?: true
-    }> => ipcRenderer.invoke('pty:inspectProcess', { id }),
-    confirmForegroundProcess: (id: string): Promise<string | null> =>
-      ipcRenderer.invoke('pty:confirmForegroundProcess', { id }),
-
-    /** Resolve a PTY's live cwd via `/proc` (Linux) or `lsof` (macOS); `''` when unknown or unresolvable. */
-    getCwd: (id: string): Promise<string> => ipcRenderer.invoke('pty:getCwd', { id }),
-
-    /** The PTY's last APPLIED size (real winsize), or null if unknown — lets the renderer detect drift after a dropped resize and re-assert. */
-    getSize: (id: string): Promise<{ cols: number; rows: number } | null> =>
-      ipcRenderer.invoke('pty:getSize', { id }),
-
-    onData: (
-      callback: (data: {
-        id: string
-        data: string
-        seq?: number
-        rawLength?: number
-        transformed?: boolean
-        background?: boolean
-        droppedOutput?: boolean
-      }) => void
-    ): (() => void) => {
-      const listener = (
-        _event: Electron.IpcRendererEvent,
-        data: {
-          id: string
-          data: string
-          seq?: number
-          rawLength?: number
-          transformed?: boolean
-          background?: boolean
-          droppedOutput?: boolean
-        }
-      ) => callback(data)
-      ipcRenderer.on('pty:data', listener)
-      return () => ipcRenderer.removeListener('pty:data', listener)
-    },
-
-    onReplay: (callback: (data: { id: string; data: string }) => void): (() => void) => {
-      const listener = (_event: Electron.IpcRendererEvent, data: { id: string; data: string }) =>
-        callback(data)
-      ipcRenderer.on('pty:replay', listener)
-      return () => ipcRenderer.removeListener('pty:replay', listener)
-    },
-
-    /** Out-of-band signal that main dropped renderer-bound bytes (hidden-gate / pending cap); pane restores from the model snapshot.
-     *  NOT on pty:data — an in-band marker is ambiguous with chunks fully stripped by OSC-9999 cleaning. */
-    onModelRestoreNeeded: (callback: (event: PtyModelRestoreNeededEvent) => void): (() => void) => {
-      const listener = (_event: Electron.IpcRendererEvent, event: PtyModelRestoreNeededEvent) =>
-        callback(event)
-      ipcRenderer.on('pty:modelRestoreNeeded', listener)
-      return () => ipcRenderer.removeListener('pty:modelRestoreNeeded', listener)
-    },
-
-    /** Batched side-effect facts (title/bell/agent transitions) for local-main PTYs.
-     *  Per-PTY in-order; deliberately NOT synced with pty:data (terminal-side-effect-authority.md). */
-    onSideEffect: (callback: (batch: TerminalSideEffectBatch) => void): (() => void) => {
-      const listener = (_event: Electron.IpcRendererEvent, batch: TerminalSideEffectBatch) =>
-        callback(batch)
-      ipcRenderer.on('pty:sideEffect', listener)
-      return () => ipcRenderer.removeListener('pty:sideEffect', listener)
-    },
-
-    /** Title-only replay snapshot on (re)attach — attention facts (bells/completions) never replay. */
-    getSideEffectSnapshot: (id: string): Promise<TerminalSideEffectBatch | null> =>
-      ipcRenderer.invoke('pty:sideEffectSnapshot', { id }),
-
-    onExit: (
-      callback: (data: {
-        id: string
-        code: number
-        preserveRendererBinding?: boolean
-        /** Which lifetime of `id` died; absent when the execution host predates the field. */
-        incarnationId?: string
-      }) => void
-    ): (() => void) => {
-      const listener = (
-        _event: Electron.IpcRendererEvent,
-        data: {
-          id: string
-          code: number
-          preserveRendererBinding?: boolean
-          incarnationId?: string
-        }
-      ) => callback(data)
-      ipcRenderer.on('pty:exit', listener)
-      return () => ipcRenderer.removeListener('pty:exit', listener)
-    },
-
-    onSpawned: (callback: (data: { id: string }) => void): (() => void) => {
-      const listener = (_event: Electron.IpcRendererEvent, data: { id: string }) => callback(data)
-      ipcRenderer.on('pty:spawned', listener)
-      return () => ipcRenderer.removeListener('pty:spawned', listener)
-    },
-
-    onSerializeBufferRequest: (
-      callback: (data: {
-        requestId: string
-        ptyId: string
-        opts?: { scrollbackRows?: number; altScreenForcesZeroRows?: boolean }
-      }) => void
-    ): (() => void) => {
-      const listener = (
-        _event: Electron.IpcRendererEvent,
-        data: {
-          requestId: string
-          ptyId: string
-          opts?: { scrollbackRows?: number; altScreenForcesZeroRows?: boolean }
-        }
-      ) => callback(data)
-      ipcRenderer.on('pty:serializeBuffer:request', listener)
-      return () => ipcRenderer.removeListener('pty:serializeBuffer:request', listener)
-    },
-
-    onClearBufferRequest: (callback: (data: { ptyId: string }) => void): (() => void) => {
-      const listener = (_event: Electron.IpcRendererEvent, data: { ptyId: string }) =>
-        callback(data)
-      ipcRenderer.on('pty:clearBuffer:request', listener)
-      return () => ipcRenderer.removeListener('pty:clearBuffer:request', listener)
-    },
-
-    sendSerializedBuffer: (
-      requestId: string,
-      snapshot: {
-        data: string
-        cols: number
-        rows: number
-        seq?: number
-        lastTitle?: string
-        kittyKeyboardFlags?: number
-      } | null
-    ): void => {
-      ipcRenderer.send('pty:serializeBuffer:response', { requestId, snapshot })
-    },
-
-    // Claim serializer ownership before spawn; echo the generation token on settle/clear to prevent pane-key reuse races.
-    declarePendingPaneSerializer: (paneKey: string): Promise<number> =>
-      ipcRenderer.invoke('pty:declarePendingPaneSerializer', { paneKey }),
-
-    settlePaneSerializer: (paneKey: string, gen: number): Promise<void> =>
-      ipcRenderer.invoke('pty:settlePaneSerializer', { paneKey, gen }),
-
-    clearPendingPaneSerializer: (paneKey: string, gen: number): Promise<void> =>
-      ipcRenderer.invoke('pty:clearPendingPaneSerializer', { paneKey, gen }),
-
-    reportRendererSerializerReady: (ptyId: string): Promise<void> =>
-      ipcRenderer.invoke('pty:reportRendererSerializerReady', { ptyId }),
-
-    management: {
-      listSessions: () => ipcRenderer.invoke('pty:management:listSessions'),
-      killAll: () => ipcRenderer.invoke('pty:management:killAll'),
-      killOne: (args: { sessionId: string }) => ipcRenderer.invoke('pty:management:killOne', args),
-      restart: () => ipcRenderer.invoke('pty:management:restart'),
-      macTccAttribution: () => ipcRenderer.invoke('pty:management:macTccAttribution')
-    }
-  },
-
-  feedback: {
-    submit: (args: {
-      feedback: string
-      submitAnonymously?: boolean
-      githubLogin: string | null
-      githubEmail: string | null
-      images?: { contentType: string; data: Uint8Array }[]
-    }): Promise<
-      { ok: true; imagesDelivered?: boolean } | { ok: false; status: number | null; error: string }
-    > => ipcRenderer.invoke('feedback:submit', args)
-  },
-
-  crashReports: {
-    getLatestPending: () => ipcRenderer.invoke('crashReports:getLatestPending'),
-    getLatestReport: () => ipcRenderer.invoke('crashReports:getLatestReport'),
-    dismiss: (args: { reportId: string }) => ipcRenderer.invoke('crashReports:dismiss', args),
-    recordRendererError: (
-      args: ReactErrorBoundaryReportArgs
-    ): Promise<ReactErrorBoundaryReportResult> =>
-      ipcRenderer.invoke('crashReports:recordRendererError', args),
-    recordBreadcrumb: (args: { name: string; data?: CrashReportBreadcrumbData }): void =>
-      ipcRenderer.send('crashReports:recordBreadcrumb', args),
-    submit: (args: CrashReportSubmitArgs): Promise<CrashReportSubmitResult> =>
-      ipcRenderer.invoke('crashReports:submit', args),
-    copyLatestDiagnostics: (args?: CrashReportCopyDiagnosticsArgs) =>
-      ipcRenderer.invoke('crashReports:copyLatestDiagnostics', args),
-    readHeapStatistics: (): RendererHeapStatistics | null => readRendererHeapStatistics(),
-    readProcessMemory: (): Promise<RendererProcessMemory | null> => readRendererProcessMemory()
-  },
-
-  export: {
-    htmlToPdf: (args: {
-      html: string
-      title: string
-    }): Promise<
-      { success: true; filePath: string } | { success: false; cancelled?: boolean; error?: string }
-    > => ipcRenderer.invoke('export:html-to-pdf', args)
-  },
-
-  gh: {
-    viewer: (): Promise<unknown> => ipcRenderer.invoke('gh:viewer'),
-
-    repoSlug: (args: { repoPath: string; repoId?: string }): Promise<unknown> =>
-      ipcRenderer.invoke('gh:repoSlug', args),
-
-    repoUpstream: (args: { repoPath: string; repoId?: string }): Promise<unknown> =>
-      ipcRenderer.invoke('gh:repoUpstream', args),
-
-    prForBranch: (args: {
-      repoPath: string
-      repoId?: string
-      branch: string
-      linkedPRNumber?: number | null
-      fallbackPRNumber?: number | null
-      acceptMergedFallbackPR?: boolean
-      currentHeadOid?: string | null
-    }): Promise<unknown> => ipcRenderer.invoke('gh:prForBranch', args),
-
-    refreshPRNow: (args: { candidate: GitHubPRRefreshCandidate }): Promise<unknown> =>
-      ipcRenderer.invoke('gh:refreshPRNow', args),
-
-    enqueuePRRefresh: (args: {
-      candidate: GitHubPRRefreshCandidate
-      reason: GitHubPRRefreshReason
-      priority?: number
-    }): Promise<unknown> => ipcRenderer.invoke('gh:enqueuePRRefresh', args),
-
-    reportVisiblePRRefreshCandidates: (args: {
-      candidates: GitHubPRRefreshCandidate[]
-      generation: number
-    }): Promise<unknown> => ipcRenderer.invoke('gh:reportVisiblePRRefreshCandidates', args),
-
-    onPRRefreshEvent: (callback: (event: GitHubPRRefreshEvent) => void): (() => void) => {
-      const listener = (_event: Electron.IpcRendererEvent, event: GitHubPRRefreshEvent): void =>
-        callback(event)
-      ipcRenderer.on('gh:prRefreshEvent', listener)
-      return () => ipcRenderer.removeListener('gh:prRefreshEvent', listener)
-    },
-
-    issue: (args: {
-      repoPath: string
-      repoId?: string
-      sourceContext?: TaskSourceContext | null
-      number: number
-    }): Promise<unknown> => ipcRenderer.invoke('gh:issue', args),
-
-    workItem: (args: {
-      repoPath: string
-      repoId?: string
-      sourceContext?: TaskSourceContext | null
-      number: number
-      type?: 'issue' | 'pr'
-    }): Promise<unknown> => ipcRenderer.invoke('gh:workItem', args),
-
-    workItemByOwnerRepo: (args: {
-      repoPath: string
-      repoId?: string
+  app: appApi,
+  orcaProfiles: orcaProfilesApi,
+  platform: platformApi,
+  wsl: wslApi,
+  pwsh: pwshApi,
+  gitBash: gitBashApi,
+  plugins: pluginsApi,
+  repos: reposApi,
+  projects: projectsApi,
+  projectGroups: projectGroupsApi,
+  folderWorkspaces: folderWorkspacesApi,
+  sparsePresets: sparsePresetsApi,
+  worktrees: worktreesApi,
+  workspaceCleanup: workspaceCleanupApi,
+  workspaceSpace: workspaceSpaceApi,
+  workspacePorts: workspacePortsApi,
+  pty: ptyApi,
+  feedback: feedbackApi,
+  crashReports: crashReportsApi,
+  export: exportApi,
+  gh: ghApi,
+  hostedReview: hostedReviewApi,
+  gl: glApiBridge,
+  bitbucket: bitbucketApi,
+  linear: linearApi,
+  jira: jiraApi,
+  starNag: starNagApi,
+  telemetryTrack: telemetryTrackApi,
+  telemetrySetOptIn: telemetrySetOptInApi,
+  telemetryAcknowledgeBanner: telemetryAcknowledgeBannerApi,
+  telemetryGetConsentState: telemetryGetConsentStateApi,
+  diagnostics: diagnosticsApi,
+  settings: settingsApi,
+  agentAwake: agentAwakeApi,
+  localhostWorktreeLabels: localhostWorktreeLabelsApi,
+  keybindings: keybindingsApi,
+  codexAccounts: codexAccountsApi,
+  claudeAccounts: claudeAccountsApi,
+  cli: cliApi,
+  codexConfigSync: codexConfigSyncApi,
+  agentTrust: agentTrustApi,
+  preflight: preflightApi,
+  notifications: notificationsApi,
+  onboarding: onboardingApi,
+  dashboard: dashboardApi,
+  terminalPreview: terminalPreviewApi,
+  macosTccPrompts: macosTccPromptsApi,
+  developerPermissions: developerPermissionsApi,
+  computerUsePermissions: computerUsePermissionsApi,
+  shell: shellApi,
+  skills: skillsApi,
+  pet: petApi,
+  browser: browserApi,
+  emulator: emulatorApi,
+  hooks: hooksApi,
+  ephemeralVm: ephemeralVmApi,
+  cache: cacheApi,
+  session: sessionApi,
+  remoteWorkspace: remoteWorkspaceApi,
+  updater: updaterApi,
+  docPreview: docPreviewApi,
+  notebook: notebookApi,
+  fs: fsApi,
+  git: gitApi,
+  ui: uiApi,
+  stats: statsApi,
+  memory: memoryApi,
+  claudeUsage: claudeUsageApi,
+  codexUsage: codexUsageApi,
+  openCodeUsage: openCodeUsageApi,
+  aiVault: aiVaultApi,
+  nativeChat: nativeChatApi,
+  runtime: runtimeApi,
+  runtimeEnvironments: runtimeEnvironmentsApi,
+  rateLimits: rateLimitsApi,
+  minimaxCredentials: minimaxCredentialsApi,
+  grokAccounts: grokAccountsApi,
+  ssh: sshApi,
+  automations: automationsApi,
+  e2e: e2eApi,
+  mobile: mobileApi,
+  agentStatus: agentStatusApi,
+  speech: speechApi,
+
+  // Fork-specific: Gitee integration (no upstream bridge module yet)
+  gitee: {
+    connect: (args: {
+      accessToken: string
+    }): Promise<{ ok: true; account: string | null } | { ok: false; error: string }> =>
+      ipcRenderer.invoke('gitee:connect', args),
+
+    disconnect: (): Promise<void> => ipcRenderer.invoke('gitee:disconnect'),
+
+    status: (): Promise<unknown> => ipcRenderer.invoke('gitee:status'),
+
+    listRepos: (args?: { page?: number }): Promise<unknown> =>
+      ipcRenderer.invoke('gitee:listRepos', args),
+
+    listPulls: (args: {
       owner: string
       repo: string
-      host?: string
-      number: number
-      type: 'issue' | 'pr'
-    }): Promise<unknown> => ipcRenderer.invoke('gh:workItemByOwnerRepo', args),
-
-    workItemDetails: (args: {
-      repoPath: string
-      repoId?: string
-      sourceContext?: TaskSourceContext | null
-      number: number
-      type?: 'issue' | 'pr'
-    }): Promise<unknown> => ipcRenderer.invoke('gh:workItemDetails', args),
-
-    notifyWorkItemMutated: (args: {
-      repoPath: string
-      repoId?: string
-      type: 'issue' | 'pr'
-      number: number
-    }): Promise<boolean> => ipcRenderer.invoke('gh:notifyWorkItemMutated', args),
-
-    prFileContents: (args: {
-      repoPath: string
-      repoId?: string
-      sourceContext?: TaskSourceContext | null
-      prNumber: number
-      prRepo?: GitHubOwnerRepo | null
-      path: string
-      oldPath?: string
-      status: string
-      headSha: string
-      baseSha: string
-    }): Promise<unknown> => ipcRenderer.invoke('gh:prFileContents', args),
-
-    listIssues: (args: { repoPath: string; repoId?: string; limit?: number }): Promise<unknown[]> =>
-      ipcRenderer.invoke('gh:listIssues', args),
-
-    createIssue: (args: {
-      repoPath: string
-      repoId?: string
-      sourceContext?: TaskSourceContext | null
-      title: string
-      body: string
-      labels?: string[]
-      assignees?: string[]
-    }): Promise<GitHubCreateIssueResult> => ipcRenderer.invoke('gh:createIssue', args),
-
-    countWorkItems: (args: {
-      repoPath: string
-      repoId?: string
-      query?: string
-    }): Promise<number> => ipcRenderer.invoke('gh:countWorkItems', args),
-
-    listWorkItems: (args: {
-      repoPath: string
-      repoId?: string
-      limit?: number
-      query?: string
+      state?: 'open' | 'closed' | 'all'
       page?: number
-      noCache?: boolean
-    }): Promise<ListWorkItemsResult<Omit<GitHubWorkItem, 'repoId'>>> =>
-      ipcRenderer.invoke('gh:listWorkItems', args),
+    }): Promise<unknown> => ipcRenderer.invoke('gitee:listPulls', args),
 
-    prChecks: (args: {
-      repoPath: string
-      repoId?: string
-      sourceContext?: TaskSourceContext | null
-      prNumber: number
-      headSha?: string
+    listIssues: (args: {
+      owner: string
+      repo: string
+      state?: 'open' | 'closed' | 'all'
+      page?: number
+    }): Promise<unknown> => ipcRenderer.invoke('gitee:listIssues', args),
+
+    listAccountPulls: (): Promise<unknown> => ipcRenderer.invoke('gitee:listAccountPulls'),
+
+    listAccountIssues: (): Promise<unknown> => ipcRenderer.invoke('gitee:listAccountIssues'),
+
+    itemDetail: (args: {
+      kind: 'pull' | 'issue'
+      owner: string
+      repo: string
+      number: string
+    }): Promise<unknown> => ipcRenderer.invoke('gitee:itemDetail', args),
+
+    itemComments: (args: {
+      kind: 'pull' | 'issue'
+      owner: string
+      repo: string
+      number: string
+    }): Promise<unknown> => ipcRenderer.invoke('gitee:itemComments', args),
+
+    pullFiles: (args: { owner: string; repo: string; number: string }): Promise<unknown> =>
+      ipcRenderer.invoke('gitee:pullFiles', args),
+
+    pullCommits: (args: { owner: string; repo: string; number: string }): Promise<unknown> =>
+      ipcRenderer.invoke('gitee:pullCommits', args)
+  },
+
+  // Fork-specific: Browser automation MCP server status
+  browserAutomationMcp: {
+    getStatus: (): Promise<unknown> => ipcRenderer.invoke('browserAutomationMcp:getStatus')
+  },
+
+  // Fork-specific: Calendar feature
+  calendar: {
+    list: (): Promise<import('../shared/calendar-types').CalendarEntry[]> =>
+      ipcRenderer.invoke('calendar:list'),
+    create: (input: import('../shared/calendar-types').CalendarEntryCreateInput): Promise<import('../shared/calendar-types').CalendarEntry> =>
+      ipcRenderer.invoke('calendar:create', input),
+    update: (args: { id: string; updates: import('../shared/calendar-types').CalendarEntryUpdateInput }): Promise<import('../shared/calendar-types').CalendarEntry> =>
+      ipcRenderer.invoke('calendar:update', args),
+    delete: (args: { id: string }): Promise<void> => ipcRenderer.invoke('calendar:delete', args),
+    categories: {
+      list: (): Promise<import('../shared/calendar-types').CalendarCategoryInfo[]> =>
+        ipcRenderer.invoke('calendar:categories:list'),
+      create: (input: import('../shared/calendar-types').CalendarCategoryCreateInput): Promise<import('../shared/calendar-types').CalendarCategoryInfo> =>
+        ipcRenderer.invoke('calendar:categories:create', input),
+      update: (args: {
+        id: string
+        updates: import('../shared/calendar-types').CalendarCategoryUpdateInput
+      }): Promise<import('../shared/calendar-types').CalendarCategoryInfo> =>
+        ipcRenderer.invoke('calendar:categories:update', args),
+      delete: (args: { id: string }): Promise<void> =>
+        ipcRenderer.invoke('calendar:categories:delete', args)
+    }
+  }
+}
       prRepo?: GitHubOwnerRepo | null
       noCache?: boolean
     }): Promise<unknown[]> => ipcRenderer.invoke('gh:prChecks', args),
@@ -5393,7 +4077,6 @@ const api = {
   }
 }
 
-// Expose Electron APIs via contextBridge when context-isolated, otherwise attach to the DOM global.
 if (process.contextIsolated) {
   try {
     contextBridge.exposeInMainWorld('electron', electronAPI)
