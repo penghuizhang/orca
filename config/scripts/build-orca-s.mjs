@@ -75,6 +75,18 @@ if (dirty.trim()) {
   console.warn('[orca-s] working tree is not clean — the package will include uncommitted changes.')
 }
 
+// 验证二开功能完整性
+console.log('[orca-s] 验证二开功能完整性...')
+const verifyResult = spawnSync('node', ['config/scripts/verify-features.mjs'], {
+  cwd: repoRoot,
+  stdio: 'inherit',
+  env
+})
+if (verifyResult.status !== 0) {
+  console.error('[orca-s] 二开功能验证失败，请先修复问题')
+  process.exit(1)
+}
+
 function artifacts() {
   const dist = resolve(repoRoot, 'dist')
   if (!existsSync(dist)) {
