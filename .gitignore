@@ -145,6 +145,9 @@ playwright-report/
 /.agents/skills/
 /skills-lock.json
 
+# Agent memory (machine-local, not part of the product)
+.workbuddy/
+
 # Generated Clawpatch state includes machine-local paths and review records.
 /.clawpatch/
 /mobile/.clawpatch/
