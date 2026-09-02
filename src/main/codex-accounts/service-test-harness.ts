@@ -126,7 +126,7 @@ export function createSettings(overrides: Partial<GlobalSettings> = {}): GlobalS
     skipCodexRateLimitResetConfirm: false,
     defaultTaskViewPreset: 'all',
     defaultTaskSource: 'github',
-    visibleTaskProviders: ['github', 'gitlab', 'linear', 'jira', 'gitee'],
+    visibleTaskProviders: ['github', 'gitlab', 'linear', 'jira'],
     visibleTaskProvidersDefaultedForJira: true,
     visibleTaskProvidersDefaultedForGitee: true,
     defaultRepoSelection: null,

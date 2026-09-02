@@ -41,6 +41,36 @@ export const getAdvancedPaneSearchEntries = createLocalizedCatalog((): SettingsS
       ...translateSearchKeyword('auto.components.settings.advanced.search.e61ed8ab33', 'updates'),
       ...translateSearchKeyword('auto.components.settings.advanced.search.a7002e1ac4', 'updater')
     ]
+  },
+  {
+    title: translate(
+      'auto.components.settings.advanced.search.customDbPathTitle',
+      'Custom Database Path'
+    ),
+    description: translate(
+      'auto.components.settings.advanced.search.customDbPathDescription',
+      'Store the business database (orca-custom.db) in a custom directory to survive app uninstalls or version updates.'
+    ),
+    keywords: [
+      ...translateSearchKeyword('auto.components.settings.advanced.search.dbKeyword', 'database'),
+      ...translateSearchKeyword('auto.components.settings.advanced.search.dbKeyword2', 'db'),
+      ...translateSearchKeyword(
+        'auto.components.settings.advanced.search.storageKeyword',
+        'storage'
+      ),
+      ...translateSearchKeyword('auto.components.settings.advanced.search.backupKeyword', 'backup'),
+      ...translateSearchKeyword(
+        'auto.components.settings.advanced.search.calendarKeyword',
+        'calendar'
+      ),
+      ...translateSearchKeyword('auto.components.settings.advanced.search.dataKeyword', 'data'),
+      ...translateSearchKeyword('auto.components.settings.advanced.search.customKeyword', 'custom'),
+      ...translateSearchKeyword(
+        'auto.components.settings.advanced.search.externalKeyword',
+        'external'
+      ),
+      ...translateSearchKeyword('auto.components.settings.advanced.search.pathKeyword', 'path')
+    ]
   }
 ])
 

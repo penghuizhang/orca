@@ -482,6 +482,11 @@ export type GlobalSettings = {
     /** Preferred port; 0 means auto-pick a free localhost port at startup. */
     port: number
   }
+  /** Custom path for the business database (orca-custom.db). When set, the calendar
+   *  and future business tables are stored at this path instead of the default userData
+   *  directory. This allows users to keep data outside the app's userData folder to
+   *  survive app uninstalls or version updates. Empty/undefined = use default path. */
+  customDbPath?: string
 }
 
 export type OrcaWorkspaceLayout = {

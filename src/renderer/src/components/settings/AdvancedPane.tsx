@@ -1,8 +1,9 @@
 import { useRef, useState } from 'react'
-import { Info, Loader2, RotateCw } from 'lucide-react'
+import { Info, Loader2, RotateCw, FolderOpen } from 'lucide-react'
 import type { GlobalSettings } from '../../../../shared/global-settings-types'
 import { useMountedRef } from '@/hooks/useMountedRef'
 import { Button } from '../ui/button'
+import { Input } from '../ui/input'
 import { Label } from '../ui/label'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip'
 import { AdvancedNetworkSettingsSection } from './AdvancedNetworkSettingsSection'
@@ -146,6 +147,61 @@ export function AdvancedPane({ settings, updateSettings }: AdvancedPaneProps): R
           )}
         />
         <AdvancedNetworkSettingsSection settings={settings} updateSettings={updateSettings} />
+      </section>
+
+      <section className="space-y-3">
+        <SettingsSubsectionHeader
+          title={translate('auto.components.settings.AdvancedPane.database', 'Database')}
+          description={translate(
+            'auto.components.settings.AdvancedPane.databaseDescription',
+            'Store business data (calendar entries) in a custom location outside the app folder.'
+          )}
+        />
+        <SearchableSetting
+          title={translate(
+            'auto.components.settings.AdvancedPane.customDbPathTitle',
+            'Custom Database Path'
+          )}
+          description={translate(
+            'auto.components.settings.AdvancedPane.customDbPathDescription',
+            'Store the business database (orca-custom.db) in a custom directory to survive app uninstalls or version updates. Leave empty to use the default location.'
+          )}
+          keywords={[
+            'database',
+            'db',
+            'storage',
+            'backup',
+            'calendar',
+            'data',
+            'custom',
+            'external'
+          ]}
+          className="space-y-2 py-2"
+          id="advanced-custom-db-path"
+        >
+          <div className="flex items-center gap-2">
+            <Input
+              value={settings.customDbPath ?? ''}
+              onChange={(e) => updateSettings({ customDbPath: e.target.value || undefined })}
+              placeholder={translate(
+                'auto.components.settings.AdvancedPane.customDbPathPlaceholder',
+                'e.g. /Users/you/software/sqlite/orca-custom.db'
+              )}
+              className="flex-1"
+            />
+          </div>
+          {settings.customDbPath ? (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <FolderOpen className="size-3.5" />
+              <span>
+                {translate(
+                  'auto.components.settings.AdvancedPane.customDbPathHint',
+                  'Data will be migrated automatically on next restart if the default database exists.'
+                )}
+              </span>
+            </div>
+          ) : null}
+        </SearchableSetting>
       </section>
     </div>
   )

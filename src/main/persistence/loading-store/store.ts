@@ -1,4 +1,4 @@
-import { dirname } from 'node:path'
+import { dirname, join } from 'node:path'
 import {
   setMigrationUnsupportedPty,
   setMigrationUnsupportedPtyPersistenceListener
@@ -23,7 +23,7 @@ import type { RepoLifecycleOperations } from './repo-lifecycle-operations'
 import type { MobileTabSelectionPersistence } from './mobile-tab-selection-persistence'
 import type { SparsePresetPersistence } from './sparse-preset-persistence'
 import type { AutomationPersistence } from './automation-persistence'
-import type { CalendarPersistence } from './calendar-persistence'
+import { CalendarPersistence } from './calendar-persistence'
 import type { MetadataLineageOperations } from './metadata-lineage-operations'
 import type { ProfilePreferences } from './profile-preferences'
 import type { SessionHostPartitionOperations } from './session-host-partitions'
@@ -59,6 +59,15 @@ export class Store {
     const normalized = normalizePersistedPaneIdentityState(loaded)
     this.state = normalized.state
     this.runtime.state = this.state
+
+    // Migrate database to custom path if configured
+    const settings = this.state.settings
+    const customDbPath = settings?.customDbPath
+    if (customDbPath) {
+      const defaultDbPath = join(dirname(this.runtime.dataFile), 'orca-custom.db')
+      CalendarPersistence.migrateToCustomPath(defaultDbPath, customDbPath)
+    }
+
     this.domains.calendar.migrateLegacyCalendarEntries()
     this.runtime.activeViewPreference = new ActiveViewPreference(
       this.runtime.dataFile,

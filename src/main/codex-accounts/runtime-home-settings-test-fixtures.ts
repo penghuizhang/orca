@@ -105,7 +105,7 @@ export function createSettings(overrides: TestSettingsOverrides = {}): GlobalSet
     skipCodexRateLimitResetConfirm: false,
     defaultTaskViewPreset: 'all',
     defaultTaskSource: 'github',
-    visibleTaskProviders: ['github', 'gitlab', 'linear', 'jira', 'gitee'],
+    visibleTaskProviders: ['github', 'gitlab', 'linear', 'jira'],
     visibleTaskProvidersDefaultedForJira: true,
     visibleTaskProvidersDefaultedForGitee: true,
     defaultRepoSelection: null,

@@ -9,6 +9,7 @@ import {
   configureDevUserDataPath,
   configureElectronNetworkCompatibility,
   configureOrcaUserDataPathEnv,
+  configurePackagedUserDataPath,
   disableUnsupportedChromiumFeatures,
   enableMainProcessGpuFeatures,
   installDevParentDisconnectQuit,
@@ -165,6 +166,12 @@ export function runMainProcessPreflight(options: MainProcessPreflightOptions): b
   }
   const isDev = is.dev
   configureDevUserDataPath(isDev)
+  // Why: packaged fork builds (orca-s) must use their own userData directory
+  // to avoid sharing data with the official Orca app. configurePackagedUserDataPath
+  // sets the path to ~/Library/Application Support/orca-s for the packaged build.
+  if (!isDev && app.isPackaged) {
+    configurePackagedUserDataPath()
+  }
   configureOrcaUserDataPathEnv()
   // Why these four lines are one step (#16761): the two above decide where userData lives, and
   // everything below may resolve a path. Installing the accessor any later leaves a window where an
