@@ -7,7 +7,6 @@ import type {
 } from '../../shared/hosted-review'
 import { supportsHostedReviewCreation } from '../../shared/hosted-review-creation-providers'
 import { normalizeHostedReviewBaseRef } from '../../shared/hosted-review-refs'
-import { isGiteeReviewCreationAuthenticated } from '../gitee/pull-request-creation'
 import { getRepoSlug } from '../github/client'
 import { isDefaultGitHubHost } from '../../shared/github/repository-identity-key'
 import { detectHostedReviewProvider, getForgeProviderForRepository } from './forge-provider'
@@ -34,7 +33,6 @@ type HostedReviewCreationEligibilityInput = HostedReviewCreationEligibilityArgs 
   // Why: only the create-time preflight sets this; the renderer's probe leaves it unset to auto-correct a local-only parent.
   enforceBaseOnRemote?: boolean
 } & HostedReviewExecutionOptions
-
 
 async function validateCurrentBranchCanCreateReview(
   repoPath: string,

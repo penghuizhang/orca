@@ -10,6 +10,7 @@ minimumReleaseAge: 4320
 minimumReleaseAgeExclude:
   - pdfjs-dist@6.3.289
   - zod@4.5.4
+  - sherpa-onnx-darwin-x64@1.12.37
 shamefullyHoist: true
 
 supportedArchitectures:

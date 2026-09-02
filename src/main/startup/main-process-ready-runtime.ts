@@ -32,6 +32,7 @@ import {
 import { initializeMainProcessAutomations } from './main-process-automations'
 import { initializeMainProcessPlugins } from './main-process-plugins'
 import { collectWorktreeTrashSweepRoots, sweepStaleWorktreeTrash } from '../worktree-trash'
+import { startBrowserAutomationMcpServer } from '../browser/mcp/browser-mcp-server'
 import { logStartupMilestone } from './startup-diagnostics'
 
 export async function initializeReadyRuntimeServices(): Promise<void> {
@@ -69,6 +70,11 @@ export async function initializeReadyRuntimeServices(): Promise<void> {
       return response.result
     }
   })
+  // Browser automation MCP server — localhost bridge that exposes orca's browser tabs to external agent CLIs (zcode/codex).
+  void startBrowserAutomationMcpServer(runtime, state.store!).catch((error) => {
+    console.warn('[browser-automation-mcp] Failed to start:', error)
+  })
+
   // Emulator bridge (serve-sim). macOS-only feature (gated in CLI/runtime); always ship like agent-browser.
   // Why: externally started serve-sim processes must stay independent — only Orca-managed/attached helpers belong to a workspace.
   state.emulatorBridge = new EmulatorBridge()

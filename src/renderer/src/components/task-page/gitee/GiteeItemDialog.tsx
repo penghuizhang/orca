@@ -19,7 +19,7 @@ import type {
   GiteeItemDetail,
   GiteePullCommit,
   GiteePullFile
-} from '../../../shared/gitee-api'
+} from '../../../../../shared/gitee-api'
 
 function Avatar({ url, login }: { url: string | null; login: string | null }): React.JSX.Element {
   return url ? (

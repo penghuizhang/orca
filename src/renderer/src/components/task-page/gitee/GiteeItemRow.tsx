@@ -2,7 +2,7 @@ import { CircleDot, ExternalLink, GitPullRequest } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
 import { translate } from '@/i18n/i18n'
-import type { GiteeAccountItem } from '../../../shared/gitee-api'
+import type { GiteeAccountItem } from '../../../../../shared/gitee-api'
 
 type GiteeItemRowProps = {
   item: GiteeAccountItem

@@ -118,7 +118,7 @@ describe('getWorktreeCardPrDisplay', () => {
 
   it('hides a matching suppressed branch-discovered GitHub PR', () => {
     expect(
-      getWorktreeCardPrDisplay(pr, null, null, null, null, null, {
+      getWorktreeCardPrDisplay(pr, null, null, null, null, null, null, {
         reviewHintKey: '',
         suppressedGitHubPR: 123
       })
@@ -127,7 +127,7 @@ describe('getWorktreeCardPrDisplay', () => {
 
   it('lets an explicit GitHub link override stale suppression metadata', () => {
     expect(
-      getWorktreeCardPrDisplay(pr, 123, null, null, null, null, {
+      getWorktreeCardPrDisplay(pr, 123, null, null, null, null, null, {
         suppressedGitHubPR: 123
       })
     ).toBe(pr)
@@ -135,7 +135,7 @@ describe('getWorktreeCardPrDisplay', () => {
 
   it('keeps a different branch-discovered GitHub PR visible', () => {
     expect(
-      getWorktreeCardPrDisplay(pr, null, null, null, null, null, {
+      getWorktreeCardPrDisplay(pr, null, null, null, null, null, null, {
         reviewHintKey: '',
         suppressedGitHubPR: 999
       })
@@ -168,7 +168,7 @@ describe('getWorktreeCardPrDisplay', () => {
 
   it('preserves branch-discovered hosted reviews for providers without worktree metadata', () => {
     expect(
-      getWorktreeCardPrDisplay(bitbucketReview, null, null, null, null, null, {
+      getWorktreeCardPrDisplay(bitbucketReview, null, null, null, null, null, null, {
         suppressedGitHubPR: bitbucketReview.number
       })
     ).toBe(bitbucketReview)

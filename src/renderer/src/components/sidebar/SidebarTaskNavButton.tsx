@@ -231,7 +231,6 @@ export function SidebarTaskNavButton(): React.JSX.Element | null {
             ) : null}
             {visibleTaskProviders.includes('gitee') ? (
               <TaskProviderShortcut
-                canBrowseTasks={canBrowseTasks}
                 label={translate(
                   'auto.components.sidebar.SidebarNav.gitee.openTasks',
                   'Open Gitee tasks'
