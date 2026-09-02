@@ -641,7 +641,7 @@ async function signMacComputerUseHelper(helperAppPath, packager) {
     process.env.ORCA_COMPUTER_MACOS_SIGN_IDENTITY ??
     process.env.CSC_NAME ??
     findInstalledMacSigningIdentity(codeSigningInfo?.keychainFile) ??
-    (isMacRelease ? null : '-')
+    (isMacRelease ? (isAdhocChannel ? '-' : null) : '-')
   if (!identity) {
     throw new Error('Missing signing identity for Orca Computer Use helper app')
   }
@@ -667,13 +667,13 @@ async function signMacStandaloneHelper(helperPath, helperName, packager) {
   const identity =
     process.env.CSC_NAME ??
     findInstalledMacSigningIdentity(codeSigningInfo?.keychainFile) ??
-    (isMacRelease ? null : '-')
+    (isMacRelease ? (isAdhocChannel ? '-' : null) : '-')
   if (!identity) {
     throw new Error(`Missing signing identity for ${helperName} helper`)
   }
   // Why: nested executables must be signed before the outer app bundle is sealed.
   const args = ['--force', '--sign', identity]
-  if (isMacRelease) {
+  if (isMacRelease && !isAdhocChannel) {
     args.push('--options', 'runtime', '--timestamp')
   }
   args.push(helperPath)
@@ -683,7 +683,7 @@ async function signMacStandaloneHelper(helperPath, helperName, packager) {
 
 function codesignArgs(identity, targetPath) {
   const args = ['--force', '--deep', '--sign', identity]
-  if (isMacRelease) {
+  if (isMacRelease && !isAdhocChannel) {
     args.push(
       '--options',
       'runtime',
