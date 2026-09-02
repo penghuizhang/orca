@@ -25,8 +25,6 @@ function reviewLinkForProvider(
       return { linkedReviewNumber: input.linkedAzureDevOpsPR ?? null }
     case 'gitea':
       return { linkedReviewNumber: input.linkedGiteaPR ?? null }
-    case 'gitee':
-      return { linkedReviewNumber: input.linkedGiteePR ?? null }
   }
 }
 
@@ -41,7 +39,6 @@ export async function getHostedReviewForBranch(
     linkedBitbucketPR?: number | null
     linkedAzureDevOpsPR?: number | null
     linkedGiteaPR?: number | null
-    linkedGiteePR?: number | null
     currentHeadOid?: string | null
     /**
      * Set by surfaces that only ever render the selected worktree, which is the

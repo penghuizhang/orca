@@ -58,8 +58,7 @@ export function linkedReviewHintKey(options?: LinkedReviewHints): string {
     ['gitlab', options?.linkedGitLabMR ?? null],
     ['bitbucket', options?.linkedBitbucketPR ?? null],
     ['azure-devops', options?.linkedAzureDevOpsPR ?? null],
-    ['gitea', options?.linkedGiteaPR ?? null],
-    ['gitee', options?.linkedGiteePR ?? null]
+    ['gitea', options?.linkedGiteaPR ?? null]
   ] as const
   return hints
     .filter(([, number]) => number !== null)

@@ -6,7 +6,6 @@ import { TaskPageGitHubList } from './github/List'
 import { TaskPageGitLabTodoList } from './gitlab/TodoList'
 import { TaskPageGitLabItemList } from './gitlab/ItemList'
 import { TaskPageJiraContent } from './jira/Content'
-import { GiteeContent } from './gitee/Content'
 export function TaskPageContent({
   model
 }: {
@@ -70,8 +69,6 @@ export function TaskPageContent({
     <TaskPageGitLabTodoList model={model} />
   ) : taskSource === 'gitlab' ? (
     <TaskPageGitLabItemList model={model} />
-  ) : taskSource === 'gitee' ? (
-    <GiteeContent />
   ) : (
     <TaskPageJiraContent model={model} />
   )
