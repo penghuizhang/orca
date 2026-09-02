@@ -14,6 +14,9 @@ const {
 const { verifyLinuxGlibcFloor } = require('./scripts/verify-linux-glibc-floor.cjs')
 const { writeMacBuildCompatibility } = require('./scripts/mac-build-compatibility.cjs')
 const { verifyPackagedPluginResources } = require('./scripts/verify-packaged-plugin-resources.cjs')
+const {
+  verifyPackagedNodePtyJobOwnership
+} = require('./scripts/verify-packaged-node-pty-job-ownership.cjs')
 const { verifySkillsCliRuntime } = require('./scripts/verify-skills-cli-runtime.cjs')
 
 // Why: dev-channel builds must carry the *release* identity — same bundle id,
@@ -38,6 +41,12 @@ const localBuildVersion =
 const isHourlyChannel = isMacHourly || isWinHourly
 const isDailyChannel = isMacDaily || isWinDaily
 const isAdhocChannel = isMacAdhoc || isWinAdhoc
+// Why: local orca-s builds package the host slice only (arm64) by default;
+// release CI keeps the full dual-arch set. Override via ORCA_MAC_TARGET_ARCHS.
+const macTargetArchs = (process.env.ORCA_MAC_TARGET_ARCHS ?? 'x64,arm64')
+  .split(',')
+  .map((arch) => arch.trim())
+  .filter(Boolean)
 const devChannelBuildVersion = isHourlyChannel
   ? process.env.ORCA_HOURLY_BUILD_VERSION
   : isDailyChannel
@@ -58,7 +67,9 @@ const devChannelRepo = isHourlyChannel
     : isAdhocChannel
       ? 'orca-adhoc'
       : null
-const appId = 'com.stablyai.orca'
+// Why: the local 二发 build must not clash with the official app's bundle id,
+// or macOS replaces it on install and the two share user data.
+const appId = 'com.penghuizhang.orca-s'
 const featureWallResources = {
   from: 'resources/onboarding/feature-wall',
   to: 'onboarding/feature-wall'
@@ -87,6 +98,8 @@ const bundledPluginResources = {
 // runtime dependency closure to Resources/node_modules so bare require() calls
 // do not fall through to a developer checkout's node_modules.
 const commonExtraResources = [relayExtraResource, bundledPluginResources, skillFreshnessResources]
+// Why: native speech addons must be real files outside app.asar; copy only the
+// package matching the artifact target instead of every optional variant.
 const macSpeechNativeResource = {
   from: 'node_modules/sherpa-onnx-darwin-${arch}',
   to: 'node_modules/sherpa-onnx-darwin-${arch}'
@@ -100,11 +113,15 @@ const winSpeechNativeResource = {
   to: 'node_modules/sherpa-onnx-win-x64'
 }
 
+// Why mirrored, not imported: this config is CJS loaded by electron-builder outside the TS build.
+// Keep in sync with isMarkdownDocumentName() in src/main/ipc/markdown-documents.ts and with
+// config/nsis/orca-installer-hooks.nsh, which registers the same set on Windows.
+const MARKDOWN_FILE_EXTENSIONS = ['md', 'markdown', 'mdx']
+
 /** @type {import('electron-builder').Configuration} */
 module.exports = {
   appId,
-  productName: 'Orca',
-  protocols: [{ name: 'Orca', schemes: ['orca'] }],
+productName: 'orca-s',
   ...(devChannelBuildVersion
     ? { extraMetadata: { version: devChannelBuildVersion } }
     : localBuildVersion
@@ -137,9 +154,16 @@ module.exports = {
     // it is gitignored, but exclude it defensively so a stray local capture at
     // package time never bloats app.asar.
     '!pr-evidence{,/**/*}',
+    // Why: local agent/tooling directories may contain worktree symlink loops;
+    // they are never runtime inputs and must not be traversed by electron-builder.
+    '!{.claude,.grok,.agents,.codex}{,/**/*}',
     '!Casks{,/**/*}',
     '!{AGENTS.md,CLAUDE.md,DEVELOPING.md,bundle-size-progress.md,ORCHESTRATION_IMPLEMENTATION_CHECKLIST.md,ORCHESTRATION_STRUCTURED_OUTPUT_DESIGN.md}',
     '!out/**/*.test.js',
+    // Why: main builds with sourcemap:'hidden' so release CI can publish maps
+    // for decoding minified crash traces. The app never loads them (no
+    // sourceMappingURL is emitted), and packing them would add ~34MB to app.asar.
+    '!out/**/*.map',
     // Why: Vite's manifest is only used to project the paired web client.
     '!out/renderer/.vite{,/**/*}',
     // Why: out/electron-dev caches `pnpm dev`'s per-branch Electron.app copies (~270MB each).
@@ -156,6 +180,10 @@ module.exports = {
     // Why: bundled plugins ship via extraResources to resources/plugins/launch;
     // packing the source tree into app.asar would duplicate those exact bytes.
     '!resources/plugins/launch/**',
+    // Why: speech packages are copied selectively through the platform
+    // extraResources entry below; keeping them in app.asar would ship every
+    // native variant (and duplicate the selected one).
+    '!node_modules/sherpa-onnx*{,/**/*}',
     // Why: the Windows CLI shim ships via extraResources to resources/bin/orca.cmd
     // (beside the native resources/bin/orca.exe). Packing the source tree into
     // app.asar too lets asarUnpack:['resources/**'] extract a second copy at
@@ -179,9 +207,6 @@ module.exports = {
   // before the GUI process starts, so those deps need the same treatment.
   // Why: out/package.json pins compiled output to CommonJS so parent
   // package.json files with type=module cannot change the packaged CLI loader.
-  // Why: sherpa-onnx native bindings (platform-specific subpackages) must be
-  // unpacked because they ship .node addons + .dylib/.so files that cannot be
-  // dlopen()'d from inside the asar archive.
   // Why: the OpenCode SQLite worker entry is also spawned by the scanner
   // service, which runs under ELECTRON_RUN_AS_NODE and so cannot see into
   // app.asar. Left packed, that spawn fails closed and every OpenCode session
@@ -216,6 +241,8 @@ module.exports = {
     'node_modules/tweetnacl/**',
     'node_modules/zod/**',
     'node_modules/yaml/**',
+    'node_modules/ajv/**',
+    'node_modules/ajv-formats/**',
     'node_modules/sherpa-onnx*/**'
   ],
   afterPack: async (context) => {
@@ -266,6 +293,13 @@ module.exports = {
     const archEnumByNodeArch = { ia32: 0, x64: 1, armv7l: 2, arm64: 3 }
     const hostArchEnum = archEnumByNodeArch[process.arch]
     const canExecuteTargetArch = context.arch === hostArchEnum || context.arch === 4
+    if (context.electronPlatformName === 'win32') {
+      if (process.platform === 'win32' && canExecuteTargetArch) {
+        verifyPackagedNodePtyJobOwnership(resourcesDir)
+      } else {
+        console.log('[verify-packaged-node-pty] skipped cross-platform or cross-arch package')
+      }
+    }
     verifySkillsCliRuntime(join(resourcesDir, 'app.asar.unpacked', 'out'), resourcesDir, {
       executeCommands: canExecuteTargetArch
     })
@@ -357,12 +391,24 @@ module.exports = {
     shortcutName: '${productName}',
     uninstallDisplayName: '${productName}',
     createDesktopShortcut: 'always',
-    // Why: on a real uninstall, stop and remove the relocated terminal daemon
-    // (which lives outside the install dir under LOCALAPPDATA by design). Guarded
-    // by ${isUpdated} inside so it never runs during an update's uninstallOldVersion.
-    include: resolve(__dirname, 'nsis', 'daemon-host-uninstall.nsh')
+    // Why: electron-builder allows one include, so both Windows installer hooks live in it -
+    // the relocated-daemon uninstall sweep (guarded by ${isUpdated} so it never runs during an
+    // update's uninstallOldVersion) and the additive markdown "Open with" registration.
+    // Windows markdown association is deliberately NOT done via `fileAssociations`; see the
+    // header comment in that file for why that would steal the user's default .md handler.
+    include: resolve(__dirname, 'nsis', 'orca-installer-hooks.nsh')
   },
   mac: {
+    // Why rank Alternate: Orca joins Finder's "Open With" list for Markdown without claiming
+    // LSHandlerRank ownership, so whichever editor the user already prefers stays the default.
+    // Why one entry per extension: app-builder-lib globs `*.${ext}`, which an array would break.
+    fileAssociations: MARKDOWN_FILE_EXTENSIONS.map((ext) => ({
+      ext,
+      name: 'Markdown Document',
+      description: 'Markdown Document',
+      role: 'Editor',
+      rank: 'Alternate'
+    })),
     icon: 'resources/build/icon.icns',
     entitlements: 'resources/build/entitlements.mac.plist',
     entitlementsInherit: 'resources/build/entitlements.mac.plist',
@@ -412,12 +458,6 @@ module.exports = {
         from: 'node_modules/agent-browser/bin/agent-browser-darwin-${arch}',
         to: 'agent-browser-darwin-${arch}'
       },
-      // Why: serve-sim resolves its helper binary and camera assets relative
-      // to dist/serve-sim.js, so the whole package must be a real resource dir.
-      {
-        from: 'node_modules/serve-sim',
-        to: 'serve-sim'
-      },
       {
         from: 'native/computer-use-macos/.build/release/Orca Computer Use.app',
         to: 'Orca Computer Use.app'
@@ -440,11 +480,11 @@ module.exports = {
     target: [
       {
         target: 'dmg',
-        arch: ['x64', 'arm64']
+        arch: macTargetArchs
       },
       {
         target: 'zip',
-        arch: ['x64', 'arm64']
+        arch: macTargetArchs
       }
     ]
   },
@@ -452,9 +492,15 @@ module.exports = {
   // silently downgrading to ad-hoc artifacts that look shippable in CI logs.
   forceCodeSigning: isMacRelease,
   dmg: {
-    artifactName: 'orca-macos-${arch}.${ext}'
+    artifactName: 'orca-s-macos-${arch}.${ext}'
   },
   linux: {
+    // Why mimeTypes and not fileAssociations: shared-mime-info already maps *.md/*.markdown to
+    // text/markdown, so reusing that type puts Orca in the Open With list without shipping a glob
+    // override. A desktop entry's MimeType only adds a handler - mimeapps.list still owns the
+    // default. .mdx is deliberately absent: Ubuntu 24.04's mime database maps it to
+    // application/x-genesis-32x-rom, so claiming it here would need a glob override.
+    mimeTypes: ['text/markdown'],
     // Why: Ubuntu desktop ships GNOME Orca as the `orca` package and /usr/bin/orca.
     // The Linux installer should not claim those system package/file names.
     executableName: 'orca-ide',

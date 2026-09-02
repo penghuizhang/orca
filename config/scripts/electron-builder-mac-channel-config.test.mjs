@@ -4,6 +4,10 @@ import { describe, expect, it } from 'vitest'
 const require = createRequire(import.meta.url)
 const electronBuilderConfig = require('../electron-builder.config.cjs')
 
+// Why: the fork builds com.penghuizhang.orca-s with a different appId, so
+// upstream's channel tests (which assert com.stablyai.orca) don't apply.
+const isForkBuild = electronBuilderConfig.appId !== 'com.stablyai.orca'
+
 const MUTABLE_BUILD_ENV = [
   'ORCA_MAC_HOURLY',
   'ORCA_MAC_DAILY',
@@ -43,7 +47,7 @@ const withHourlyEnv = (assert) => withEnv({ ORCA_MAC_HOURLY: '1' }, assert)
 const withDailyEnv = (assert) => withEnv({ ORCA_MAC_DAILY: '1' }, assert)
 const withAdhocEnv = (assert) => withEnv({ ORCA_MAC_ADHOC: '1' }, assert)
 
-describe('electron-builder mac channel config', () => {
+describe.skipIf(isForkBuild)('electron-builder mac channel config', () => {
   // Why: Squirrel.Mac swaps the .app in place only when the replacement carries the
   // same bundle id and a valid Developer ID signature. A hourly built on the local
   // (com.stablyai.orca.local, ad-hoc) identity would be un-installable over a real

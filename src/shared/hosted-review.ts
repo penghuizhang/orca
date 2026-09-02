@@ -12,6 +12,7 @@ export type HostedReviewProvider =
   | 'bitbucket'
   | 'azure-devops'
   | 'gitea'
+  | 'gitee'
   | 'unsupported'
 
 export type HostedReviewState = 'open' | 'closed' | 'merged' | 'draft'
@@ -55,6 +56,9 @@ export type HostedReviewInfo = {
 export type HostedReviewForBranchArgs = {
   repoPath: string
   repoId?: string
+  admissionTier?: 'interactive' | 'status' | 'background'
+  /** Desktop IPC-only owner guard; runtime RPC callers omit this field. */
+  repoOwnerExecutionHostId?: string
   branch: string
   linkedGitHubPR?: number | null
   fallbackGitHubPR?: number | null
@@ -62,6 +66,7 @@ export type HostedReviewForBranchArgs = {
   linkedBitbucketPR?: number | null
   linkedAzureDevOpsPR?: number | null
   linkedGiteaPR?: number | null
+  linkedGiteePR?: number | null
   // The worktree's checked-out HEAD oid (GitHub merged-at-head visibility).
   currentHeadOid?: string | null
   /**
@@ -202,6 +207,7 @@ export type HostedReviewCreationEligibilityArgs = {
   linkedBitbucketPR?: number | null
   linkedAzureDevOpsPR?: number | null
   linkedGiteaPR?: number | null
+  linkedGiteePR?: number | null
 }
 
 export type HostedReviewDecision = 'approved' | 'changes_requested' | 'review_required' | null

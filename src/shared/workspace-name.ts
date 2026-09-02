@@ -2,6 +2,7 @@ import {
   collectCompactWorkspaceWords,
   foldWorkspaceNameWhitespaceToHyphen
 } from './workspace-name-text-scanner'
+import { escapeRegex } from './string-utils'
 
 function normalizeApostrophes(input: string): string {
   return input.replace(/[‘’]/g, "'")
@@ -46,7 +47,7 @@ export type WorkspaceIntentWorkItem = {
   type: 'issue' | 'pr' | 'mr'
   number: number
   title: string
-  provider?: 'github' | 'gitlab' | 'linear' | 'jira'
+  provider?: 'github' | 'gitlab' | 'linear' | 'jira' | 'gitee'
   linearIdentifier?: string
   jiraIdentifier?: string
 }
@@ -135,10 +136,6 @@ function compactWords(input: string, maxWords = 4): string {
   return words.map(titleCaseWord).join(' ')
 }
 
-function escapeRegExp(input: string): string {
-  return input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-}
-
 function compactWorkItemTitle(title: string, item: WorkspaceIntentWorkItem): string {
   const identifier = item.linearIdentifier ?? item.jiraIdentifier
   let withoutPrefix = title
@@ -152,7 +149,7 @@ function compactWorkItemTitle(title: string, item: WorkspaceIntentWorkItem): str
   }
   if (identifier) {
     withoutPrefix = withoutPrefix
-      .replace(new RegExp(`^${escapeRegExp(identifier)}\\s*[:-]?\\s*`, 'i'), '')
+      .replace(new RegExp(`^${escapeRegex(identifier)}\\s*[:-]?\\s*`, 'i'), '')
       .trim()
   }
   return compactWords(withoutPrefix || title, 3)
@@ -181,7 +178,7 @@ export function getLinkedWorkItemWorkspaceName(
   let subject = getLinkedWorkItemTitleSubject(item) || item.title.trim()
   if (identifier) {
     subject = subject
-      .replace(new RegExp(`^${escapeRegExp(identifier)}\\s*[:-]?\\s*`, 'i'), '')
+      .replace(new RegExp(`^${escapeRegex(identifier)}\\s*[:-]?\\s*`, 'i'), '')
       .trim()
   }
   const displayName = [identifier, subject].filter(Boolean).join(' ') || workItemIdentity(item)

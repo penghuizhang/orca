@@ -1,6 +1,7 @@
 import type { HostedReviewInfo } from '../../../../shared/hosted-review'
 import type { PRInfo } from '../../../../shared/github/pull-request-types'
 import type { Worktree } from '../../../../shared/worktree/types'
+import { isGitHubPRSuppressed } from '../../../../shared/worktree/github-pr-suppression'
 
 type LinkedReviewMetadataProvider = Exclude<HostedReviewInfo['provider'], 'unsupported'>
 
@@ -26,6 +27,7 @@ type LinkedReviewNumbers = {
   linkedBitbucketPR: number | null
   linkedAzureDevOpsPR: number | null
   linkedGiteaPR: number | null
+  linkedGiteePR: number | null
 }
 
 export type WorktreeCardPrDisplay =
@@ -43,6 +45,7 @@ type WorktreeCardPrDisplayOptions = {
   reviewHintKey?: string
   /** GitHub PR number proven by a branch-scoped lookup. */
   branchLookupGitHubPRNumber?: number | null
+  suppressedGitHubPR?: number | null
 }
 
 function getLinkedReviewNumber(
@@ -60,6 +63,8 @@ function getLinkedReviewNumber(
       return links.linkedAzureDevOpsPR
     case 'gitea':
       return links.linkedGiteaPR
+    case 'gitee':
+      return links.linkedGiteePR
   }
 }
 
@@ -85,6 +90,7 @@ export function getWorktreeCardPrDisplay(
   linkedBitbucketPR: number | null = null,
   linkedAzureDevOpsPR: number | null = null,
   linkedGiteaPR: number | null = null,
+  linkedGiteePR: number | null = null,
   options: WorktreeCardPrDisplayOptions = {}
 ): WorktreeCardPrDisplay | null {
   const links = {
@@ -92,14 +98,25 @@ export function getWorktreeCardPrDisplay(
     linkedGitLabMR,
     linkedBitbucketPR,
     linkedAzureDevOpsPR,
-    linkedGiteaPR
+    linkedGiteaPR,
+    linkedGiteePR
   }
   const hasLinkedReview =
     linkedPR !== null ||
     linkedGitLabMR !== null ||
     linkedBitbucketPR !== null ||
     linkedAzureDevOpsPR !== null ||
-    linkedGiteaPR !== null
+    linkedGiteaPR !== null ||
+    linkedGiteePR !== null
+  if (
+    review?.provider === 'github' &&
+    isGitHubPRSuppressed(
+      { linkedPR, suppressedGitHubPR: options.suppressedGitHubPR ?? null },
+      review.number
+    )
+  ) {
+    return null
+  }
   if (review) {
     if (review.provider === 'unsupported') {
       return review
@@ -146,6 +163,10 @@ export function getWorktreeCardPrDisplay(
 
   if (linkedGiteaPR !== null) {
     return makeLinkedReviewFallback('gitea', linkedGiteaPR, review)
+  }
+
+  if (linkedGiteePR !== null) {
+    return makeLinkedReviewFallback('gitee', linkedGiteePR, review)
   }
 
   return null

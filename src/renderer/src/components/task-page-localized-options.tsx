@@ -1,6 +1,7 @@
 import React from 'react'
 import { Github, Gitlab, LayoutGrid, List } from 'lucide-react'
 
+import { GiteeIcon } from '@/components/icons/GiteeIcon'
 import { JiraIcon } from '@/components/icons/JiraIcon'
 import { createLocalizedCatalog } from '@/i18n/localized-catalog'
 import { translate } from '@/i18n/i18n'
@@ -131,6 +132,11 @@ export const getSourceOptions = createLocalizedCatalog((): SourceOption[] => [
     id: 'jira',
     label: translate('auto.components.TaskPage.9cd11ba218', 'Jira'),
     Icon: ({ className }) => <JiraIcon className={className} />
+  },
+  {
+    id: 'gitee',
+    label: translate('auto.components.TaskPage.gitee.sourceOption', 'Gitee'),
+    Icon: ({ className }) => <GiteeIcon className={className} />
   }
 ])
 
@@ -211,15 +217,13 @@ export const getLinearDisplayProperties = createLocalizedCatalog(
   }
 )
 
-export const getLinearPriorityLabels = createLocalizedCatalog(
-  (): Record<number, string> => ({
-    0: translate('auto.components.TaskPage.713179dfdc', 'No priority'),
-    1: translate('auto.components.TaskPage.f373ab1a4f', 'Urgent'),
-    2: translate('auto.components.TaskPage.345b169f1f', 'High'),
-    3: translate('auto.components.TaskPage.7fd59c18d8', 'Medium'),
-    4: translate('auto.components.TaskPage.69591944e7', 'Low')
-  })
-)
+export const getLinearPriorityLabels = createLocalizedCatalog((): Record<number, string> => ({
+  0: translate('auto.components.TaskPage.713179dfdc', 'No priority'),
+  1: translate('auto.components.TaskPage.f373ab1a4f', 'Urgent'),
+  2: translate('auto.components.TaskPage.345b169f1f', 'High'),
+  3: translate('auto.components.TaskPage.7fd59c18d8', 'Medium'),
+  4: translate('auto.components.TaskPage.69591944e7', 'Low')
+}))
 
 export function getLinearPriorityLabel(priority: number): string {
   return getLinearPriorityLabels()[priority] ?? `P${priority}`

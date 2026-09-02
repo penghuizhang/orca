@@ -28,9 +28,13 @@ export type WorktreeMeta = {
   /** See Worktree.creatorProvenance. */
   creatorProvenance?: WorkspaceCreatorProvenance
   displayName: string
+  /** True when a user-authored label must survive branch changes. */
+  displayNameIsPinned?: boolean
   comment: string
   linkedIssue: number | null
   linkedPR: number | null
+  /** GitHub PR hidden from branch discovery after an explicit unlink. */
+  suppressedGitHubPR?: number | null
   linkedLinearIssue: string | null
   linkedLinearIssueWorkspaceId?: string | null
   linkedLinearIssueOrganizationUrlKey?: string | null
@@ -44,6 +48,8 @@ export type WorktreeMeta = {
   linkedAzureDevOpsPR?: number | null
   /** Optional for backward compatibility — see Worktree.linkedGiteaPR. */
   linkedGiteaPR?: number | null
+  /** Optional for backward compatibility — see Worktree.linkedGiteePR. */
+  linkedGiteePR?: number | null
   linkedWorkItem?: WorkspaceLinkedItem | null
   linkedTaskSourceContext?: TaskSourceContext | null
   isArchived: boolean

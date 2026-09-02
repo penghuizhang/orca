@@ -137,6 +137,27 @@ export function OpenCodeIcon({ size = 14 }: { size?: number }): React.JSX.Elemen
   )
 }
 
+export function ZCodeIcon({ size = 14 }: { size?: number }): React.JSX.Element {
+  // SVG geometry adapted from the ZCode brand mark's 512 canvas.
+  // Why: same square viewBox and currentColor fills as sibling glyphs so the
+  // mark stays legible in both Orca themes.
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 512 512"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden
+      className="text-current"
+    >
+      <path d="M128 128H384V176H128V128Z" fill="currentColor" />
+      <path d="M384 176L176 384H128L336 176H384Z" fill="currentColor" fillOpacity="0.28" />
+      <path d="M128 384H384V432H128V384Z" fill="currentColor" />
+    </svg>
+  )
+}
+
 export function AgentLetterIcon({
   letter,
   size = 14

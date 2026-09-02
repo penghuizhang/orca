@@ -15,6 +15,30 @@ describe('getRepoBackedTaskEmptyState', () => {
     })
   })
 
+  it('points to adding a workspace when the app has no workspace at all', () => {
+    expect(
+      getRepoBackedTaskEmptyState({
+        provider: 'github',
+        selectedRepoCount: 0,
+        hasNoWorkspace: true
+      })
+    ).toEqual({
+      title: 'No workspace yet',
+      description: 'Add a workspace (a git repository) to start browsing tasks.'
+    })
+    expect(
+      getRepoBackedTaskEmptyState({
+        provider: 'gitlab',
+        selectedRepoCount: 0,
+        gitlabView: 'mrs',
+        hasNoWorkspace: true
+      })
+    ).toEqual({
+      title: 'No workspace yet',
+      description: 'Add a workspace (a git repository) to start browsing tasks.'
+    })
+  })
+
   it('keeps GitHub no-match copy when sources are selected', () => {
     expect(
       getRepoBackedTaskEmptyState({

@@ -6,7 +6,7 @@ import type {
   GrokAccountsApi,
   MinimaxCredentialsApi
 } from './api/agent-account-api'
-import type { AgentHooksApi, HooksApi } from './api/agent-hook-api'
+import type { HooksApi } from './api/agent-hook-api'
 import type { SkillsApi } from './api/agent-skill-api'
 import type { AgentAwakeApi, AgentStatusApi, AgentTrustApi } from './api/agent-status-api'
 import type {
@@ -18,10 +18,12 @@ import type {
 import type { AiVaultApi } from './api/ai-vault-api'
 import type { AppApi, E2EApi, PlatformApi } from './api/app-api'
 import type { AutomationsApi } from './api/automation-api'
+import type { CalendarApi } from './api/calendar-api'
 import type { BrowserApi } from './api/browser-api'
 import type { CliApi } from './api/cli-install-api'
 import type { CrashReportsApi, FeedbackApi } from './api/crash-report-api'
 import type { DashboardApi, TerminalPreviewApi } from './api/dashboard-api'
+import type { DocPreviewApi } from './api/doc-preview-api'
 import type { EmulatorApi } from './api/emulator-api'
 import type { EphemeralVmApi } from './api/ephemeral-vm-api'
 import type { ExportApi, FilesystemApi } from './api/filesystem-api'
@@ -30,7 +32,7 @@ import type { GitOperationApi } from './api/git-operation-api'
 import type { GithubPullRequestApi } from './api/github-pull-request-api'
 import type { GithubWorkItemApi } from './api/github-work-item-api'
 import type { GitLabApi } from './api/gitlab-api'
-import type { BitbucketApi, HostedReviewApi } from './api/hosted-review-api'
+import type { BitbucketApi, GiteeApi, HostedReviewApi } from './api/hosted-review-api'
 import type { JiraApi } from './api/jira-api'
 import type { LinearApi } from './api/linear-api'
 import type { MobileApi } from './api/mobile-api'
@@ -46,6 +48,7 @@ import type {
 import type { PetApi } from './api/pet-api'
 import type { PluginsApi } from './api/plugin-host-api'
 import type { PreflightApi } from './api/preflight-api'
+import type { BrowserAutomationMcpApi } from './api/browser-automation-mcp-api'
 import type { PtyApi } from './api/pty-api'
 import type { ProjectGroupsApi, ProjectsApi, RepositoryApi } from './api/repository-api'
 import type { RuntimeApi } from './api/runtime-api'
@@ -87,6 +90,7 @@ export type PreloadApi = {
   hostedReview: HostedReviewApi
   gl: GitLabApi
   bitbucket: BitbucketApi
+  gitee: GiteeApi
   linear: LinearApi
   jira: JiraApi
   starNag: StarNagApi
@@ -103,7 +107,6 @@ export type PreloadApi = {
   claudeAccounts: ClaudeAccountsApi
   cli: CliApi
   codexConfigSync: CodexConfigSyncApi
-  agentHooks: AgentHooksApi
   agentTrust: AgentTrustApi
   preflight: PreflightApi
   notifications: NotificationsApi
@@ -125,6 +128,7 @@ export type PreloadApi = {
   remoteWorkspace: WorkspaceSessionApi['remoteWorkspace']
   updater: UpdaterApi
   notebook: FilesystemApi['notebook']
+  docPreview: DocPreviewApi['docPreview']
   stats: StatsApi
   memory: MemoryApi
   claudeUsage: ClaudeUsageApi
@@ -142,6 +146,8 @@ export type PreloadApi = {
   grokAccounts: GrokAccountsApi
   ssh: SshApi
   automations: AutomationsApi
+  browserAutomationMcp: BrowserAutomationMcpApi
+  calendar: CalendarApi
   wsl: RuntimeApi['wsl']
   pwsh: RuntimeApi['pwsh']
   gitBash: RuntimeApi['gitBash']
@@ -153,6 +159,7 @@ export type PreloadApi = {
 
 export type { ClaudeUsageApi, CodexUsageApi, OpenCodeUsageApi } from './api/agent-usage-api'
 export type { AiVaultApi } from './api/ai-vault-api'
+export type { AutomationsApi, ExternalAutomationManagerResult } from './api/automation-api'
 export type { AppApi } from './api/app-api'
 export type { BrowserApi, DetectedBrowserInfo, DetectedBrowserProfileInfo } from './api/browser-api'
 export type { EmulatorApi } from './api/emulator-api'

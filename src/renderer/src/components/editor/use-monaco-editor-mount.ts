@@ -18,6 +18,8 @@ import {
   installMonacoViewStateTracking,
   restoreMonacoViewState
 } from './monaco-view-state-persistence'
+import { registerCodeDefinitionProvider } from '@/lib/code-navigation/monaco-definition-provider'
+import { installCodeNavigationBindings } from '@/lib/code-navigation/code-navigation-bindings'
 
 // Why: binds a freshly created Monaco instance to the app; reads everything through refs so the callback identity stays stable across renders.
 export function useMonacoEditorMount(params: MonacoEditorMountParams): OnMount {
@@ -115,6 +117,10 @@ export function useMonacoEditorMount(params: MonacoEditorMountParams): OnMount {
       }
 
       setupCopy(editorInstance, monaco, filePath, propsRef)
+      const definitionProviderHandle = registerCodeDefinitionProvider(
+        monaco as unknown as Parameters<typeof registerCodeDefinitionProvider>[0],
+        () => ({ worktreeId: worktreeId ?? undefined, filePath })
+      )
       unregisterFileSearchSelectionRef.current?.()
       unregisterFileSearchSelectionRef.current = registerFileSearchSelectedTextProvider(() => {
         if (!editorInstance.hasTextFocus()) {
@@ -127,6 +133,14 @@ export function useMonacoEditorMount(params: MonacoEditorMountParams): OnMount {
         }
         // Why: Monaco selections live in its text model, not the DOM selection API that app shortcuts read.
         return model.getValueInRange(selection)
+      })
+
+      const navigationBindings = installCodeNavigationBindings({
+        editorInstance,
+        worktreeId: worktreeId ?? undefined,
+        getFilePath: () => filePath,
+        languageRef,
+        contentRef
       })
 
       const { disposeInputBindings } = installMonacoEditorInputBindings({
@@ -168,6 +182,8 @@ export function useMonacoEditorMount(params: MonacoEditorMountParams): OnMount {
       })
 
       editorInstance.onDidDispose(() => {
+        navigationBindings.dispose()
+        definitionProviderHandle.dispose()
         cursorPositionSub.dispose()
         scrollStateSub.dispose()
         gutterMouseDownSub.dispose()

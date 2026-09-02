@@ -54,6 +54,7 @@ export function mergeRuntimeFolderWorkspace(
     linkedBitbucketPR: meta.linkedBitbucketPR ?? null,
     linkedAzureDevOpsPR: meta.linkedAzureDevOpsPR ?? null,
     linkedGiteaPR: meta.linkedGiteaPR ?? null,
+    linkedGiteePR: meta.linkedGiteePR ?? null,
     linkedWorkItem: meta.linkedWorkItem ?? null,
     linkedTaskSourceContext: meta.linkedTaskSourceContext ?? null,
     isArchived: meta.isArchived ?? false,

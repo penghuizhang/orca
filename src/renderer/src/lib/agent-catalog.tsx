@@ -10,7 +10,8 @@ import {
   KiloIcon,
   OmpIcon,
   OpenCodeIcon,
-  PiIcon
+  PiIcon,
+  ZCodeIcon
 } from './agent-icon-glyphs'
 import { translate } from '@/i18n/i18n'
 import { createLocalizedCatalog } from '@/i18n/localized-catalog'
@@ -89,6 +90,13 @@ export const getAgentCatalog = createLocalizedCatalog((): AgentCatalogEntry[] =>
     label: translate('auto.lib.agent.catalog.e7a4ca5103', 'OpenCode'),
     cmd: 'opencode',
     homepageUrl: 'https://opencode.ai/docs/cli/'
+  },
+  {
+    id: 'zcode',
+    label: translate('auto.lib.agent.catalog.zcode_label', 'ZCode'),
+    cmd: 'zcode',
+    faviconDomain: 'z.ai',
+    homepageUrl: 'https://github.com/kingsword09/zcode-cli'
   },
   {
     id: 'mimo-code',
@@ -356,6 +364,9 @@ export function AgentIcon({
   }
   if (agent === 'opencode') {
     return <OpenCodeIcon size={size} />
+  }
+  if (agent === 'zcode') {
+    return <ZCodeIcon size={size} />
   }
   const catalogEntry = getAgentCatalog().find((a) => a.id === agent)
   // Why: prefer the favicon bundled at build time so the icon renders without a
