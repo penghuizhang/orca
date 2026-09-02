@@ -3708,7 +3708,8 @@
           "rangeLast7Days": "过去 7 天",
           "rangeLast30Days": "过去 30 天",
           "rangeLast90Days": "过去 90 天",
-          "rangeAllTime": "全部时间"
+          "rangeAllTime": "全部时间",
+          "zcodeUsageNote": "注意：ZCode 的使用量包含在 OpenCode 统计中，因为 ZCode 使用 OpenCode API。"
         },
         "ShareUsageButton": {
           "7d6b25323d": "分享到 X",

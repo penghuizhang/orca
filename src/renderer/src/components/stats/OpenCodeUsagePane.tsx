@@ -208,6 +208,12 @@ export function OpenCodeUsagePane(): React.JSX.Element {
             'Cost comes from the local OpenCode database when the assistant message recorded one.'
           )}
         </p>
+        <p className="px-1 text-xs text-muted-foreground">
+          {translate(
+            'auto.components.stats.OpenCodeUsagePane.zcodeUsageNote',
+            'Note: ZCode usage is included in OpenCode statistics as ZCode uses OpenCode APIs.'
+          )}
+        </p>
 
         <OpenCodeUsageDetails
           daily={daily}

@@ -4091,7 +4091,8 @@
           "rangeLast7Days": "Last 7 days",
           "rangeLast30Days": "Last 30 days",
           "rangeLast90Days": "Last 90 days",
-          "rangeAllTime": "All time"
+          "rangeAllTime": "All time",
+          "zcodeUsageNote": "Note: ZCode usage is included in OpenCode statistics as ZCode uses OpenCode APIs."
         },
         "ShareUsageButton": {
           "7d6b25323d": "Share on X",
