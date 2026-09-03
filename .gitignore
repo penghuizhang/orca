@@ -83,6 +83,9 @@ design-docs/
 .context/
 .atl/
 
+# CodeGraph local index (machine-local, regenerated on demand)
+.codegraph/
+
 # Machine-local agent hook endpoint files may contain auth tokens.
 /agent-hooks/
 

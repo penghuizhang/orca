@@ -100,7 +100,16 @@ console.log(`📦 当前版本: ${packageJson.version}`)
 // 6. 检查工作目录状态
 console.log('\n=== 6. 检查工作目录状态 ===')
 const status = run('git', ['status', '--porcelain'])
-check('工作目录干净', status === '', status ? `有未提交的更改:\n${status}` : '')
+// Why: .codegraph/ 是本机索引目录（见 .gitignore），不属于产品改动，不能阻塞打包。
+const relevantStatus = status
+  .split('\n')
+  .filter((line) => line.trim() && !line.startsWith('?? .codegraph/'))
+  .join('\n')
+check(
+  '工作目录干净',
+  relevantStatus === '',
+  relevantStatus ? `有未提交的更改:\n${relevantStatus}` : ''
+)
 
 // 7. 检查类型检查
 console.log('\n=== 7. 检查类型检查 (可选) ===')
