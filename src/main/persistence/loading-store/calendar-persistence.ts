@@ -37,7 +37,9 @@ export class CalendarPersistence {
     // Why: fork business data lives in its own sqlite next to the profile state
     // file, so a profile switch carries its calendar (and future tables) along.
     // When customDbPath is configured, use the external path instead.
-    const settings = runtime.state.settings
+    // Why optional-chain: Store builds domains before runtime.state is assigned
+    // (see store.ts); boot must not crash — custom path applies once loaded.
+    const settings = runtime.state?.settings
     const customDbPath = settings?.customDbPath
     const dbPath =
       customDbPath && existsSync(customDbPath)
