@@ -125,14 +125,20 @@ export async function parseZCodeUsageDatabase(dbPath: string): Promise<{
       ORDER BY started_at ASC
     `)
 
+    let rowCount = 0
     for (const row of stmt.iterate() as IterableIterator<ZCodeModelUsageRow>) {
+      rowCount++
       const parsed = parseModelUsageRow(row)
       if (parsed) {
         events.push(parsed)
       }
     }
+    console.log(`[zcode-usage] parseZCodeUsageDatabase: ${rowCount} rows, ${events.length} events`)
 
     const { sessions, dailyAggregates } = aggregateEvents(events)
+    console.log(
+      `[zcode-usage] aggregateEvents: ${sessions.size} sessions, ${dailyAggregates.size} daily`
+    )
 
     return {
       processedDatabase,

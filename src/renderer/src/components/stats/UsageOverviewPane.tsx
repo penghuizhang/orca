@@ -36,22 +36,29 @@ export function UsageOverviewPane(): React.JSX.Element {
   const openCodeScanState = useAppStore((state) => state.openCodeUsageScanState)
   const openCodeSummary = useAppStore((state) => state.openCodeUsageSummary)
   const openCodeDaily = useAppStore((state) => state.openCodeUsageDaily)
+  const zcodeScanState = useAppStore((state) => state.zcodeUsageScanState)
+  const zcodeSummary = useAppStore((state) => state.zcodeUsageSummary)
+  const zcodeDaily = useAppStore((state) => state.zcodeUsageDaily)
   const fetchClaudeUsage = useAppStore((state) => state.fetchClaudeUsage)
   const fetchCodexUsage = useAppStore((state) => state.fetchCodexUsage)
   const fetchOpenCodeUsage = useAppStore((state) => state.fetchOpenCodeUsage)
+  const fetchZCodeUsage = useAppStore((state) => state.fetchZCodeUsage)
   const refreshClaudeUsage = useAppStore((state) => state.refreshClaudeUsage)
   const refreshCodexUsage = useAppStore((state) => state.refreshCodexUsage)
   const refreshOpenCodeUsage = useAppStore((state) => state.refreshOpenCodeUsage)
+  const refreshZCodeUsage = useAppStore((state) => state.refreshZCodeUsage)
   const enableClaudeUsage = useAppStore((state) => state.enableClaudeUsage)
   const enableCodexUsage = useAppStore((state) => state.enableCodexUsage)
   const enableOpenCodeUsage = useAppStore((state) => state.enableOpenCodeUsage)
+  const enableZCodeUsage = useAppStore((state) => state.enableZCodeUsage)
   const recordFeatureInteraction = useAppStore((state) => state.recordFeatureInteraction)
 
   useEffect(() => {
     void fetchClaudeUsage()
     void fetchCodexUsage()
     void fetchOpenCodeUsage()
-  }, [fetchClaudeUsage, fetchCodexUsage, fetchOpenCodeUsage])
+    void fetchZCodeUsage()
+  }, [fetchClaudeUsage, fetchCodexUsage, fetchOpenCodeUsage, fetchZCodeUsage])
 
   const overview = useMemo(
     () =>
@@ -70,6 +77,11 @@ export function UsageOverviewPane(): React.JSX.Element {
           scanState: openCodeScanState,
           summary: openCodeSummary,
           daily: openCodeDaily
+        },
+        zcode: {
+          scanState: zcodeScanState,
+          summary: zcodeSummary,
+          daily: zcodeDaily
         }
       }),
     [
@@ -81,7 +93,10 @@ export function UsageOverviewPane(): React.JSX.Element {
       codexSummary,
       openCodeDaily,
       openCodeScanState,
-      openCodeSummary
+      openCodeSummary,
+      zcodeDaily,
+      zcodeScanState,
+      zcodeSummary
     ]
   )
   const recentDays = useMemo(
@@ -94,7 +109,8 @@ export function UsageOverviewPane(): React.JSX.Element {
     void Promise.all([
       claudeScanState?.enabled ? refreshClaudeUsage() : Promise.resolve(),
       codexScanState?.enabled ? refreshCodexUsage() : Promise.resolve(),
-      openCodeScanState?.enabled ? refreshOpenCodeUsage() : Promise.resolve()
+      openCodeScanState?.enabled ? refreshOpenCodeUsage() : Promise.resolve(),
+      zcodeScanState?.enabled ? refreshZCodeUsage() : Promise.resolve()
     ])
   }
 
@@ -272,8 +288,10 @@ export function UsageOverviewPane(): React.JSX.Element {
                   void enableClaudeUsage()
                 } else if (provider.id === 'codex') {
                   void enableCodexUsage()
-                } else {
+                } else if (provider.id === 'opencode') {
                   void enableOpenCodeUsage()
+                } else {
+                  void enableZCodeUsage()
                 }
               }}
             />

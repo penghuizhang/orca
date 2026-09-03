@@ -70,7 +70,7 @@ export function TokenMixBar({ overview }: { overview: UsageOverviewModel }): Rea
           <p className="text-xs text-muted-foreground">
             {translate(
               'auto.components.stats.usage.overview.sections.3bc4a01b24',
-              'Combined input, output, and cache tokens across enabled providers.'
+              'Combined input, output, and cache tokens across Claude, Codex, OpenCode, and ZCode providers.'
             )}
           </p>
         </div>
@@ -146,7 +146,7 @@ export function DailyIntensityGrid({
           <p className="text-xs text-muted-foreground">
             {translate(
               'auto.components.stats.usage.overview.sections.f28ff1f852',
-              'Recent combined Claude, Codex, and OpenCode token activity.'
+              'Recent combined Claude, Codex, OpenCode, and ZCode token activity.'
             )}
           </p>
         </div>

@@ -14,6 +14,11 @@ import type {
   OpenCodeUsageScanState,
   OpenCodeUsageSummary
 } from '../../../../shared/opencode-usage-types'
+import type {
+  ZCodeUsageDailyPoint,
+  ZCodeUsageScanState,
+  ZCodeUsageSummary
+} from '../../../../shared/zcode-usage-types'
 import { getRecentUsageDays } from './usage-overview-daily-series'
 import { buildUsageOverview, formatUsageCost, formatUsageTokens } from './usage-overview-model'
 
@@ -47,6 +52,17 @@ function enabledOpenCodeScanState(): OpenCodeUsageScanState {
     lastScanCompletedAt: 600,
     lastScanError: null,
     hasAnyOpenCodeData: true
+  }
+}
+
+function enabledZCodeScanState(): ZCodeUsageScanState {
+  return {
+    enabled: true,
+    isScanning: false,
+    lastScanStartedAt: 700,
+    lastScanCompletedAt: 800,
+    lastScanError: null,
+    hasAnyZCodeData: true
   }
 }
 
@@ -142,6 +158,39 @@ describe('usage overview model', () => {
         totalTokens: 1_600
       }
     ]
+    const zcodeSummary: ZCodeUsageSummary = {
+      scope: 'all',
+      range: '30d',
+      sessions: 1,
+      events: 2,
+      inputTokens: 800,
+      cachedInputTokens: 200,
+      outputTokens: 400,
+      reasoningOutputTokens: 50,
+      totalTokens: 1_200,
+      estimatedCostUsd: 0.02,
+      topModel: 'deepseek-v4-flash',
+      topProvider: 'opencode-go',
+      hasAnyZCodeData: true
+    }
+    const zcodeDaily: ZCodeUsageDailyPoint[] = [
+      {
+        day: '2026-05-14',
+        inputTokens: 500,
+        cachedInputTokens: 100,
+        outputTokens: 200,
+        reasoningOutputTokens: 30,
+        totalTokens: 700
+      },
+      {
+        day: '2026-05-15',
+        inputTokens: 300,
+        cachedInputTokens: 100,
+        outputTokens: 200,
+        reasoningOutputTokens: 20,
+        totalTokens: 500
+      }
+    ]
 
     const overview = buildUsageOverview({
       claude: {
@@ -158,25 +207,31 @@ describe('usage overview model', () => {
         scanState: enabledOpenCodeScanState(),
         summary: openCodeSummary,
         daily: openCodeDaily
+      },
+      zcode: {
+        scanState: enabledZCodeScanState(),
+        summary: zcodeSummary,
+        daily: zcodeDaily
       }
     })
 
-    expect(overview.totalTokens).toBe(10_800)
-    expect(overview.newInputTokens).toBe(2_950)
-    expect(overview.cacheTokens).toBe(5_550)
-    expect(overview.outputTokens).toBe(2_200)
-    expect(overview.reasoningTokens).toBe(400)
-    expect(overview.sessions).toBe(4)
-    expect(overview.activityCount).toBe(9)
+    expect(overview.totalTokens).toBe(12_000)
+    expect(overview.newInputTokens).toBe(3_550)
+    expect(overview.cacheTokens).toBe(5_750)
+    expect(overview.outputTokens).toBe(2_600)
+    expect(overview.reasoningTokens).toBe(450)
+    expect(overview.sessions).toBe(5)
+    expect(overview.activityCount).toBe(11)
     expect(overview.activeDays).toBe(3)
-    expect(overview.estimatedCostUsd).toBeCloseTo(0.09)
-    expect(overview.cacheShare).toBeCloseTo(5_550 / 8_500)
+    expect(overview.estimatedCostUsd).toBeCloseTo(0.11)
+    expect(overview.cacheShare).toBeCloseTo(5_750 / 9_300)
     expect(overview.bestDay).toMatchObject({
       day: '2026-05-14',
-      totalTokens: 4_500,
+      totalTokens: 5_200,
       claudeTokens: 2_500,
       codexTokens: 2_000,
       openCodeTokens: 0,
+      zcodeTokens: 700,
       intensity: 4
     })
     expect(overview.providers.find((provider) => provider.id === 'codex')).toMatchObject({
@@ -200,6 +255,7 @@ describe('usage overview model', () => {
           claudeTokens: 2_500,
           codexTokens: 2_000,
           openCodeTokens: 0,
+          zcodeTokens: 0,
           intensity: 4
         }
       ],
@@ -214,6 +270,7 @@ describe('usage overview model', () => {
         claudeTokens: 0,
         codexTokens: 0,
         openCodeTokens: 0,
+        zcodeTokens: 0,
         intensity: 0
       },
       {
@@ -222,6 +279,7 @@ describe('usage overview model', () => {
         claudeTokens: 2_500,
         codexTokens: 2_000,
         openCodeTokens: 0,
+        zcodeTokens: 0,
         intensity: 4
       },
       {
@@ -230,6 +288,7 @@ describe('usage overview model', () => {
         claudeTokens: 0,
         codexTokens: 0,
         openCodeTokens: 0,
+        zcodeTokens: 0,
         intensity: 0
       }
     ])
@@ -239,7 +298,8 @@ describe('usage overview model', () => {
     const overview = buildUsageOverview({
       claude: { scanState: null, summary: null, daily: [] },
       codex: { scanState: null, summary: null, daily: [] },
-      opencode: { scanState: null, summary: null, daily: [] }
+      opencode: { scanState: null, summary: null, daily: [] },
+      zcode: { scanState: null, summary: null, daily: [] }
     })
 
     expect(overview.hasAnyEnabledProvider).toBe(false)
@@ -269,7 +329,8 @@ describe('usage overview model', () => {
         summary: null,
         daily: codexDaily
       },
-      opencode: { scanState: null, summary: null, daily: [] }
+      opencode: { scanState: null, summary: null, daily: [] },
+      zcode: { scanState: null, summary: null, daily: [] }
     })
 
     expect(overview.daily).toHaveLength(130_000)
