@@ -17,6 +17,7 @@ import { CalendarEntryDialog } from './calendar-entry-dialog'
 import { CalendarRangeSummary } from './calendar-range-summary'
 import { CalendarWorkListDialog } from './calendar-work-list-dialog'
 import { CalendarCategoryManagerDialog } from './calendar-category-manager-dialog'
+import { CalendarEntryDeleteDialog } from './calendar-entry-delete-dialog'
 import {
   addMonths,
   fromDateKey,
@@ -25,14 +26,6 @@ import {
   type WorkListRange
 } from './calendar-time'
 import { Button } from '@/components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle
-} from '@/components/ui/dialog'
 import { translate, getIntlLocale } from '@/i18n/i18n'
 import { useAppStore } from '@/store'
 
@@ -403,28 +396,12 @@ export default function CalendarPage(): React.JSX.Element {
         onDelete={deleteCategory}
       />
 
-      <Dialog open={deleteTarget !== null} onOpenChange={(open) => !open && setDeleteTarget(null)}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-sm">
-              {translate('auto.components.calendar.deleteEntry', 'Delete entry')}
-            </DialogTitle>
-            <DialogDescription className="text-xs">
-              {translate('auto.components.calendar.deleteEntryDescription', 'Delete "{{title}}"?', {
-                title: deleteTarget?.title
-              })}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteTarget(null)}>
-              {translate('auto.components.calendar.cancel', 'Cancel')}
-            </Button>
-            <Button variant="destructive" disabled={isSaving} onClick={() => void confirmDelete()}>
-              {translate('auto.components.calendar.delete', 'Delete')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <CalendarEntryDeleteDialog
+        target={deleteTarget}
+        isSaving={isSaving}
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={() => void confirmDelete()}
+      />
     </main>
   )
 }
