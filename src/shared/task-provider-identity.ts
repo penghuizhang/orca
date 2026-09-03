@@ -79,9 +79,6 @@ export function normalizeTaskProviderIdentity(
         siteUrl: normalizeNonEmptyString(raw.siteUrl),
         projectKey: normalizeNonEmptyString(raw.projectKey)
       }
-    case 'gitee':
-      // Why: Gitee work items are account-level; no per-repo identity is stored.
-      return null
   }
 }
 
@@ -115,8 +112,6 @@ export function isStoredTaskProviderIdentity(provider: TaskProvider, identity: u
       )
     case 'jira':
       return ['siteId', 'siteUrl', 'projectKey'].every((key) => isNullableOptionalString(raw[key]))
-    case 'gitee':
-      return true
   }
 }
 
@@ -124,8 +119,7 @@ const TASK_PROVIDER_IDENTITY_FIELDS: Record<TaskProvider, readonly string[]> = {
   github: ['owner', 'repo', 'host'],
   gitlab: ['projectId', 'namespace', 'project', 'webUrl'],
   linear: ['workspaceId', 'workspaceName', 'teamId', 'teamKey'],
-  jira: ['siteId', 'siteUrl', 'projectKey'],
-  gitee: []
+  jira: ['siteId', 'siteUrl', 'projectKey']
 }
 
 export function areTaskProviderIdentitiesEqual(

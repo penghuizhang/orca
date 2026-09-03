@@ -89,12 +89,6 @@ export function useTaskSourceProviderReadiness(
         connected: jiraConnected,
         checking: jiraChecking,
         visible: visible.has('jira')
-      },
-      gitee: {
-        connected: preflightStatus?.gitee?.configured === true,
-        checking: reviewChecking,
-        unavailable: reviewUnavailable,
-        visible: visible.has('gitee')
       }
     }
   }, [
@@ -109,7 +103,6 @@ export function useTaskSourceProviderReadiness(
     linearSkillSettled,
     reviewChecking,
     reviewUnavailable,
-    preflightStatus?.gitee?.configured,
     visibleProvidersKey
   ])
 }

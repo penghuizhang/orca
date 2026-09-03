@@ -2,7 +2,6 @@ import {
   AzureDevOpsIntegrationCard,
   BitbucketIntegrationCard,
   GiteaIntegrationCard,
-  GiteeIntegrationCard,
   GitHubIntegrationCard,
   GitLabIntegrationCard
 } from './source-control-integration-cards'
@@ -34,7 +33,6 @@ export function IntegrationsPane(): React.JSX.Element {
           <BitbucketIntegrationCard />
           <AzureDevOpsIntegrationCard />
           <GiteaIntegrationCard />
-          <GiteeIntegrationCard />
         </div>
       </section>
 

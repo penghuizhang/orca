@@ -137,10 +137,7 @@ describe('TasksPane', () => {
         skillChecking: false,
         visible: true
       },
-      jira: { connected: false, checking: false, visible: false },
-      // Why: gitee mirrors the code-host cold-start shape so it never claims
-      // the sticky auto-expand slot in these preflight-ordering scenarios.
-      gitee: { connected: false, checking: true, visible: true }
+      jira: { connected: false, checking: false, visible: false }
     }
   })
 

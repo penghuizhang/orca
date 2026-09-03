@@ -1,3 +1,4 @@
+import { copyFileSync, existsSync, mkdirSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import {
   normalizeCalendarEntry,
@@ -35,10 +36,17 @@ export class CalendarPersistence {
   constructor(runtime: StoreRuntimeState, scheduling: WriteSchedulingOperations) {
     // Why: fork business data lives in its own sqlite next to the profile state
     // file, so a profile switch carries its calendar (and future tables) along.
-    const customDb = new CustomDb(
-      join(dirname(runtime.dataFile), 'orca-custom.db'),
-      CALENDAR_MIGRATIONS
-    )
+    // When customDbPath is configured, use the external path instead.
+    // Why optional-chain: Store builds domains before runtime.state is assigned
+    // (see store.ts); boot must not crash — custom path applies once loaded.
+    const settings = runtime.state?.settings
+    const customDbPath = settings?.customDbPath
+    const dbPath =
+      customDbPath && existsSync(customDbPath)
+        ? customDbPath
+        : join(dirname(runtime.dataFile), 'orca-custom.db')
+
+    const customDb = new CustomDb(dbPath, CALENDAR_MIGRATIONS)
     this[calendarPersistenceContext] = {
       runtime,
       scheduling,
@@ -112,6 +120,42 @@ export class CalendarPersistence {
       ).calendarEntries
       scheduleSave(this[calendarPersistenceContext].scheduling)
     }
+  }
+
+  /**
+   * Migrate the database from the default path to a custom external path.
+   * This is idempotent: if the target already exists, it does nothing.
+   * If the source doesn't exist, it does nothing.
+   *
+   * @param defaultDbPath The default database path (next to orca-data.json)
+   * @param customDbPath The custom external database path
+   */
+  static migrateToCustomPath(defaultDbPath: string, customDbPath: string): void {
+    // If custom path already exists, no migration needed
+    if (existsSync(customDbPath)) {
+      return
+    }
+
+    // If default path doesn't exist, nothing to migrate
+    if (!existsSync(defaultDbPath)) {
+      return
+    }
+
+    // Ensure the target directory exists
+    mkdirSync(dirname(customDbPath), { recursive: true })
+
+    // Copy the database file and its WAL/SHM sidecars
+    copyFileSync(defaultDbPath, customDbPath)
+    const walPath = `${defaultDbPath}-wal`
+    const shmPath = `${defaultDbPath}-shm`
+    if (existsSync(walPath)) {
+      copyFileSync(walPath, `${customDbPath}-wal`)
+    }
+    if (existsSync(shmPath)) {
+      copyFileSync(shmPath, `${customDbPath}-shm`)
+    }
+
+    console.log(`[calendar] Migrated database from ${defaultDbPath} to ${customDbPath}`)
   }
 }
 

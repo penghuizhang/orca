@@ -12,11 +12,10 @@ import {
 import { useTranslation } from 'react-i18next'
 import { useAppStore } from '@/store'
 import { cn } from '@/lib/utils'
-import type { GlobalSettings } from '../../../../shared/global-settings-types'
-import { useActivityUnreadCount } from '@/components/activity/useActivityUnreadCount'
 import { useShortcutKeyComboDetails } from '@/hooks/useShortcutLabel'
 import { ShortcutKeyCombo } from '@/components/ShortcutKeyCombo'
 import { useMobileSidebarOnboardingBadge } from './mobile-sidebar-onboarding-badge'
+import { useActivityUnreadCount } from '@/components/activity/useActivityUnreadCount'
 import { ContextMenu, ContextMenuTrigger } from '@/components/ui/context-menu'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -25,8 +24,33 @@ import { SidebarTaskNavButton } from './SidebarTaskNavButton'
 import { HideSidebarMenu } from './sidebar-nav-controls'
 import { translate } from '@/i18n/i18n'
 import { lazyWithRetry } from '@/lib/lazy-with-retry'
+import type { GlobalSettings } from '../../../../shared/global-settings-types'
 
 export { getSetupGuideSidebarEntryReady, shouldShowSetupGuideEntry } from './SetupGuideSidebarEntry'
+
+export function shouldShowMobileButton(
+  settings: Partial<Pick<GlobalSettings, 'showMobileButton'>> | null | undefined
+): boolean {
+  return settings?.showMobileButton !== false
+}
+
+export function shouldShowAutomationsButton(
+  settings: Partial<Pick<GlobalSettings, 'showAutomationsButton'>> | null | undefined
+): boolean {
+  return settings?.showAutomationsButton !== false
+}
+
+export function shouldShowArtifactsButton(
+  settings: Partial<Pick<GlobalSettings, 'showArtifactsButton'>> | null | undefined
+): boolean {
+  return settings?.showArtifactsButton === true
+}
+
+export function shouldShowSkillsButton(
+  settings: Partial<Pick<GlobalSettings, 'showSkillsButton'>> | null | undefined
+): boolean {
+  return settings?.showSkillsButton === true
+}
 
 export function shouldShowAgentsButton(
   settings: Pick<GlobalSettings, 'experimentalActivity'> | null | undefined
@@ -35,33 +59,9 @@ export function shouldShowAgentsButton(
 }
 
 export function shouldShowAgentDashboardButton(
-  settings: Pick<GlobalSettings, 'experimentalAgentDashboardPopout'> | null | undefined
+  settings: Partial<Pick<GlobalSettings, 'experimentalAgentDashboardPopout'>> | null | undefined
 ): boolean {
   return settings?.experimentalAgentDashboardPopout === true
-}
-
-export function shouldShowMobileButton(
-  settings: Pick<GlobalSettings, 'showMobileButton'> | null | undefined
-): boolean {
-  return settings?.showMobileButton !== false
-}
-
-export function shouldShowAutomationsButton(
-  settings: Pick<GlobalSettings, 'showAutomationsButton'> | null | undefined
-): boolean {
-  return settings?.showAutomationsButton !== false
-}
-
-export function shouldShowArtifactsButton(
-  settings: Pick<GlobalSettings, 'showArtifactsButton'> | null | undefined
-): boolean {
-  return settings?.showArtifactsButton === true
-}
-
-export function shouldShowSkillsButton(
-  settings: Pick<GlobalSettings, 'showSkillsButton'> | null | undefined
-): boolean {
-  return settings?.showSkillsButton === true
 }
 
 const AgentDashboardSidebarEntry = lazyWithRetry(() => import('./AgentDashboardSidebarEntry'))
@@ -80,13 +80,8 @@ const SidebarNav = React.memo(function SidebarNav() {
   const openModal = useAppStore((s) => s.openModal)
   const updateSettings = useAppStore((s) => s.updateSettings)
   const activeView = useAppStore((s) => s.activeView)
-  const experimentalSidebarButtons = useAppStore(
-    (s) =>
-      (shouldShowAgentsButton(s.settings) ? 1 : 0) |
-      (shouldShowAgentDashboardButton(s.settings) ? 2 : 0)
-  )
-  const showAgentsButton = (experimentalSidebarButtons & 1) !== 0
-  const showAgentDashboardButton = (experimentalSidebarButtons & 2) !== 0
+  const showAgentDashboardButton = useAppStore((s) => shouldShowAgentDashboardButton(s.settings))
+  const showAgentsButton = useAppStore((s) => shouldShowAgentsButton(s.settings))
   const showAutomationsButton = useAppStore((s) => shouldShowAutomationsButton(s.settings))
   const showMobileButton = useAppStore((s) => shouldShowMobileButton(s.settings))
   const showArtifactsButton = useAppStore((s) => shouldShowArtifactsButton(s.settings))
@@ -97,8 +92,8 @@ const SidebarNav = React.memo(function SidebarNav() {
   const mobileActive = activeView === 'mobile'
   const artifactsActive = activeView === 'artifacts'
   const skillsActive = activeView === 'skills'
-  const activityUnreadCount = useActivityUnreadCount(showAgentsButton, 'sidebar-badge')
   const mobileOnboardingBadge = useMobileSidebarOnboardingBadge(showMobileButton)
+  const activityUnreadCount = useActivityUnreadCount()
   const hideAutomationsButton = React.useCallback(() => {
     void updateSettings({ showAutomationsButton: false })
   }, [updateSettings])

@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { Github, Gitlab } from 'lucide-react'
-import { GiteeIcon } from '@/components/icons/GiteeIcon'
 import type { GlobalSettings } from '../../../../shared/global-settings-types'
 import type { TaskProvider } from '../../../../shared/task-providers'
 import {
@@ -90,18 +89,6 @@ const PROVIDER_META: Record<
       )
     },
     Icon: ({ className }) => <JiraIcon className={className} />
-  },
-  gitee: {
-    get label() {
-      return translate('auto.components.settings.TasksPane.giteeLabel', 'Gitee')
-    },
-    get description() {
-      return translate(
-        'auto.components.settings.TasksPane.giteeDescription',
-        'Browse pull requests and issues across your Gitee repositories.'
-      )
-    },
-    Icon: ({ className }) => <GiteeIcon className={className} />
   }
 }
 

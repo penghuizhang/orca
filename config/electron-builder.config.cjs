@@ -1,4 +1,4 @@
-const { chmodSync, existsSync, readdirSync } = require('node:fs')
+const { chmodSync, existsSync, readdirSync, readFileSync, writeFileSync } = require('node:fs')
 const { execFileSync } = require('node:child_process')
 const { join, resolve } = require('node:path')
 const electronBuilderNativeRebuild = require('./scripts/electron-builder-native-rebuild.cjs')
@@ -18,6 +18,7 @@ const {
   verifyPackagedNodePtyJobOwnership
 } = require('./scripts/verify-packaged-node-pty-job-ownership.cjs')
 const { verifySkillsCliRuntime } = require('./scripts/verify-skills-cli-runtime.cjs')
+const { verifyStaticAppImagePackage } = require('./scripts/static-appimage-package-contract.cjs')
 
 // Why: dev-channel builds must carry the *release* identity — same bundle id,
 // Developer ID signature, and notarization ticket — or Squirrel.Mac refuses to
@@ -112,6 +113,29 @@ const winSpeechNativeResource = {
   from: 'node_modules/sherpa-onnx-win-x64',
   to: 'node_modules/sherpa-onnx-win-x64'
 }
+// electron-builder replaces these defaults when `depends` is configured; retain
+// Electron's loader requirements alongside Orca's headless-host dependencies.
+const debElectronRuntimeDependencies = [
+  'libgtk-3-0',
+  'libnotify4',
+  'libnss3',
+  'libxss1',
+  'libxtst6',
+  'xdg-utils',
+  'libatspi2.0-0',
+  'libuuid1',
+  'libsecret-1-0'
+]
+const rpmElectronRuntimeDependencies = [
+  'gtk3',
+  'libnotify',
+  'nss',
+  'libXScrnSaver',
+  '(libXtst or libXtst6)',
+  'xdg-utils',
+  'at-spi2-core',
+  '(libuuid or libuuid1)'
+]
 
 // Why mirrored, not imported: this config is CJS loaded by electron-builder outside the TS build.
 // Keep in sync with isMarkdownDocumentName() in src/main/ipc/markdown-documents.ts and with
@@ -122,6 +146,9 @@ const MARKDOWN_FILE_EXTENSIONS = ['md', 'markdown', 'mdx']
 module.exports = {
   appId,
 productName: 'orca-s',
+  // Why no upstream protocols here: registering orca:// would fight the official
+  // app for the scheme (coexistence rule); toolsets pin is harmless, keep it.
+  toolsets: { appimage: '1.0.3' },
   ...(devChannelBuildVersion
     ? { extraMetadata: { version: devChannelBuildVersion } }
     : localBuildVersion
@@ -157,6 +184,8 @@ productName: 'orca-s',
     // Why: local agent/tooling directories may contain worktree symlink loops;
     // they are never runtime inputs and must not be traversed by electron-builder.
     '!{.claude,.grok,.agents,.codex}{,/**/*}',
+    // Why: CodeGraph's local SQLite index is machine-local and must never ship in app.asar.
+    '!.codegraph{,/**/*}',
     '!Casks{,/**/*}',
     '!{AGENTS.md,CLAUDE.md,DEVELOPING.md,bundle-size-progress.md,ORCHESTRATION_IMPLEMENTATION_CHECKLIST.md,ORCHESTRATION_STRUCTURED_OUTPUT_DESIGN.md}',
     '!out/**/*.test.js',
@@ -245,12 +274,21 @@ productName: 'orca-s',
     'node_modules/ajv-formats/**',
     'node_modules/sherpa-onnx*/**'
   ],
+  artifactBuildCompleted: ({ file, arch }) => {
+    if (file.endsWith('.AppImage')) {
+      verifyStaticAppImagePackage(file, arch)
+    }
+  },
   afterPack: async (context) => {
     // Why: a Linux runner-image glibc bump silently shipped a node-pty pty.node
     // requiring GLIBC_2.34, crashing the app on startup on Ubuntu 20.04 (#9902).
     // Fail packaging if any bundled native binary exceeds the supported floor.
     if (context.electronPlatformName === 'linux') {
-      verifyLinuxGlibcFloor(context.appOutDir)
+      // Why the arch is passed: symbol-version checks pass happily on a wrong-architecture binary,
+      // so a cross-built slice could ship the host's pty.node and only fail at runtime.
+      verifyLinuxGlibcFloor(context.appOutDir, {
+        targetArch: { 1: 'x64', 3: 'arm64' }[context.arch]
+      })
     }
     const resourcesDir =
       context.electronPlatformName === 'darwin'
@@ -263,6 +301,10 @@ productName: 'orca-s',
         : join(context.appOutDir, 'resources')
     if (!existsSync(resourcesDir)) {
       throw new Error(`Missing packaged resources directory: ${resourcesDir}`)
+    }
+    // FpmTarget replaces this with deb/rpm while building those artifacts from the shared app tree.
+    if (context.electronPlatformName === 'linux') {
+      writeFileSync(join(resourcesDir, 'package-type'), 'AppImage')
     }
     if (context.electronPlatformName === 'darwin') {
       const architectureByEnum = { 1: 'x64', 3: 'arm64' }
@@ -283,6 +325,7 @@ productName: 'orca-s',
       }
       writeMacBuildCompatibility(resourcesDir, { version, commit, architecture })
     }
+    stampPackagedCliVersion(resourcesDir, context.packager.appInfo.version)
     prunePackagedRuntimeNodeModules(resourcesDir, context.electronPlatformName, context.arch)
     verifyPackagedMainRuntimeDeps(resourcesDir)
     // Why: boot the packaged daemon-entry under plain Node, but only for the
@@ -532,7 +575,8 @@ productName: 'orca-s',
       },
       featureWallResources
     ],
-    target: ['AppImage', 'deb'],
+    // Keep local artifacts aligned with the release pipeline.
+    target: ['AppImage', 'deb', 'rpm'],
     maintainer: 'stablyai',
     category: 'Utility'
   },
@@ -546,6 +590,7 @@ productName: 'orca-s',
     // Linux host — Chromium needs a display server even for offscreen rendering,
     // and serve starts Xvfb itself when present (see ensure-virtual-display.ts).
     depends: [
+      ...debElectronRuntimeDependencies,
       'python3',
       'python3-gi',
       'gir1.2-atspi-2.0',
@@ -567,9 +612,9 @@ productName: 'orca-s',
     // Why: see deb depends. RPM distros ship Xvfb as xorg-x11-server-Xvfb (there
     // is no `xvfb` package), so the name differs from the deb here.
     depends: [
+      ...rpmElectronRuntimeDependencies,
       'python3',
       'python3-gobject',
-      'at-spi2-core',
       'xdotool',
       'xclip',
       'xorg-x11-server-Xvfb'
@@ -592,6 +637,16 @@ productName: 'orca-s',
     repo: devChannelRepo ?? 'orca',
     releaseType: devChannelRepo ? 'prerelease' : 'release'
   }
+}
+
+// Stamp the effective channel version where node-mode CLI code can read it.
+function stampPackagedCliVersion(resourcesDir, version) {
+  const packageJsonPath = join(resourcesDir, 'app.asar.unpacked', 'out', 'package.json')
+  if (!existsSync(packageJsonPath)) {
+    throw new Error(`Missing unpacked CLI package boundary: ${packageJsonPath}`)
+  }
+  const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'))
+  writeFileSync(packageJsonPath, `${JSON.stringify({ ...packageJson, version }, null, 2)}\n`)
 }
 
 function chmodUnixCliLaunchers(resourcesDir, electronPlatformName) {
@@ -641,7 +696,7 @@ async function signMacComputerUseHelper(helperAppPath, packager) {
     process.env.ORCA_COMPUTER_MACOS_SIGN_IDENTITY ??
     process.env.CSC_NAME ??
     findInstalledMacSigningIdentity(codeSigningInfo?.keychainFile) ??
-    (isMacRelease ? null : '-')
+    (isMacRelease ? (isAdhocChannel ? '-' : null) : '-')
   if (!identity) {
     throw new Error('Missing signing identity for Orca Computer Use helper app')
   }
@@ -667,13 +722,13 @@ async function signMacStandaloneHelper(helperPath, helperName, packager) {
   const identity =
     process.env.CSC_NAME ??
     findInstalledMacSigningIdentity(codeSigningInfo?.keychainFile) ??
-    (isMacRelease ? null : '-')
+    (isMacRelease ? (isAdhocChannel ? '-' : null) : '-')
   if (!identity) {
     throw new Error(`Missing signing identity for ${helperName} helper`)
   }
   // Why: nested executables must be signed before the outer app bundle is sealed.
   const args = ['--force', '--sign', identity]
-  if (isMacRelease) {
+  if (isMacRelease && !isAdhocChannel) {
     args.push('--options', 'runtime', '--timestamp')
   }
   args.push(helperPath)
@@ -683,7 +738,7 @@ async function signMacStandaloneHelper(helperPath, helperName, packager) {
 
 function codesignArgs(identity, targetPath) {
   const args = ['--force', '--deep', '--sign', identity]
-  if (isMacRelease) {
+  if (isMacRelease && !isAdhocChannel) {
     args.push(
       '--options',
       'runtime',

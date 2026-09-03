@@ -11,8 +11,6 @@ const PULL_REQUEST_TEMPLATE_CANDIDATES = [
   '.azuredevops/PULL_REQUEST_TEMPLATE.md',
   '.gitea/pull_request_template.md',
   '.gitea/PULL_REQUEST_TEMPLATE.md',
-  '.gitee/pull_request_template.md',
-  '.gitee/PULL_REQUEST_TEMPLATE.md',
   'pull_request_template.md',
   'PULL_REQUEST_TEMPLATE.md',
   'docs/pull_request_template.md',

@@ -189,12 +189,6 @@
       }
     },
     {
-      "files": ["src/main/gitee/client.ts"],
-      "rules": {
-        "max-lines": ["error", { "max": 500, "skipBlankLines": true, "skipComments": true }]
-      }
-    },
-    {
       "files": ["src/shared/constants.ts"],
       "rules": {
         "max-lines": ["error", { "max": 550, "skipBlankLines": true, "skipComments": true }]

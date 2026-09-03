@@ -30,7 +30,5 @@ export function shouldHideTaskPageListChrome({
       return hasJiraDetail
     case 'linear':
       return hasLinearIssueDetail || hasLinearProjectContext || hasLinearViewContext
-    case 'gitee':
-      return false
   }
 }

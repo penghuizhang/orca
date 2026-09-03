@@ -157,42 +157,6 @@ export const getIntegrationsPaneSearchEntries = createLocalizedCatalog(() => [
     ]
   },
   {
-    title: translate(
-      'auto.components.settings.integrations.search.gitee.title',
-      'Gitee Integration'
-    ),
-    description: translate(
-      'auto.components.settings.integrations.search.gitee.description',
-      'Gitee authentication via a private token, with repository, pull request, and issue browsing.'
-    ),
-    keywords: [
-      ...translateSearchKeyword(
-        'auto.components.settings.integrations.search.gitee.keyword',
-        'gitee'
-      ),
-      ...translateSearchKeyword(
-        'auto.components.settings.integrations.search.gitee.keyword2',
-        '码云'
-      ),
-      ...translateSearchKeyword(
-        'auto.components.settings.integrations.search.c450244ad7',
-        'integration'
-      ),
-      ...translateSearchKeyword(
-        'auto.components.settings.integrations.search.8c568d761c',
-        'pull request'
-      ),
-      ...translateSearchKeyword(
-        'auto.components.settings.integrations.search.gitee.keyword3',
-        'issue'
-      ),
-      ...translateSearchKeyword(
-        'auto.components.settings.integrations.search.gitee.keyword4',
-        'private token'
-      )
-    ]
-  },
-  {
     title: translate('auto.components.settings.integrations.search.617603509b', 'Jira Integration'),
     description: translate(
       'auto.components.settings.integrations.search.76f6af7c57',

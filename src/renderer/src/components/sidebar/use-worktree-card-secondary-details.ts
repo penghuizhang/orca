@@ -184,8 +184,7 @@ export function useWorktreeCardSecondaryDetails({
     (hoverReviewProvider === 'gitlab' && linkedGitLabMR !== null) ||
     (hoverReviewProvider === 'bitbucket' && linkedBitbucketPR !== null) ||
     (hoverReviewProvider === 'azure-devops' && linkedAzureDevOpsPR !== null) ||
-    (hoverReviewProvider === 'gitea' && linkedGiteaPR !== null) ||
-    (hoverReviewProvider === 'gitee' && worktree.linkedGiteePR !== null)
+    (hoverReviewProvider === 'gitea' && linkedGiteaPR !== null)
   const handleUnlinkReview = useCallback(async () => {
     const options = { executionHostId: worktree.hostId ?? 'local' }
     switch (hoverReviewProvider) {
@@ -212,9 +211,6 @@ export function useWorktreeCardSecondaryDetails({
         return
       case 'gitea':
         void updateWorktreeMeta(worktree.id, { linkedGiteaPR: null }, options)
-        break
-      case 'gitee':
-        void updateWorktreeMeta(worktree.id, { linkedGiteePR: null })
         break
       case 'unsupported':
       case undefined:

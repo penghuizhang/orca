@@ -36,9 +36,6 @@ export function getSelectedReviewBranch(
   if (typeof args.linkedGiteaPR === 'number') {
     return { provider: 'gitea', number: args.linkedGiteaPR }
   }
-  if (typeof args.linkedGiteePR === 'number') {
-    return { provider: 'gitee', number: args.linkedGiteePR }
-  }
   return null
 }
 
