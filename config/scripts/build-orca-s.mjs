@@ -6,7 +6,7 @@
 //     /Applications, clear the quarantine attribute and launch the app
 //   node config/scripts/build-orca-s.mjs --dry-run  — print what would run
 import { spawnSync } from 'node:child_process'
-import { cpSync, existsSync, readdirSync, rmSync } from 'node:fs'
+import { existsSync, readdirSync, rmSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { resolve } from 'node:path'
 
@@ -142,12 +142,15 @@ if (install) {
   }
   console.log(`[orca-s] installing ${appSource} -> ${appTarget}`)
   if (!dryRun) {
-    // Why: cpSync cannot overwrite an existing .app — its Versions/Current
-    // symlink trips ERR_FS_CP_SYMLINK_TO_SUBDIRECTORY — so remove first.
+    // Why: remove first — ditto merges into an existing destination.
     if (existsSync(appTarget)) {
       rmSync(appTarget, { recursive: true, force: true })
     }
-    cpSync(appSource, appTarget, { recursive: true, force: true })
+    // Why ditto, not fs.cpSync: .app bundles carry relative framework symlinks
+    // (Versions/Current); cpSync resolves them to absolute dist paths, breaking
+    // the code seal so macOS refuses launch (silent exit 1) and the installed
+    // app dangles on dist/ surviving. ditto preserves links verbatim.
+    run('ditto', [appSource, appTarget])
     run('xattr', ['-cr', appTarget])
     console.log('[orca-s] launching orca-s…')
     run('open', [appTarget])
