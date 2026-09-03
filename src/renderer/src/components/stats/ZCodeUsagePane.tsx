@@ -4,6 +4,7 @@ import { useAppStore } from '../../store'
 import { ClaudeUsageLoadingState } from './ClaudeUsageLoadingState'
 import { StatCard } from './StatCard'
 import { UsageFilterRadioGroup, UsageTrackingPaneShell } from './UsageTrackingPaneShell'
+import { ZCodeUsageDetails } from './ZCodeUsageDetails'
 import { formatCost, formatTokens, formatUpdatedAt } from './usage-formatters'
 import { translate } from '@/i18n/i18n'
 import type { ZCodeUsageRange } from '../../../../shared/zcode-usage-types'
@@ -27,6 +28,10 @@ const RANGE_LABELS: Record<ZCodeUsageRange, string> = {
 export function ZCodeUsagePane(): React.JSX.Element {
   const scanState = useAppStore((state) => state.zcodeUsageScanState)
   const summary = useAppStore((state) => state.zcodeUsageSummary)
+  const daily = useAppStore((state) => state.zcodeUsageDaily)
+  const modelBreakdown = useAppStore((state) => state.zcodeUsageModelBreakdown)
+  const projectBreakdown = useAppStore((state) => state.zcodeUsageProjectBreakdown)
+  const recentSessions = useAppStore((state) => state.zcodeUsageRecentSessions)
   const range = useAppStore((state) => state.zcodeUsageRange)
   const fetchZCodeUsage = useAppStore((state) => state.fetchZCodeUsage)
   const setZCodeUsageRange = useAppStore((state) => state.setZCodeUsageRange)
@@ -180,6 +185,14 @@ export function ZCodeUsagePane(): React.JSX.Element {
             'Note: ZCode usage is tracked separately from OpenCode. ZCode uses its own database at ~/.zcode/cli/db/db.sqlite.'
           )}
         </p>
+
+        <ZCodeUsageDetails
+          daily={daily}
+          modelBreakdown={modelBreakdown}
+          projectBreakdown={projectBreakdown}
+          recentSessions={recentSessions}
+          summary={summary}
+        />
       </>
     </UsageTrackingPaneShell>
   )
