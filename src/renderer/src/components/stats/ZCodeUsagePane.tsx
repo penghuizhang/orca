@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { Activity, Brain, Coins, DatabaseZap, FolderKanban, Sparkles } from 'lucide-react'
 import { useAppStore } from '../../store'
 import { ClaudeUsageLoadingState } from './ClaudeUsageLoadingState'
@@ -6,8 +6,7 @@ import { StatCard } from './StatCard'
 import { UsageFilterRadioGroup, UsageTrackingPaneShell } from './UsageTrackingPaneShell'
 import { formatCost, formatTokens, formatUpdatedAt } from './usage-formatters'
 import { translate } from '@/i18n/i18n'
-
-type ZCodeUsageRange = '7d' | '30d' | '90d' | 'all'
+import type { ZCodeUsageRange } from '../../../../shared/zcode-usage-types'
 
 const RANGE_OPTIONS: ZCodeUsageRange[] = ['7d', '30d', '90d', 'all']
 const RANGE_LABELS: Record<ZCodeUsageRange, string> = {
@@ -25,28 +24,19 @@ const RANGE_LABELS: Record<ZCodeUsageRange, string> = {
   }
 }
 
-// Temporary stub implementation — real data will come from IPC
-function useZCodeUsage(_range: ZCodeUsageRange) {
-  const [state] = useState<{
-    isLoading: boolean
-    summary: {
-      inputTokens: number
-      outputTokens: number
-      cachedInputTokens: number
-      reasoningOutputTokens: number
-      sessions: number
-      events: number
-      estimatedCostUsd: number | null
-    } | null
-  }>({ isLoading: false, summary: null })
-
-  return state
-}
-
 export function ZCodeUsagePane(): React.JSX.Element {
-  const [range, setRange] = useState<ZCodeUsageRange>('30d')
-  const { isLoading, summary } = useZCodeUsage(range)
+  const scanState = useAppStore((state) => state.zcodeUsageScanState)
+  const summary = useAppStore((state) => state.zcodeUsageSummary)
+  const range = useAppStore((state) => state.zcodeUsageRange)
+  const fetchZCodeUsage = useAppStore((state) => state.fetchZCodeUsage)
+  const setZCodeUsageRange = useAppStore((state) => state.setZCodeUsageRange)
+  const setZCodeUsageEnabled = useAppStore((state) => state.setZCodeUsageEnabled)
+  const refreshZCodeUsage = useAppStore((state) => state.refreshZCodeUsage)
   const recordFeatureInteraction = useAppStore((state) => state.recordFeatureInteraction)
+
+  useEffect(() => {
+    void fetchZCodeUsage()
+  }, [fetchZCodeUsage])
 
   useEffect(() => {
     recordFeatureInteraction('usage-tracking')
@@ -54,7 +44,28 @@ export function ZCodeUsagePane(): React.JSX.Element {
 
   const title = translate('auto.components.stats.ZCodeUsagePane.title', 'ZCode Usage Tracking')
 
-  if (isLoading) {
+  if (!scanState?.enabled) {
+    return (
+      <UsageTrackingPaneShell
+        enabled={false}
+        title={title}
+        disabledDescription={translate(
+          'auto.components.stats.ZCodeUsagePane.disabledDescription',
+          'Reads local ZCode usage logs to show token, model, and session stats.'
+        )}
+        enableLabel={translate(
+          'auto.components.stats.ZCodeUsagePane.enableLabel',
+          'Enable ZCode usage analytics'
+        )}
+        onEnabledChange={(enabled) => {
+          recordFeatureInteraction('usage-tracking')
+          void setZCodeUsageEnabled(enabled)
+        }}
+      />
+    )
+  }
+
+  if (!summary && (scanState.isScanning || scanState.lastScanCompletedAt === null)) {
     return (
       <ClaudeUsageLoadingState
         title={title}
@@ -64,14 +75,25 @@ export function ZCodeUsagePane(): React.JSX.Element {
     )
   }
 
-  const hasAnyData = summary !== null && summary.sessions > 0
+  const hasAnyData = summary?.hasAnyZCodeData ?? scanState.hasAnyZCodeData
 
   return (
     <UsageTrackingPaneShell
       enabled
       title={title}
-      status={formatUpdatedAt(null)}
-      isRefreshing={false}
+      status={
+        <>
+          {formatUpdatedAt(scanState.lastScanCompletedAt)}
+          {scanState.lastScanError
+            ? translate(
+                'auto.components.stats.ZCodeUsagePane.scanError',
+                ' • Last scan error: {{value0}}',
+                { value0: scanState.lastScanError }
+              )
+            : ''}
+        </>
+      }
+      isRefreshing={scanState.isScanning}
       hasData={hasAnyData}
       enableLabel={translate(
         'auto.components.stats.ZCodeUsagePane.enableLabel',
@@ -93,7 +115,7 @@ export function ZCodeUsagePane(): React.JSX.Element {
           label={translate('auto.components.stats.ZCodeUsagePane.rangeLabel', 'Range')}
           value={range}
           options={RANGE_OPTIONS.map((value) => ({ value, label: RANGE_LABELS[value] }))}
-          onValueChange={(value) => setRange(value as ZCodeUsageRange)}
+          onValueChange={(value) => void setZCodeUsageRange(value as ZCodeUsageRange)}
         />
       ]}
       selectionSummary={RANGE_LABELS[range]}
@@ -101,13 +123,11 @@ export function ZCodeUsagePane(): React.JSX.Element {
         'auto.components.stats.ZCodeUsagePane.emptyMessage',
         'No local ZCode usage found yet. Start using ZCode to see statistics here.'
       )}
-      onEnabledChange={(_enabled) => {
+      onEnabledChange={(enabled) => {
         recordFeatureInteraction('usage-tracking')
-        // TODO: Implement setZCodeUsageEnabled IPC call
+        void setZCodeUsageEnabled(enabled)
       }}
-      onRefresh={() => {
-        // TODO: Implement refreshZCodeUsage IPC call
-      }}
+      onRefresh={() => void refreshZCodeUsage()}
     >
       <>
         <div className="grid gap-3 md:grid-cols-3">
