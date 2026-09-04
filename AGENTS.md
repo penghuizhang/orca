@@ -2,6 +2,16 @@
 
 All UI work — layout, color, typography, spacing, component selection, UX behavior — must follow [`docs/STYLEGUIDE.md`](./docs/STYLEGUIDE.md). Use the tokens defined in `src/renderer/src/assets/main.css` (the canonical source) and the shadcn primitives in `src/renderer/src/components/ui/`. Don't invent new color values, font sizes, or shadow tiers when a documented one already covers the role. When STYLEGUIDE.md is silent, follow the resolution order in its final section.
 
+## Team Knowledge in Repo (Shared by Commit)
+
+Knowledge must live IN the repo so teammates share it after commit — do not keep it only in personal agent memory stores:
+
+- **工程日记忆（每日决策/踩坑/状态）** → `.workbuddy/memory/`：每日 `YYYY-MM-DD.md` + 索引 `MEMORY.md`（本仓库已提交，团队共享；变更前必读，完成后归档日记忆）
+- **设计文档 / 方案 / 排查记录** → `.workbuddy/docs/<分类目录>/`，命名 `YYYY-MM-DD-中文描述.md`（分类目录：calendar/gitee/zcode/mobile/feishu/workflow/reference/archive）；被其他文档引用时同步更新引用
+- **可复用流程 / SOP** → `.agents/skills/<slug>/SKILL.md`（pi 及兼容 agent 会自动加载，本仓库已提交）
+- **行为规则 / 约定** → 本文件 `AGENTS.md`
+- 仅个人偏好、机器本地状态才留在个人 agent 记忆（如 pi-hermes-memory）或 gitignore 目录（如 `/.claude/skills/`）；发现只有个人记忆里有的团队知识时，迁移到上述仓库位置
+
 ## Electron UI Validation
 
 Use the `$electron` skill and Playwright CDP for rendered Orca UI checks. Do not use computer-use for Orca UI validation.

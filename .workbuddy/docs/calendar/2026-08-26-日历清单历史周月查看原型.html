@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>日历「工作清单」历史周/月查看 · 原型</title>
+<style>
+  :root {
+    --bg: #ffffff; --muted: #f4f4f5; --border: #e4e4e7; --fg: #18181b;
+    --muted-fg: #71717a; --primary: #2563eb; --primary-fg: #fff;
+    --amber: #f59e0b; --blue: #3b82f6; --green: #22c55e; --zinc: #a1a1aa;
+    --shadow: 0 10px 30px rgba(0,0,0,.12); --radius: 10px;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px/1.5 -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; color: var(--fg); background: #fafafa; }
+  .app { max-width: 1180px; margin: 0 auto; padding: 16px; }
+  header.top { display: flex; align-items: center; gap: 10px; padding: 6px 4px 14px; }
+  header.top h1 { font-size: 18px; margin: 0; }
+  .btn { border: 1px solid var(--border); background: var(--bg); border-radius: 8px; padding: 6px 12px; cursor: pointer; font-size: 13px; }
+  .btn:hover { background: var(--muted); }
+  .btn.primary { background: var(--primary); color: var(--primary-fg); border-color: var(--primary); }
+  .btn.sm { padding: 4px 10px; font-size: 12px; }
+  .btn.icon { padding: 4px 8px; }
+  .card { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .cols { display: grid; grid-template-columns: 200px 1fr 280px; min-height: 420px; }
+  .side { border-right: 1px solid var(--border); padding: 14px; }
+  .side h4 { margin: 0 0 8px; font-size: 12px; color: var(--muted-fg); }
+  .cat { display: flex; align-items: center; gap: 8px; padding: 3px 0; font-size: 13px; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+  .grid { padding: 10px; }
+  .grid .wd { display: grid; grid-template-columns: repeat(7,1fr); font-size: 11px; color: var(--muted-fg); text-align: center; padding-bottom: 6px; }
+  .grid .cells { display: grid; grid-template-columns: repeat(7,1fr); gap: 4px; }
+  .cell { border: 1px solid var(--border); border-radius: 6px; min-height: 64px; padding: 4px; font-size: 11px; }
+  .cell.dim { background: #fafafa; color: #c4c4c8; }
+  .cell .d { font-weight: 600; }
+  .cell .e { margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .day { border-left: 1px solid var(--border); padding: 14px; }
+  .day h3 { margin: 0 0 10px; font-size: 15px; }
+  .day .ph { color: var(--muted-fg); font-size: 13px; }
+  /* summary bar */
+  .summary { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; border-top: 1px solid var(--border); background: var(--muted); padding: 10px 16px; }
+  .summary .sel { position: relative; }
+  .summary .label { font-weight: 600; }
+  .summary .counts { display: flex; gap: 14px; color: var(--muted-fg); flex-wrap: wrap; }
+  .summary .spacer { margin-left: auto; display: flex; gap: 12px; align-items: center; }
+  .menu { position: absolute; top: 110%; left: 0; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; box-shadow: var(--shadow); min-width: 150px; z-index: 20; display: none; }
+  .menu.open { display: block; }
+  .menu div { padding: 8px 12px; cursor: pointer; font-size: 13px; }
+  .menu div:hover { background: var(--muted); }
+  /* dialog */
+  .mask { position: fixed; inset: 0; background: rgba(0,0,0,.4); display: none; align-items: center; justify-content: center; }
+  .mask.open { display: flex; }
+  .dialog { width: 640px; max-width: 92vw; background: var(--bg); border-radius: 12px; box-shadow: var(--shadow); overflow: hidden; }
+  .dialog .dh { padding: 14px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
+  .dialog .dh h3 { margin: 0; font-size: 15px; }
+  .dialog .rangebar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+  .dialog .body { padding: 12px 16px; }
+  pre.preview { background: var(--muted); border: 1px solid var(--border); border-radius: 8px; padding: 12px; max-height: 46vh; overflow: auto; white-space: pre-wrap; font-size: 12.5px; line-height: 1.7; margin: 0; }
+  .dialog .df { padding: 12px 16px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; }
+  .customInput { display: none; gap: 8px; align-items: center; }
+  .customInput.show { display: flex; }
+  input[type=date] { border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px; font-size: 12px; }
+  .hint { color: var(--muted-fg); font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <h1>日历</h1>
+    <button class="btn sm">◀</button>
+    <strong>2026年8月</strong>
+    <button class="btn sm">▶</button>
+    <button class="btn sm">今天</button>
+    <span style="margin-left:auto"><button class="btn primary sm">+ 新建条目</button></span>
+  </header>
+
+  <div class="card">
+    <div class="cols">
+      <div class="side">
+        <h4>分类</h4>
+        <div class="cat"><span class="dot" style="background:var(--amber)"></span>会议</div>
+        <div class="cat"><span class="dot" style="background:var(--blue)"></span>功能点</div>
+        <div class="cat"><span class="dot" style="background:var(--green)"></span>里程碑</div>
+        <div class="cat"><span class="dot" style="background:var(--zinc)"></span>其他</div>
+        <h4 style="margin-top:16px">月历缩略图</h4>
+        <div class="hint">（占位）</div>
+      </div>
+      <div class="grid">
+        <div class="wd"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div>
+        <div class="cells" id="cells"></div>
+      </div>
+      <div class="day">
+        <h3>8月26日 周三</h3>
+        <div class="ph">当日详情（占位）</div>
+      </div>
+    </div>
+
+    <!-- 底部概览条 -->
+    <div class="summary">
+      <div class="sel">
+        <button class="btn sm" id="barRangeBtn">本周 ▾</button>
+        <div class="menu" id="barMenu">
+          <div data-kind="week" data-off="0">本周</div>
+          <div data-kind="week" data-off="7">上周</div>
+          <div data-kind="month" data-off="0">本月</div>
+          <div data-kind="month" data-off="-1">上月</div>
+          <div data-kind="custom">自定义区间</div>
+        </div>
+      </div>
+      <span class="label" id="barLabel"></span>
+      <div class="counts" id="barCounts"></div>
+      <div class="spacer">
+        <strong id="barHours"></strong>
+        <button class="btn primary sm" id="openDialog">📋 复制清单</button>
+      </div>
+    </div>
+  </div>
+  <p class="hint">说明：原型用示例数据演示。底部概览条切区间 → 实时聚合；点「复制清单」打开对话框，可翻期 / 选自定义区间，预览与复制覆盖任意历史周月。</p>
+</div>
+
+<!-- 对话框 -->
+<div class="mask" id="mask">
+  <div class="dialog">
+    <div class="dh">
+      <h3>工作清单</h3>
+      <span class="hint" id="dlgRangeText"></span>
+    </div>
+    <div class="rangebar">
+      <div class="sel">
+        <button class="btn sm" id="dlgRangeBtn">本周 ▾</button>
+        <div class="menu" id="dlgMenu">
+          <div data-kind="week" data-off="0">本周</div>
+          <div data-kind="week" data-off="7">上周</div>
+          <div data-kind="month" data-off="0">本月</div>
+          <div data-kind="month" data-off="-1">上月</div>
+          <div data-kind="custom">自定义区间</div>
+        </div>
+      </div>
+      <button class="btn icon" id="prev" title="上一期">◀</button>
+      <button class="btn icon" id="next" title="下一期">▶</button>
+      <div class="customInput" id="customInput">
+        <span>开始</span><input type="date" id="cStart" />
+        <span>结束</span><input type="date" id="cEnd" />
+      </div>
+    </div>
+    <div class="body">
+      <pre class="preview" id="preview"></pre>
+    </div>
+    <div class="df">
+      <button class="btn" id="closeDlg">关闭</button>
+      <button class="btn primary" id="copy">复制到剪贴板</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ---------- 示例数据（覆盖 8 月与 7 月，便于演示历史浏览） ----------
+const CAT = { meeting:'会议', feature:'功能点', milestone:'里程碑', other:'其他' };
+const CATCOLOR = { meeting:'var(--amber)', feature:'var(--blue)', milestone:'var(--green)', other:'var(--zinc)' };
+const SAMPLE = [
+  // 本周（含 8/24 周一 ~ 8/30 周日）
+  { date:'2026-08-24', title:'周会同步进度', cat:'meeting', hours:1 },
+  { date:'2026-08-25', title:'评审迁移文档改造方案', cat:'meeting', hours:1.5 },
+  { date:'2026-08-25', title:'洗车相关 bug 处理', cat:'feature', hours:0.5 },
+  { date:'2026-08-26', title:'日历历史周月查看原型', cat:'feature', hours:2 },
+  { date:'2026-08-26', title:'版本发布里程碑', cat:'milestone', hours:0 },
+  { date:'2026-08-27', title:'客户对接沟通', cat:'meeting', hours:1 },
+  { date:'2026-08-28', title:'整理季度汇报材料', cat:'other', hours:3 },
+  // 上月（7 月，演示"上月"与自定义）
+  { date:'2026-07-01', title:'季度规划会', cat:'meeting', hours:2 },
+  { date:'2026-07-03', title:'需求评审', cat:'meeting', hours:1.5 },
+  { date:'2026-07-08', title:'登录模块重构', cat:'feature', hours:4 },
+  { date:'2026-07-15', title:'支付联调', cat:'feature', hours:3 },
+  { date:'2026-07-22', title:'性能优化专项', cat:'feature', hours:2.5 },
+  { date:'2026-07-29', title:'月度复盘', cat:'other', hours:1.5 },
+  { date:'2026-07-30', title:'v2.0 上线', cat:'milestone', hours:0 },
+];
+
+// ---------- 工具 ----------
+const TODAY = new Date(2026, 7, 26); // 2026-08-26
+function pad(n){ return String(n).padStart(2,'0'); }
+function key(d){ return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
+function fromKey(k){ const [y,m,d]=k.split('-').map(Number); return new Date(y,m-1,d); }
+function addDays(d,n){ const x=new Date(d); x.setDate(x.getDate()+n); return x; }
+function weekRange(anchor){ // 周一为首
+  const off=(anchor.getDay()+6)%7; const mon=new Date(anchor); mon.setDate(anchor.getDate()-off);
+  return Array.from({length:7},(_,i)=>key(addDays(mon,i)));
+}
+function monthRange(y,m){ const last=new Date(y,m,0).getDate(); return Array.from({length:last},(_,i)=>`${y}-${pad(m)}-${pad(i+1)}`); }
+function rangeDates(r){
+  if(r.kind==='week') return weekRange(fromKey(r.anchor));
+  if(r.kind==='month') return monthRange(r.year,r.month);
+  // custom
+  let s=fromKey(r.start), e=fromKey(r.end); if(s>e){ [s,e]=[e,s]; }
+  const out=[]; for(let d=s; d<=e; d=addDays(d,1)) out.push(key(d)); return out;
+}
+function shiftRange(r,dir){
+  if(r.kind==='week'){ const a=fromKey(r.anchor); return {kind:'week', anchor:key(addDays(a, dir*7))}; }
+  if(r.kind==='month'){ const d=new Date(r.year, r.month-1+dir, 1); return {kind:'month', year:d.getFullYear(), month:d.getMonth()+1}; }
+  // custom: 平移整段
+  const s=fromKey(r.start), e=fromKey(r.end); const span=Math.round((e-s)/864e5);
+  const ns=addDays(s, dir*(span+1)); const ne=addDays(ns, span);
+  return {kind:'custom', start:key(ns), end:key(ne)};
+}
+const WD=['周日','周一','周二','周三','周四','周五','周六'];
+function rangeLabel(r){
+  const ds=rangeDates(r); const s=fromKey(ds[0]), e=fromKey(ds.at(-1));
+  const fmt=d=>`${d.getMonth()+1}月${d.getDate()}日`;
+  if(r.kind==='month') return `${r.year}年${r.month}月`;
+  if(r.kind==='week') return `${fmt(s)} – ${fmt(e)}, ${s.getFullYear()}`;
+  return `${r.start} – ${r.end}`;
+}
+const RANGE_NAME={week0:'本周',week7:'上周',month0:'本月',month_1:'上月'};
+function rangeBtnText(r){
+  if(r.kind==='week'){ const off=Math.round((fromKey(r.anchor)-TODAY)/864e5/7)*7; return (off===0?'本周':off===-7?'上周':'周('+r.anchor+')'); }
+  if(r.kind==='month'){ const now=new Date(2026,7,1); const d=new Date(r.year,r.month-1,1); const diff=(d-now)/864e5; const months=Math.round(diff/30); return months===0?'本月':months===-1?'上月':`${r.year}年${r.month}月`; }
+  return '自定义区间';
+}
+
+// ---------- 状态 ----------
+let range = { kind:'week', anchor:'2026-08-26' };
+let custom = { start:'2026-07-01', end:'2026-07-31' };
+
+function entriesInRange(){
+  const set=new Set(rangeDates(range));
+  return SAMPLE.filter(x=>set.has(x.date));
+}
+function renderSummary(){
+  const es=entriesInRange();
+  document.getElementById('barRangeBtn').textContent = rangeBtnText(range)+' ▾';
+  document.getElementById('barLabel').textContent = rangeLabel(range);
+  const counts={meeting:0,feature:0,milestone:0,other:0}; let hours=0;
+  es.forEach(e=>{ counts[e.cat]++; hours+=e.hours; });
+  const c=document.getElementById('barCounts'); c.innerHTML='';
+  for(const k of ['meeting','feature','milestone','other']){
+    const span=document.createElement('span'); span.style.display='flex'; span.style.alignItems='center'; span.style.gap='6px';
+    span.innerHTML=`<span class="dot" style="background:${CATCOLOR[k]}"></span>${CAT[k]} ${counts[k]}`;
+    c.appendChild(span);
+  }
+  const t=document.createElement('span'); t.textContent=`共 ${es.length} 条`; c.appendChild(t);
+  document.getElementById('barHours').textContent=`合计 ${hours.toFixed(1)} 小时`;
+}
+
+function buildMarkdown(){
+  const ds=rangeDates(range); const es=entriesInRange();
+  const byDay={}; ds.forEach(d=>byDay[d]=[]); es.forEach(e=>byDay[e.date]?.push(e));
+  const lines=[];
+  const title = range.kind==='month' ? `# ${rangeLabel(range)} 工作清单` : `# ${rangeLabel(range)} 工作清单`;
+  lines.push(title,'');
+  for(const d of ds){
+    const arr=byDay[d]; if(!arr||!arr.length) continue;
+    const dt=fromKey(d); lines.push(`## ${WD[dt.getDay()]} ${dt.getMonth()+1}/${dt.getDate()}`);
+    arr.forEach((e,i)=>lines.push(`${i+1}. ${e.title}`));
+    lines.push('');
+  }
+  return lines.join('\n').trimEnd();
+}
+
+function renderDialog(){
+  document.getElementById('dlgRangeBtn').textContent = rangeBtnText(range)+' ▾';
+  document.getElementById('dlgRangeText').textContent = '区间：'+rangeLabel(range);
+  document.getElementById('customInput').classList.toggle('show', range.kind==='custom');
+  document.getElementById('preview').textContent = buildMarkdown();
+}
+
+// ---------- 交互 ----------
+function setRange(r){ range=r; renderSummary(); renderDialog(); }
+function wireMenu(menuId, btnId){
+  const menu=document.getElementById(menuId), btn=document.getElementById(btnId);
+  btn.onclick=(ev)=>{ ev.stopPropagation(); menu.classList.toggle('open'); };
+  menu.querySelectorAll('div').forEach(div=>{
+    div.onclick=()=>{
+      const kind=div.dataset.kind; const off=parseInt(div.dataset.off||'0',10);
+      let r;
+      if(kind==='week') r={kind:'week', anchor:key(addDays(TODAY,-off))};
+      else if(kind==='month'){ const d=new Date(TODAY.getFullYear(), TODAY.getMonth()+1+off, 1); r={kind:'month', year:d.getFullYear(), month:d.getMonth()+1}; }
+      else r={kind:'custom', start:custom.start, end:custom.end};
+      setRange(r); menu.classList.remove('open');
+    };
+  });
+}
+wireMenu('barMenu','barRangeBtn');
+wireMenu('dlgMenu','dlgRangeBtn');
+document.addEventListener('click',()=>{ document.querySelectorAll('.menu.open').forEach(m=>m.classList.remove('open')); });
+
+document.getElementById('openDialog').onclick=()=>{ renderDialog(); document.getElementById('mask').classList.add('open'); };
+document.getElementById('closeDlg').onclick=()=>document.getElementById('mask').classList.remove('open');
+document.getElementById('mask').onclick=(e)=>{ if(e.target.id==='mask') document.getElementById('mask').classList.remove('open'); };
+document.getElementById('prev').onclick=()=>setRange(shiftRange(range,-1));
+document.getElementById('next').onclick=()=>setRange(shiftRange(range,1));
+document.getElementById('cStart').onchange=(e)=>{ custom.start=e.target.value; if(range.kind==='custom') setRange({...range, start:custom.start}); };
+document.getElementById('cEnd').onchange=(e)=>{ custom.end=e.target.value; if(range.kind==='custom') setRange({...range, end:custom.end}); };
+document.getElementById('copy').onclick=async()=>{
+  try{ await navigator.clipboard.writeText(buildMarkdown()); alert('已复制当前区间工作清单到剪贴板'); }
+  catch{ alert('复制失败，请手动选中预览文本复制'); }
+};
+
+// ---------- 月网格（静态示意） ----------
+(function(){
+  const first=new Date(2026,7,1); const off=(first.getDay()+6)%7; const start=new Date(2026,7,1-off);
+  const cells=document.getElementById('cells');
+  for(let i=0;i<42;i++){ const d=new Date(start); d.setDate(start.getDate()+i);
+    const dim=d.getMonth()!==7;
+    const div=document.createElement('div'); div.className='cell'+(dim?' dim':'');
+    const es=SAMPLE.filter(x=>x.date===key(d));
+    div.innerHTML=`<div class="d">${d.getDate()}</div>`+es.slice(0,3).map(e=>`<div class="e" style="color:${CATCOLOR[e.cat]}">• ${e.title}</div>`).join('');
+    cells.appendChild(div);
+  }
+})();
+
+renderSummary();
+</script>
+</body>
+</html>
