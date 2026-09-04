@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>日历本周概览与复制清单 —— 原型（月视图版）</title>
+<style>
+  :root {
+    --background: #fff;
+    --foreground: #0a0a0a;
+    --muted: #f5f5f5;
+    --muted-foreground: #6b6b6b;
+    --accent: #f5f5f5;
+    --border: #e5e5e5;
+    --destructive: #e40014;
+    --amber: #f59e0b;
+    --blue: #3b82f6;
+    --green: #22c55e;
+    --zinc: #71717a;
+    --shadow-popover: 0 12px 32px rgba(0,0,0,.12);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { height:100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    font-size: 13px; color: var(--foreground); background: #ececec;
+    display: flex; align-items: center; justify-content: center; padding: 24px;
+  }
+  .app {
+    width: 1280px; height: 820px; background: var(--background);
+    border: 1px solid var(--border); border-radius: 10px; overflow: hidden;
+    display: flex; flex-direction: column; box-shadow: var(--shadow-popover);
+  }
+  /* top bar */
+  .topbar {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 20px 12px 16px; border-bottom: 1px solid var(--border); flex-shrink:0;
+  }
+  .title { font-size: 15px; font-weight: 600; white-space: nowrap; }
+  .nav { display:flex; align-items:center; gap: 2px; margin-left: 8px; }
+  .nav button {
+    border:0; background:transparent; width: 26px; height:26px; border-radius:6px; cursor:pointer;
+    color: var(--foreground); font-size: 14px; line-height:1;
+  }
+  .nav button:hover { background: var(--accent); }
+  .range { font-weight:500; min-width: 90px; text-align:center; }
+  .btn {
+    border:1px solid var(--border); background:#fff; font:inherit; border-radius:6px;
+    padding: 4px 12px; cursor:pointer; color: var(--foreground);
+  }
+  .btn:hover { background: var(--accent); }
+  .btn.primary { background: var(--foreground); color: #fff; border-color: transparent; }
+  .btn.primary:hover { background:#262626; }
+  .spacer { flex:1; }
+
+  /* body: three columns (unchanged month layout) */
+  .body { display: flex; flex:1; min-height:0; }
+  .side { width: 200px; border-right: 1px solid var(--border); padding: 12px; display:flex; flex-direction:column; gap:14px; flex-shrink:0; }
+  .side h4 {
+    font-size: 11px; font-weight:600; letter-spacing:.08em; text-transform:uppercase;
+    color: var(--muted-foreground); padding: 0 4px 6px;
+  }
+  .cat { display:flex; flex-direction:column; gap:2px; }
+  .cat label { display:flex; align-items:center; gap:8px; padding:6px 4px; border-radius:6px; cursor:pointer; }
+  .cat label:hover { background: var(--accent); }
+  .cat .addcat {
+    display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:2px;
+    padding:5px 4px; border:1px dashed var(--border); border-radius:6px;
+    color:var(--muted-foreground); cursor:pointer; font-size:12px;
+  }
+  .cat .addcat:hover { background: var(--accent); color: var(--foreground); }
+  .cat .addcat .tip { font-size:10px; }
+  .dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+  .check { width:15px; height:15px; border-radius:4px; border:1px solid var(--border); background:#fff; position:relative; flex-shrink:0; }
+  .check.on::after {
+    content:"✓"; position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-size:10px; color: #fff; background: var(--foreground); border-radius:4px;
+  }
+  .minical { margin-top:auto; border-top: 1px solid var(--border); padding-top: 8px; }
+  .minical-head { display:flex; justify-content:space-between; align-items:center; font-size:12px; font-weight:500; padding: 0 4px 6px; }
+  .minical-grid { display:grid; grid-template-columns: repeat(7, 1fr); row-gap:2px; text-align:center; font-size:10px; }
+  .minical-grid .d { width:22px; height:22px; margin:0 auto; display:flex; align-items:center; justify-content:center; border-radius:50%; color: var(--foreground); }
+  .minical-grid .d.other { color: rgba(10,10,10,.35); }
+  .minical-grid .d.weekend { color: var(--destructive); }
+  .minical-grid .d.today { background: var(--destructive); color:#fff; font-weight:600; }
+  .minical-grid .d.sel { outline:2px solid var(--foreground); outline-offset:-1px; }
+
+  /* month grid */
+  .month { flex:1; min-width:0; display:flex; flex-direction:column; }
+  .weekhead { display:grid; grid-template-columns: repeat(7,1fr); border-bottom:1px solid var(--border); }
+  .wh { padding: 6px 10px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing:.04em; }
+  .wh.weekend { color: var(--destructive); text-align:right; }
+  .wh:not(.weekend) { text-align:right; }
+  .grid { flex:1; display:grid; grid-template-columns: repeat(7,1fr); grid-template-rows: repeat(6,1fr); min-height:0; }
+  .cell { border-right:1px solid var(--border); border-bottom:1px solid var(--border); padding: 4px; display:flex; flex-direction:column; gap:2px; min-height:0; cursor:pointer; }
+  .cell:hover { background: var(--accent); }
+  .cell:nth-child(7n) { border-right:0; }
+  .cell.weekend { background: rgba(245,245,245,.5); }
+  .cell.out { background: rgba(245,245,245,.6); opacity:.6; }
+  .cell.todaycell { background: rgba(228,0,20,.04); }
+  .cell .numrow { display:flex; align-items:center; justify-content:space-between; }
+  .cell .num { font-size: 12px; font-weight:600; }
+  .cell.todaycell .num { background: var(--destructive); color:#fff; border-radius:999px; width:20px; height:20px; display:flex; align-items:center; justify-content:center; }
+  .cell.weekend .num { color: var(--destructive); }
+  .cell .lunar { font-size: 9px; color: var(--muted-foreground); }
+  .cell .chips { display:flex; flex-direction:column; gap:2px; overflow:hidden; }
+  .chip {
+    display:flex; align-items:center; gap:4px; background: rgba(10,10,10,.05); border-radius:3px;
+    padding: 1px 4px; font-size: 10px; line-height: 1.6; min-width:0;
+  }
+  .chip .c { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+  .chip .txt { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+  /* right day panel */
+  .daypanel { width: 244px; border-left: 1px solid var(--border); padding: 12px; display:flex; flex-direction:column; flex-shrink:0; }
+  .daypanel h3 { font-size: 14px; font-weight:600; }
+  .daypanel .sub { font-size: 11px; color: var(--muted-foreground); padding: 4px 0 10px; }
+  .daylist { flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:4px; min-height:0; }
+  .drow { display:flex; gap:8px; border-radius:6px; padding:6px; cursor:pointer; align-items:flex-start; }
+  .drow:hover { background: var(--accent); }
+  .drow .tt { font-size:13px; }
+  .drow .mm { font-size:11px; color: var(--muted-foreground); display:flex; gap:6px; margin-top:2px; }
+  .newbtn { border:1px solid var(--border); background:#fff; border-radius:6px; padding:6px; font:inherit; cursor:pointer; margin-top:8px; float:none; }
+  .newbtn:hover { background: var(--accent); }
+
+  /* NEW: week summary bar */
+  .summary {
+    border-top: 1px solid var(--border); padding: 10px 16px;
+    display: flex; align-items: center; gap: 18px; font-size: 13px; flex-shrink:0;
+    background: var(--muted);
+  }
+  .summary .lbl { font-weight:600; white-space:nowrap; }
+  .summary .chips { display:flex; gap:12px; color: var(--muted-foreground); align-items:center; flex-wrap:wrap; }
+  .summary .total { margin-left:auto; display:flex; align-items:center; gap:8px; font-weight:600; white-space:nowrap; }
+  .summary .total .num { font-size: 15px; }
+
+  /* dialog */
+  .overlay {
+    position: fixed; inset:0; background: rgba(0,0,0,.32); display:none; align-items:center; justify-content:center; z-index:40;
+  }
+  .overlay.show { display:flex; }
+  .sheet {
+    width: 580px; max-width: 92vw; max-height: 70vh; background:#fff; border-radius: 10px;
+    display:flex; flex-direction:column; overflow:hidden; box-shadow: var(--shadow-popover);
+  }
+  .sheet-head { display:flex; align-items:center; justify-content:space-between; padding: 12px 16px; border-bottom:1px solid var(--border); }
+  .sheet-head h5 { font-size:14px; font-weight:600; }
+  .sheet-head button { border:0; background:transparent; font-size:18px; cursor:pointer; color: var(--muted-foreground); }
+  .sheet pre {
+    flex:1; overflow:auto; margin:0; padding: 14px 16px;
+    font: 12px/1.7 ui-monospace, "SF Mono", Menlo, monospace; color: var(--foreground); white-space:pre-wrap;
+  }
+  .sheet-foot { display:flex; justify-content:flex-end; gap:8px; padding: 10px 16px; border-top:1px solid var(--border); }
+
+  .toast {
+    position: fixed; top: 18px; left: 50%; transform: translateX(-50%);
+    background: var(--foreground); color:#fff; padding: 8px 18px; border-radius: 8px;
+    font-size: 13px; box-shadow: var(--shadow-popover); opacity:0; pointer-events:none; transition: opacity .2s;
+    z-index: 60;
+  }
+  .toast.show { opacity:1; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="title">日历</div>
+    <div class="nav">
+      <button>‹</button>
+    </div>
+    <div class="range">2026年8月</div>
+    <div class="nav">
+      <button>›</button>
+      <button style="margin-left:6px; padding:0 8px; width:auto; font-size:12px">今天</button>
+    </div>
+    <div class="spacer"></div>
+    <button class="btn primary">+ 新建条目</button>
+  </div>
+
+  <div class="body">
+    <div class="side">
+      <div>
+        <h4>分类</h4>
+        <div class="cat">
+          <label><span class="check on"></span><span class="dot" style="background:var(--amber)"></span>会议</label>
+          <label><span class="check on"></span><span class="dot" style="background:var(--blue)"></span>功能点</label>
+          <label><span class="check on"></span><span class="dot" style="background:var(--green)"></span>里程碑</label>
+          <label><span class="check on"></span><span class="dot" style="background:var(--zinc)"></span>其他</label>
+          <div class="addcat" title="新增自定义分类"><span>＋ 新增分类</span><span class="tip">可自定义</span></div>
+        </div>
+        <h4 style="margin-top:14px">日历</h4>
+        <div class="cat">
+          <label><span class="check on"></span>显示农历</label>
+        </div>
+      </div>
+      <div class="minical">
+        <div class="minical-head"><span>2026年8月</span><span>‹ ›</span></div>
+        <div class="minical-grid">
+          <div class="d other">27</div><div class="d other">28</div><div class="d other">29</div><div class="d other">30</div>
+          <div class="d">1</div><div class="d weekend">2</div><div class="d">3</div>
+          <div class="d">4</div><div class="d">5</div><div class="d">6</div><div class="d">7</div><div class="d">8</div>
+          <div class="d weekend">9</div><div class="d">10</div><div class="d">11</div><div class="d">12</div><div class="d">13</div>
+          <div class="d">14</div><div class="d weekend">15</div><div class="d">16</div><div class="d today">17</div><div class="d sel">18</div>
+          <div class="d">19</div><div class="d">20</div><div class="d weekend">21</div><div class="d">22</div><div class="d">23</div>
+          <div class="d">24</div><div class="d weekend">25</div><div class="d other">26</div><div class="d other">27</div>
+          <div class="d other">28</div><div class="d other">29</div><div class="d other">30</div><div class="d other">31</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- month grid (unchanged) -->
+    <div class="month">
+      <div class="weekhead">
+        <div class="wh">周一</div><div class="wh">周二</div><div class="wh">周三</div><div class="wh">周四</div><div class="wh">周五</div>
+        <div class="wh weekend">周六</div><div class="wh weekend">周日</div>
+      </div>
+      <div class="grid">
+        <!-- 2026-08-01 Sat, start from 7/27 Mon -->
+        <div class="cell out weekend"><div class="numrow"><span class="num">27</span><span class="lunar">十二</span></div></div>
+        <div class="cell out"><div class="numrow"><span class="num">28</span><span class="lunar">十三</span></div></div>
+        <div class="cell out"><div class="numrow"><span class="num">29</span><span class="lunar">十四</span></div></div>
+        <div class="cell out"><div class="numrow"><span class="num">30</span><span class="lunar">十五</span></div></div>
+        <div class="cell out"><div class="numrow"><span class="num">31</span><span class="lunar">十六</span></div></div>
+        <div class="cell weekend"><div class="numrow"><span class="num">1</span><span class="lunar">十八</span></div></div>
+        <div class="cell weekend"><div class="numrow"><span class="num">2</span><span class="lunar">十九</span></div></div>
+        <div class="cell"><div class="numrow"><span class="num">3</span><span class="lunar">二十</span></div></div>
+        <div class="cell"><div class="numrow"><span class="num">4</span><span class="lunar">廿一</span></div></div>
+        <div class="cell"><div class="numrow"><span class="num">5</span><span class="lunar">廿二</span></div></div>
+        <div class="cell"><div class="numrow"><span class="num">6</span><span class="lunar">廿三</span></div></div>
+        <div class="cell"><div class="numrow"><span class="num">7</span><span class="lunar">廿四</span></div></div>
+        <div class="cell weekend"><div class="numrow"><span class="num">8</span><span class="lunar">廿五</span></div></div>
+        <div class="cell weekend"><div class="numrow"><span class="num">9</span><span class="lunar">廿六</span></div></div>
+        <div class="cell"><div class="numrow"><span class="num">10</span><span class="lunar">廿七</span></div></div>
+        <div class="cell"><div class="numrow"><span class="num">11</span><span class="lunar">廿八</span></div></div>
+        <div class="cell"><div class="numrow"><span class="num">12</span><span class="lunar">廿九</span></div></div>
+        <div class="cell"><div class="numrow"><span class="num">13</span><span class="lunar">初一</span></div></div>
+        <div class="cell"><div class="numrow"><span class="num">14</span><span class="lunar">初二</span></div></div>
+        <div class="cell weekend"><div class="numrow"><span class="num">15</span><span class="lunar">初三</span></div></div>
+        <div class="cell weekend"><div class="numrow"><span class="num">16</span><span class="lunar">初四</span></div></div>
+        <div class="cell"><div class="numrow"><span class="num">17</span><span class="lunar">初五</span></div>
+          <div class="chips"><div class="chip"><span class="c" style="background:var(--amber)"></span><span class="txt">评审迁移文档改造方案</span></div></div>
+        </div>
+        <div class="cell todaycell"><div class="numrow"><span class="num">18</span><span class="lunar">初六</span></div>
+          <div class="chips">
+            <div class="chip"><span class="c" style="background:var(--amber)"></span><span class="txt">09:00 数据迁移代码评审</span></div>
+            <div class="chip"><span class="c" style="background:var(--blue)"></span><span class="txt">10:30 金融街协助联调</span></div>
+            <div class="chip"><span class="c" style="background:var(--blue)"></span><span class="txt">14:00 接口联调与回归</span></div>
+            <div class="chip" style="color:var(--muted-foreground)"><span class="txt">+1 more</span></div>
+          </div>
+        </div>
+        <div class="cell"><div class="numrow"><span class="num">19</span><span class="lunar">初七</span></div>
+          <div class="chips">
+            <div class="chip"><span class="c" style="background:var(--amber)"></span><span class="txt">09:00 晨会</span></div>
+            <div class="chip"><span class="c" style="background:var(--blue)"></span><span class="txt">10:30 迁移 SQL 核对</span></div>
+          </div>
+        </div>
+        <div class="cell"><div class="numrow"><span class="num">20</span><span class="lunar">初八</span></div>
+          <div class="chips"><div class="chip"><span class="c" style="background:var(--blue)"></span><span class="txt">09:30 数据一致性排查</span></div></div>
+        </div>
+        <div class="cell"><div class="numrow"><span class="num">21</span><span class="lunar">初九</span></div>
+          <div class="chips">
+            <div class="chip"><span class="c" style="background:var(--amber)"></span><span class="txt">09:00 周会</span></div>
+            <div class="chip"><span class="c" style="background:var(--zinc)"></span><span class="txt">10:00 整理本周进度</span></div>
+          </div>
+        </div>
+        <div class="cell weekend"><div class="numrow"><span class="num">22</span><span class="lunar">初十</span></div></div>
+        <div class="cell weekend"><div class="numrow"><span class="num">23</span><span class="lunar">十一</span></div></div>
+        <div class="cell"><div class="numrow"><span class="num">24</span><span class="lunar">十二</span></div></div>
+        <div class="cell"><div class="numrow"><span class="num">25</span><span class="lunar">十三</span></div></div>
+        <div class="cell"><div class="numrow"><span class="num">26</span><span class="lunar">十四</span></div></div>
+        <div class="cell"><div class="numrow"><span class="num">27</span><span class="lunar">十五</span></div></div>
+        <div class="cell"><div class="numrow"><span class="num">28</span><span class="lunar">十六</span></div></div>
+        <div class="cell weekend"><div class="numrow"><span class="num">29</span><span class="lunar">十七</span></div></div>
+        <div class="cell weekend"><div class="numrow"><span class="num">30</span><span class="lunar">十八</span></div></div>
+        <div class="cell"><div class="numrow"><span class="num">31</span><span class="lunar">十九</span></div></div>
+        <div class="cell out"><div class="numrow"><span class="num">1</span><span class="lunar">二十</span></div></div>
+        <div class="cell out"><div class="numrow"><span class="num">2</span><span class="lunar">廿一</span></div></div>
+        <div class="cell out"><div class="numrow"><span class="num">3</span><span class="lunar">廿二</span></div></div>
+        <div class="cell out"><div class="numrow"><span class="num">4</span><span class="lunar">廿三</span></div></div>
+        <div class="cell out"><div class="numrow"><span class="num">5</span><span class="lunar">廿四</span></div></div>
+        <div class="cell out weekend"><div class="numrow"><span class="num">6</span><span class="lunar">廿五</span></div></div>
+      </div>
+    </div>
+
+    <div class="daypanel">
+      <h3>8月18日 周二</h3>
+      <div class="sub">丙午年 七月初六</div>
+      <div class="daylist">
+        <div class="drow"><span class="dot" style="background:var(--amber)"></span><div><div class="tt">数据迁移代码评审</div><div class="mm"><span>09:00–10:00</span><span>会议</span></div></div></div>
+        <div class="drow"><span class="dot" style="background:var(--blue)"></span><div><div class="tt">金融街协助联调</div><div class="mm"><span>10:30–12:00</span><span>功能点</span></div></div></div>
+        <div class="drow"><span class="dot" style="background:var(--blue)"></span><div><div class="tt">接口联调与回归</div><div class="mm"><span>14:00–16:00</span><span>功能点</span></div></div></div>
+      </div>
+      <button class="newbtn">+ 新建条目</button>
+    </div>
+  </div>
+
+  <!-- NEW: week summary bar -->
+  <div class="summary">
+    <span class="lbl">本周概览</span>
+    <div class="chips">
+      <span class="chip" style="display:inline-flex;align-items:center;gap:5px"><span class="dot" style="background:var(--amber); width:8px;height:8px"></span>会议 5</span>
+      <span class="chip" style="display:inline-flex;align-items:center;gap:5px"><span class="dot" style="background:var(--blue); width:8px;height:8px"></span>功能点 5</span>
+      <span class="chip" style="display:inline-flex;align-items:center;gap:5px"><span class="dot" style="background:var(--green); width:8px;height:8px"></span>里程碑 1</span>
+      <span class="chip" style="display:inline-flex;align-items:center;gap:5px"><span class="dot" style="background:var(--zinc); width:8px;height:8px"></span>其他 2</span>
+      <span>共 13 条</span>
+    </div>
+    <button class="btn primary" id="copyBtn">📋 复制本周清单</button>
+  </div>
+</div>
+
+<div class="toast" id="toast">已复制本周工作清单，可直接粘贴到工时系统</div>
+
+<div class="overlay" id="overlay">
+  <div class="sheet">
+    <div class="sheet-head"><h5>复制本周清单 · 2026-08-17 ~ 2026-08-23</h5><button id="closeSheet">×</button></div>
+    <pre id="sheetBody"></pre>
+    <div class="sheet-foot">
+      <button class="btn" id="closeBtn">关闭</button>
+      <button class="btn primary" id="realCopy">复制到剪贴板</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="catOverlay">
+  <div class="sheet" style="width:420px">
+    <div class="sheet-head"><h5>管理分类</h5><button id="closeCat">×</button></div>
+    <pre style="white-space:normal;font:inherit;line-height:1.8" id="catBody"></pre>
+    <div class="sheet-foot">
+      <button class="btn" id="closeCat2">关闭</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const markdown = `# 2026年8月17日 – 8月23日 工作清单
+
+## 星期一 8/17
+1. 评审迁移文档改造方案
+2. 洗车相关的 bug 处理
+
+## 星期二 8/18
+1. 数据迁移代码评审
+2. 金融街协助联调
+3. 接口联调与回归
+
+## 星期三 8/19
+1. 晨会
+2. 迁移 SQL 核对
+3. 里程碑计划书写
+
+## 星期四 8/20
+1. 数据一致性排查
+2. 方案评审会议
+
+## 星期五 8/21
+1. 周会
+2. 整理本周进度
+3. 下周工作计划`;
+
+const catPreview = `内置分类（不可删改）
+  ● 会议        ● 功能点      ● 里程碑      ● 其他
+
+自定义分类（可改名 / 删除）
+  ● 调研（新增）    ● 值班（新增）
+
+「＋ 新增分类」→ 输入名称 + 选择颜色 → 保存即出现在下拉与筛选列表`;
+
+const toast = document.getElementById('toast');
+function showToast(msg) {
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2000);
+}
+function doCopy() {
+  navigator.clipboard.writeText(markdown).then(() => {
+    showToast('已复制本周工作清单，可直接粘贴到工时系统');
+  }).catch(() => showToast('复制失败，请手动选中预览文本复制'));
+}
+document.querySelector('.addcat').addEventListener('click', () => {
+  document.getElementById('catBody').textContent = catPreview;
+  document.getElementById('catOverlay').classList.add('show');
+});
+document.getElementById('copyBtn').addEventListener('click', () => {
+  document.getElementById('sheetBody').textContent = markdown;
+  document.getElementById('overlay').classList.add('show');
+});
+document.getElementById('realCopy').addEventListener('click', doCopy);
+document.getElementById('closeSheet').addEventListener('click', () => document.getElementById('overlay').classList.remove('show'));
+document.getElementById('closeBtn').addEventListener('click', () => document.getElementById('overlay').classList.remove('show'));
+document.getElementById('overlay').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) e.currentTarget.classList.remove('show');
+});
+document.getElementById('closeCat').addEventListener('click', () => document.getElementById('catOverlay').classList.remove('show'));
+document.getElementById('closeCat2').addEventListener('click', () => document.getElementById('catOverlay').classList.remove('show'));
+document.getElementById('catOverlay').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) e.currentTarget.classList.remove('show');
+});
+</script>
+</body>
+</html>
