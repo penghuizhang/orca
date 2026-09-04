@@ -3728,7 +3728,8 @@
           "908c470587": "codex",
           "eb6a066185": "claude",
           "eee19cfade": "resumen",
-          "grokUsageTab": "Grok"
+          "grokUsageTab": "Grok",
+          "piUsageTab": "Pi"
         },
         "UsageOverviewPane": {
           "22ed1b7669": "sesiones",
@@ -3748,7 +3749,8 @@
           "ca6bc5fded": "Actualizar",
           "e06d1baf5c": "Actualizar resumen de uso",
           "c760c481c5": "Resumen de uso",
-          "55c910f4f1": "- algunos precios de modelos no están disponibles"
+          "55c910f4f1": "- algunos precios de modelos no están disponibles",
+          "enablePi": "Activar Pi"
         },
         "share": {
           "card": {
@@ -3793,7 +3795,8 @@
             "model": {
               "bc474051e5": "OpenCode",
               "eb220d193b": "Codex",
-              "544d6d4c16": "Claude"
+              "544d6d4c16": "Claude",
+              "piLabel": "Pi"
             },
             "sections": {
               "9564a3b21b": "sesiones -",
@@ -3846,6 +3849,46 @@
           "e5a6b7c8d9": "Créditos semanales usados",
           "f6b7c8d9e0": "Restablecimiento del periodo de facturación",
           "a7b8c9d0e1": "Configuración de la cuenta de Grok"
+        },
+        "PiUsagePane": {
+          "title": "Seguimiento de uso de Pi",
+          "disabledDescription": "Lee los registros locales de sesiones de Pi para mostrar estadísticas de tokens, modelos y sesiones.",
+          "enableLabel": "Activar análisis de uso de Pi",
+          "scanError": " • Último error de escaneo: {{value0}}",
+          "optionsLabel": "Opciones de uso de Pi",
+          "filtersLabel": "Filtros",
+          "refreshAriaLabel": "Actualizar uso de Pi",
+          "refreshLabel": "Actualizar",
+          "rangeLabel": "Rango",
+          "rangeLast7Days": "Últimos 7 días",
+          "rangeLast30Days": "Últimos 30 días",
+          "rangeLast90Days": "Últimos 90 días",
+          "rangeAllTime": "Todo el tiempo",
+          "emptyMessage": "Aún no hay uso local de Pi en este rango.",
+          "inputTokens": "Tokens de entrada",
+          "outputTokens": "Tokens de salida",
+          "cachedInput": "Entrada en caché",
+          "reasoningOutput": "Salida de razonamiento",
+          "sessionsEvents": "Sesiones / Eventos",
+          "recordedCost": "Costo registrado",
+          "costNote": "El costo proviene de los registros de sesión de Pi cuando el mensaje del asistente lo registró.",
+          "piNote": "Nota: el uso de Pi se escanea desde los registros locales en ~/.pi/agent/sessions.",
+          "byModel": "Por modelo",
+          "topModel": "Modelo principal:",
+          "byProvider": "Por proveedor",
+          "topProvider": "Proveedor principal:",
+          "byProject": "Por proyecto",
+          "topProject": "Proyecto principal:",
+          "recentSessions": "Sesiones recientes",
+          "recentSessionsDescription": "Sesiones locales de Pi más recientes en este rango.",
+          "lastActive": "Última actividad",
+          "project": "Proyecto",
+          "model": "Modelo",
+          "events": "Eventos",
+          "input": "Entrada",
+          "output": "Salida",
+          "total": "Total",
+          "unknown": "Desconocido"
         }
       },
       "sparse": {

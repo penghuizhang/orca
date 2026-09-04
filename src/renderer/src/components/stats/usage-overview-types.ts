@@ -18,8 +18,13 @@ import type {
   ZCodeUsageScanState,
   ZCodeUsageSummary
 } from '../../../../shared/zcode-usage-types'
+import type {
+  PiUsageDailyPoint,
+  PiUsageScanState,
+  PiUsageSummary
+} from '../../../../shared/pi-usage-types'
 
-export type UsageProviderId = 'claude' | 'codex' | 'opencode' | 'zcode'
+export type UsageProviderId = 'claude' | 'codex' | 'opencode' | 'zcode' | 'pi'
 
 export type UsageProviderOverview = {
   id: UsageProviderId
@@ -50,6 +55,7 @@ export type UsageOverviewDailyPoint = {
   codexTokens: number
   openCodeTokens: number
   zcodeTokens: number
+  piTokens: number
   intensity: 0 | 1 | 2 | 3 | 4
 }
 
@@ -95,5 +101,10 @@ export type UsageOverviewInput = {
     scanState: ZCodeUsageScanState | null
     summary: ZCodeUsageSummary | null
     daily: ZCodeUsageDailyPoint[]
+  }
+  pi: {
+    scanState: PiUsageScanState | null
+    summary: PiUsageSummary | null
+    daily: PiUsageDailyPoint[]
   }
 }

@@ -3744,7 +3744,8 @@
           "908c470587": "codex",
           "eb6a066185": "claude",
           "eee19cfade": "概览",
-          "grokUsageTab": "Grok"
+          "grokUsageTab": "Grok",
+          "piUsageTab": "Pi"
         },
         "UsageOverviewPane": {
           "22ed1b7669": "会话",
@@ -3764,7 +3765,8 @@
           "ca6bc5fded": "刷新",
           "e06d1baf5c": "刷新使用概览",
           "c760c481c5": "使用概述",
-          "55c910f4f1": "- 部分型号价格不详"
+          "55c910f4f1": "- 部分型号价格不详",
+          "enablePi": "启用 Pi"
         },
         "share": {
           "card": {
@@ -3809,7 +3811,8 @@
             "model": {
               "bc474051e5": "OpenCode",
               "eb220d193b": "Codex",
-              "544d6d4c16": "Claude"
+              "544d6d4c16": "Claude",
+              "piLabel": "Pi"
             },
             "sections": {
               "9564a3b21b": "会话 -",
@@ -3862,6 +3865,46 @@
           "e5a6b7c8d9": "已用每周额度",
           "f6b7c8d9e0": "计费周期重置",
           "a7b8c9d0e1": "Grok 账户设置"
+        },
+        "PiUsagePane": {
+          "title": "Pi 用量跟踪",
+          "disabledDescription": "读取本地 Pi 会话日志，显示token、模型和会话统计。",
+          "enableLabel": "启用 Pi 使用量分析",
+          "scanError": " • 上次扫描错误：{{value0}}",
+          "optionsLabel": "Pi 使用量选项",
+          "filtersLabel": "筛选",
+          "refreshAriaLabel": "刷新 Pi 使用量",
+          "refreshLabel": "刷新",
+          "rangeLabel": "范围",
+          "rangeLast7Days": "过去 7 天",
+          "rangeLast30Days": "过去 30 天",
+          "rangeLast90Days": "过去 90 天",
+          "rangeAllTime": "全部时间",
+          "emptyMessage": "此范围内尚无本地 Pi 使用记录。",
+          "inputTokens": "输入token",
+          "outputTokens": "输出token",
+          "cachedInput": "缓存输入",
+          "reasoningOutput": "推理输出",
+          "sessionsEvents": "会话/事件",
+          "recordedCost": "记录成本",
+          "costNote": "成本来自 Pi 会话日志中 assistant 消息记录的计费值。",
+          "piNote": "注意：Pi 使用量从本地会话日志 ~/.pi/agent/sessions 扫描。",
+          "byModel": "按模型",
+          "topModel": "常用模型：",
+          "byProvider": "按服务商",
+          "topProvider": "用量最高的服务商：",
+          "byProject": "按项目",
+          "topProject": "用量最高的项目：",
+          "recentSessions": "最近的会话",
+          "recentSessionsDescription": "此范围内最近的本地 Pi 会话。",
+          "lastActive": "最后活跃",
+          "project": "项目",
+          "model": "模型",
+          "events": "事件",
+          "input": "输入",
+          "output": "输出",
+          "total": "总计",
+          "unknown": "未知"
         }
       },
       "sparse": {

@@ -39,18 +39,24 @@ export function UsageOverviewPane(): React.JSX.Element {
   const zcodeScanState = useAppStore((state) => state.zcodeUsageScanState)
   const zcodeSummary = useAppStore((state) => state.zcodeUsageSummary)
   const zcodeDaily = useAppStore((state) => state.zcodeUsageDaily)
+  const piScanState = useAppStore((state) => state.piUsageScanState)
+  const piSummary = useAppStore((state) => state.piUsageSummary)
+  const piDaily = useAppStore((state) => state.piUsageDaily)
   const fetchClaudeUsage = useAppStore((state) => state.fetchClaudeUsage)
   const fetchCodexUsage = useAppStore((state) => state.fetchCodexUsage)
   const fetchOpenCodeUsage = useAppStore((state) => state.fetchOpenCodeUsage)
   const fetchZCodeUsage = useAppStore((state) => state.fetchZCodeUsage)
+  const fetchPiUsage = useAppStore((state) => state.fetchPiUsage)
   const refreshClaudeUsage = useAppStore((state) => state.refreshClaudeUsage)
   const refreshCodexUsage = useAppStore((state) => state.refreshCodexUsage)
   const refreshOpenCodeUsage = useAppStore((state) => state.refreshOpenCodeUsage)
   const refreshZCodeUsage = useAppStore((state) => state.refreshZCodeUsage)
+  const refreshPiUsage = useAppStore((state) => state.refreshPiUsage)
   const enableClaudeUsage = useAppStore((state) => state.enableClaudeUsage)
   const enableCodexUsage = useAppStore((state) => state.enableCodexUsage)
   const enableOpenCodeUsage = useAppStore((state) => state.enableOpenCodeUsage)
   const enableZCodeUsage = useAppStore((state) => state.enableZCodeUsage)
+  const enablePiUsage = useAppStore((state) => state.enablePiUsage)
   const recordFeatureInteraction = useAppStore((state) => state.recordFeatureInteraction)
 
   useEffect(() => {
@@ -58,7 +64,8 @@ export function UsageOverviewPane(): React.JSX.Element {
     void fetchCodexUsage()
     void fetchOpenCodeUsage()
     void fetchZCodeUsage()
-  }, [fetchClaudeUsage, fetchCodexUsage, fetchOpenCodeUsage, fetchZCodeUsage])
+    void fetchPiUsage()
+  }, [fetchClaudeUsage, fetchCodexUsage, fetchOpenCodeUsage, fetchZCodeUsage, fetchPiUsage])
 
   const overview = useMemo(
     () =>
@@ -82,6 +89,11 @@ export function UsageOverviewPane(): React.JSX.Element {
           scanState: zcodeScanState,
           summary: zcodeSummary,
           daily: zcodeDaily
+        },
+        pi: {
+          scanState: piScanState,
+          summary: piSummary,
+          daily: piDaily
         }
       }),
     [
@@ -96,7 +108,10 @@ export function UsageOverviewPane(): React.JSX.Element {
       openCodeSummary,
       zcodeDaily,
       zcodeScanState,
-      zcodeSummary
+      zcodeSummary,
+      piDaily,
+      piScanState,
+      piSummary
     ]
   )
   const recentDays = useMemo(
@@ -110,7 +125,8 @@ export function UsageOverviewPane(): React.JSX.Element {
       claudeScanState?.enabled ? refreshClaudeUsage() : Promise.resolve(),
       codexScanState?.enabled ? refreshCodexUsage() : Promise.resolve(),
       openCodeScanState?.enabled ? refreshOpenCodeUsage() : Promise.resolve(),
-      zcodeScanState?.enabled ? refreshZCodeUsage() : Promise.resolve()
+      zcodeScanState?.enabled ? refreshZCodeUsage() : Promise.resolve(),
+      piScanState?.enabled ? refreshPiUsage() : Promise.resolve()
     ])
   }
 
@@ -203,6 +219,16 @@ export function UsageOverviewPane(): React.JSX.Element {
                     'Enable OpenCode'
                   )}
                 </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    recordFeatureInteraction('usage-tracking')
+                    void enablePiUsage()
+                  }}
+                >
+                  {translate('auto.components.stats.UsageOverviewPane.enablePi', 'Enable Pi')}
+                </Button>
               </div>
             </div>
           </div>
@@ -290,8 +316,10 @@ export function UsageOverviewPane(): React.JSX.Element {
                   void enableCodexUsage()
                 } else if (provider.id === 'opencode') {
                   void enableOpenCodeUsage()
-                } else {
+                } else if (provider.id === 'zcode') {
                   void enableZCodeUsage()
+                } else {
+                  void enablePiUsage()
                 }
               }}
             />

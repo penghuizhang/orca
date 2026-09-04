@@ -22,14 +22,16 @@ describe('usage provider IPC handlers', () => {
     const codexUsage = createUsage()
     const openCodeUsage = createUsage()
     const zcodeUsage = createUsage()
+    const piUsage = createUsage()
     registerUsageProviderHandlers({
       claudeUsage: claudeUsage as never,
       codexUsage: codexUsage as never,
       openCodeUsage: openCodeUsage as never,
-      zcodeUsage: zcodeUsage as never
+      zcodeUsage: zcodeUsage as never,
+      piUsage: piUsage as never
     })
 
-    const prefixes = ['claudeUsage', 'codexUsage', 'openCodeUsage', 'zcodeUsage']
+    const prefixes = ['claudeUsage', 'codexUsage', 'openCodeUsage', 'zcodeUsage', 'piUsage']
     const suffixes = Object.keys(claudeUsage)
     expect(handle.mock.calls.map(([channel]) => channel)).toEqual(
       prefixes.flatMap((prefix) => suffixes.map((suffix) => `${prefix}:${suffix}`))

@@ -3728,7 +3728,8 @@
           "908c470587": "codex",
           "eb6a066185": "claude",
           "eee19cfade": "概要",
-          "grokUsageTab": "Grok"
+          "grokUsageTab": "Grok",
+          "piUsageTab": "Pi"
         },
         "UsageOverviewPane": {
           "22ed1b7669": "セッション",
@@ -3748,7 +3749,8 @@
           "ca6bc5fded": "更新",
           "e06d1baf5c": "リフレッシュの使用法の概要",
           "c760c481c5": "使用方法の概要",
-          "55c910f4f1": "- 一部のモデルの価格は利用できません"
+          "55c910f4f1": "- 一部のモデルの価格は利用できません",
+          "enablePi": "Pi を有効にする"
         },
         "share": {
           "card": {
@@ -3793,7 +3795,8 @@
             "model": {
               "bc474051e5": "OpenCode",
               "eb220d193b": "Codex",
-              "544d6d4c16": "Claude"
+              "544d6d4c16": "Claude",
+              "piLabel": "Pi"
             },
             "sections": {
               "9564a3b21b": "セッション -",
@@ -3846,6 +3849,46 @@
           "e5a6b7c8d9": "使用済み週次クレジット",
           "f6b7c8d9e0": "請求期間のリセット",
           "a7b8c9d0e1": "Grok アカウント設定"
+        },
+        "PiUsagePane": {
+          "title": "Pi 使用量トラッキング",
+          "disabledDescription": "ローカルの Pi セッションログを読み取り、トークン・モデル・セッションの統計を表示します。",
+          "enableLabel": "Pi 使用量分析を有効にする",
+          "scanError": " • 最終スキャンエラー: {{value0}}",
+          "optionsLabel": "Pi 使用量オプション",
+          "filtersLabel": "フィルター",
+          "refreshAriaLabel": "Pi 使用量を更新",
+          "refreshLabel": "更新",
+          "rangeLabel": "範囲",
+          "rangeLast7Days": "過去 7 日間",
+          "rangeLast30Days": "過去 30 日間",
+          "rangeLast90Days": "過去 90 日間",
+          "rangeAllTime": "全期間",
+          "emptyMessage": "この範囲にはローカルの Pi 使用記録がまだありません。",
+          "inputTokens": "入力トークン",
+          "outputTokens": "出力トークン",
+          "cachedInput": "キャッシュ済み入力",
+          "reasoningOutput": "推論出力",
+          "sessionsEvents": "セッション / イベント",
+          "recordedCost": "記録されたコスト",
+          "costNote": "コストは、アシスタントメッセージが記録した Pi セッションログの値から取得されます。",
+          "piNote": "注意：Pi の使用量はローカルのセッションログ ~/.pi/agent/sessions から収集されます。",
+          "byModel": "モデル別",
+          "topModel": "最多モデル:",
+          "byProvider": "プロバイダー別",
+          "topProvider": "最多プロバイダー:",
+          "byProject": "プロジェクト別",
+          "topProject": "最多プロジェクト:",
+          "recentSessions": "最近のセッション",
+          "recentSessionsDescription": "この範囲で最近のローカル Pi セッション。",
+          "lastActive": "最終アクティブ",
+          "project": "プロジェクト",
+          "model": "モデル",
+          "events": "イベント",
+          "input": "入力",
+          "output": "出力",
+          "total": "合計",
+          "unknown": "不明"
         }
       },
       "sparse": {
