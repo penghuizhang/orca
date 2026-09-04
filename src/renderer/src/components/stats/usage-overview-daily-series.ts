@@ -36,7 +36,8 @@ export function buildDailyOverview(input: UsageOverviewInput): UsageOverviewDail
       claudeTokens: 0,
       codexTokens: 0,
       openCodeTokens: 0,
-      zcodeTokens: 0
+      zcodeTokens: 0,
+      piTokens: 0
     }
     const total = getClaudeDailyTotal(entry)
     current.totalTokens += total
@@ -51,7 +52,8 @@ export function buildDailyOverview(input: UsageOverviewInput): UsageOverviewDail
       claudeTokens: 0,
       codexTokens: 0,
       openCodeTokens: 0,
-      zcodeTokens: 0
+      zcodeTokens: 0,
+      piTokens: 0
     }
     current.totalTokens += entry.totalTokens
     current.codexTokens += entry.totalTokens
@@ -65,7 +67,8 @@ export function buildDailyOverview(input: UsageOverviewInput): UsageOverviewDail
       claudeTokens: 0,
       codexTokens: 0,
       openCodeTokens: 0,
-      zcodeTokens: 0
+      zcodeTokens: 0,
+      piTokens: 0
     }
     current.totalTokens += entry.totalTokens
     current.openCodeTokens += entry.totalTokens
@@ -79,10 +82,26 @@ export function buildDailyOverview(input: UsageOverviewInput): UsageOverviewDail
       claudeTokens: 0,
       codexTokens: 0,
       openCodeTokens: 0,
-      zcodeTokens: 0
+      zcodeTokens: 0,
+      piTokens: 0
     }
     current.totalTokens += entry.totalTokens
     current.zcodeTokens += entry.totalTokens
+    byDay.set(entry.day, current)
+  }
+
+  for (const entry of input.pi.daily) {
+    const current = byDay.get(entry.day) ?? {
+      day: entry.day,
+      totalTokens: 0,
+      claudeTokens: 0,
+      codexTokens: 0,
+      openCodeTokens: 0,
+      zcodeTokens: 0,
+      piTokens: 0
+    }
+    current.totalTokens += entry.totalTokens
+    current.piTokens += entry.totalTokens
     byDay.set(entry.day, current)
   }
 
@@ -130,6 +149,7 @@ export function getRecentUsageDays(
         codexTokens: 0,
         openCodeTokens: 0,
         zcodeTokens: 0,
+        piTokens: 0,
         intensity: 0
       }
     )

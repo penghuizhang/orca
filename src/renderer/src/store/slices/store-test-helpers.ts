@@ -25,7 +25,8 @@ import {
   createClaudeUsageSlice,
   createCodexUsageSlice,
   createOpenCodeUsageSlice,
-  createZCodeUsageSlice
+  createZCodeUsageSlice,
+  createPiUsageSlice
 } from './usage-provider-slices'
 import { createBrowserSlice } from './browser'
 import { createRateLimitSlice } from './rate-limits'
@@ -83,6 +84,7 @@ export function createTestStore() {
     ...createCodexUsageSlice(...a),
     ...createOpenCodeUsageSlice(...a),
     ...createZCodeUsageSlice(...a),
+    ...createPiUsageSlice(...a),
     ...createBrowserSlice(...a),
     ...createRateLimitSlice(...a),
     ...createSshSlice(...a),

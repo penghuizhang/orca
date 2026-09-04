@@ -4141,7 +4141,9 @@
           "eb6a066185": "claude",
           "eee19cfade": "overview",
           "grokUsageTab": "Grok",
-          "trackingSince": "Tracking since {{value0}}"
+          "trackingSince": "Tracking since {{value0}}",
+          "zcodeUsageTab": "ZCode",
+          "piUsageTab": "Pi"
         },
         "UsageOverviewPane": {
           "22ed1b7669": "sessions",
@@ -4161,7 +4163,8 @@
           "ca6bc5fded": "Refresh",
           "e06d1baf5c": "Refresh usage overview",
           "c760c481c5": "Usage Overview",
-          "55c910f4f1": "- some model prices are unavailable"
+          "55c910f4f1": "- some model prices are unavailable",
+          "enablePi": "Enable Pi"
         },
         "share": {
           "card": {
@@ -4206,7 +4209,9 @@
             "model": {
               "bc474051e5": "OpenCode",
               "eb220d193b": "Codex",
-              "544d6d4c16": "Claude"
+              "544d6d4c16": "Claude",
+              "zcodeLabel": "ZCode",
+              "piLabel": "Pi"
             },
             "sections": {
               "9564a3b21b": "sessions -",
@@ -4265,6 +4270,84 @@
           "e5a6b7c8d9": "Weekly credits used",
           "f6b7c8d9e0": "Billing period reset",
           "a7b8c9d0e1": "Grok account settings"
+        },
+        "PiUsagePane": {
+          "byModel": "By model",
+          "topModel": "Top model:",
+          "byProvider": "By provider",
+          "topProvider": "Top provider:",
+          "byProject": "By project",
+          "topProject": "Top project:",
+          "recentSessions": "Recent sessions",
+          "recentSessionsDescription": "Most recent local Pi sessions in this scope.",
+          "lastActive": "Last active",
+          "project": "Project",
+          "model": "Model",
+          "events": "Events",
+          "input": "Input",
+          "output": "Output",
+          "total": "Total",
+          "unknown": "Unknown",
+          "rangeLast7Days": "Last 7 days",
+          "rangeLast30Days": "Last 30 days",
+          "rangeLast90Days": "Last 90 days",
+          "rangeAllTime": "All time",
+          "title": "Pi Usage Tracking",
+          "disabledDescription": "Reads local Pi session logs to show token, model, and session stats.",
+          "enableLabel": "Enable Pi usage analytics",
+          "scanError": " • Last scan error: {{value0}}",
+          "optionsLabel": "Pi usage options",
+          "filtersLabel": "Filters",
+          "refreshAriaLabel": "Refresh Pi usage",
+          "refreshLabel": "Refresh",
+          "rangeLabel": "Range",
+          "emptyMessage": "No local Pi usage found yet. Start using Pi to see statistics here.",
+          "inputTokens": "Input tokens",
+          "outputTokens": "Output tokens",
+          "cachedInput": "Cached input",
+          "reasoningOutput": "Reasoning output",
+          "sessionsEvents": "Sessions / Events",
+          "recordedCost": "Recorded cost",
+          "costNote": "Cost comes from the Pi session logs when the assistant message recorded one.",
+          "piNote": "Note: Pi usage is scanned from local session logs at ~/.pi/agent/sessions."
+        },
+        "ZCodeUsagePane": {
+          "040c044d39": "By model",
+          "a15206a63a": "Top model:",
+          "0f0a1684bb": "By provider",
+          "048ffe4d65": "Top provider:",
+          "4799177b1c": "Recent sessions",
+          "81817a641a": "Most recent local ZCode sessions in this scope.",
+          "d97bdf6e27": "Last active",
+          "a4738de041": "Project",
+          "08c78441b7": "Model",
+          "d416f5cf92": "Events",
+          "0f2f266c9d": "Input",
+          "dfc4513657": "Output",
+          "349f7c3f5c": "Total",
+          "362231082f": "Unknown",
+          "rangeLast7Days": "Last 7 days",
+          "rangeLast30Days": "Last 30 days",
+          "rangeLast90Days": "Last 90 days",
+          "rangeAllTime": "All time",
+          "title": "ZCode Usage Tracking",
+          "disabledDescription": "Reads local ZCode usage logs to show token, model, and session stats.",
+          "enableLabel": "Enable ZCode usage analytics",
+          "scanError": " • Last scan error: {{value0}}",
+          "optionsLabel": "ZCode usage options",
+          "filtersLabel": "Filters",
+          "refreshAriaLabel": "Refresh ZCode usage",
+          "refreshLabel": "Refresh",
+          "rangeLabel": "Range",
+          "emptyMessage": "No local ZCode usage found yet. Start using ZCode to see statistics here.",
+          "inputTokens": "Input tokens",
+          "outputTokens": "Output tokens",
+          "cachedInput": "Cached input",
+          "reasoningOutput": "Reasoning output",
+          "sessionsEvents": "Sessions / Events",
+          "recordedCost": "Recorded cost",
+          "costNote": "Cost comes from the local ZCode database when the assistant message recorded one.",
+          "zcodeNote": "Note: ZCode usage is tracked separately from OpenCode. ZCode uses its own database at ~/.zcode/cli/db/db.sqlite."
         }
       },
       "sparse": {
@@ -6438,7 +6521,13 @@
           "8b7a8df299": "Low-level workarounds for support troubleshooting.",
           "8d8d8ac599": "Compatibility",
           "network": "Network",
-          "networkDescription": "App-level network routing for proxies and corporate environments."
+          "networkDescription": "App-level network routing for proxies and corporate environments.",
+          "database": "Database",
+          "databaseDescription": "Store business data (calendar entries) in a custom location outside the app folder.",
+          "customDbPathTitle": "Custom Database Path",
+          "customDbPathDescription": "Store the business database (orca-custom.db) in a custom directory to survive app uninstalls or version updates. Leave empty to use the default location.",
+          "customDbPathPlaceholder": "e.g. /Users/you/software/sqlite/orca-custom.db",
+          "customDbPathHint": "Data will be migrated automatically on next restart if the default database exists."
         },
         "AgentLocationSetting": {
           "92f4238f1a": "WSL default",
@@ -8824,7 +8913,9 @@
             "2b4d26d11e": "networking",
             "e04e9db503": "advanced",
             "585f56fae0": "Use HTTP/1.1 for Electron networking when HTTP/2 fails behind a proxy.",
-            "11eea3da72": "HTTP/1.1 Compatibility"
+            "11eea3da72": "HTTP/1.1 Compatibility",
+            "customDbPathTitle": "Custom Database Path",
+            "customDbPathDescription": "Store the business database (orca-custom.db) in a custom directory to survive app uninstalls or version updates."
           }
         },
         "agents": {
@@ -16718,7 +16809,8 @@
         "categoryUpdated": "Category updated.",
         "categoryDeleted": "Category deleted.",
         "categorySaveFailed": "Failed to save category.",
-        "categoriesLoadFailed": "Failed to load calendar categories."
+        "categoriesLoadFailed": "Failed to load calendar categories.",
+        "workListWorkList": "Work list"
       },
       "GiteeItemDialog": {
         "createdAt": "Created",

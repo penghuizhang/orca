@@ -8,6 +8,7 @@ import {
   createClaudeProvider,
   createCodexProvider,
   createOpenCodeProvider,
+  createPiProvider,
   createZCodeProvider
 } from './usage-provider-normalization'
 
@@ -16,7 +17,8 @@ export function buildUsageOverview(input: UsageOverviewInput): UsageOverviewMode
     createClaudeProvider(input.claude),
     createCodexProvider(input.codex),
     createOpenCodeProvider(input.opencode),
-    createZCodeProvider(input.zcode)
+    createZCodeProvider(input.zcode),
+    createPiProvider(input.pi)
   ]
   const daily = buildDailyOverview(input)
   const bestDay =

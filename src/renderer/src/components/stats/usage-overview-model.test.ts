@@ -212,7 +212,8 @@ describe('usage overview model', () => {
         scanState: enabledZCodeScanState(),
         summary: zcodeSummary,
         daily: zcodeDaily
-      }
+      },
+      pi: { scanState: null, summary: null, daily: [] }
     })
 
     expect(overview.totalTokens).toBe(12_000)
@@ -232,6 +233,7 @@ describe('usage overview model', () => {
       codexTokens: 2_000,
       openCodeTokens: 0,
       zcodeTokens: 700,
+      piTokens: 0,
       intensity: 4
     })
     expect(overview.providers.find((provider) => provider.id === 'codex')).toMatchObject({
@@ -256,6 +258,7 @@ describe('usage overview model', () => {
           codexTokens: 2_000,
           openCodeTokens: 0,
           zcodeTokens: 0,
+          piTokens: 0,
           intensity: 4
         }
       ],
@@ -271,6 +274,7 @@ describe('usage overview model', () => {
         codexTokens: 0,
         openCodeTokens: 0,
         zcodeTokens: 0,
+        piTokens: 0,
         intensity: 0
       },
       {
@@ -280,6 +284,7 @@ describe('usage overview model', () => {
         codexTokens: 2_000,
         openCodeTokens: 0,
         zcodeTokens: 0,
+        piTokens: 0,
         intensity: 4
       },
       {
@@ -289,6 +294,7 @@ describe('usage overview model', () => {
         codexTokens: 0,
         openCodeTokens: 0,
         zcodeTokens: 0,
+        piTokens: 0,
         intensity: 0
       }
     ])
@@ -299,7 +305,8 @@ describe('usage overview model', () => {
       claude: { scanState: null, summary: null, daily: [] },
       codex: { scanState: null, summary: null, daily: [] },
       opencode: { scanState: null, summary: null, daily: [] },
-      zcode: { scanState: null, summary: null, daily: [] }
+      zcode: { scanState: null, summary: null, daily: [] },
+      pi: { scanState: null, summary: null, daily: [] }
     })
 
     expect(overview.hasAnyEnabledProvider).toBe(false)
@@ -330,7 +337,8 @@ describe('usage overview model', () => {
         daily: codexDaily
       },
       opencode: { scanState: null, summary: null, daily: [] },
-      zcode: { scanState: null, summary: null, daily: [] }
+      zcode: { scanState: null, summary: null, daily: [] },
+      pi: { scanState: null, summary: null, daily: [] }
     })
 
     expect(overview.daily).toHaveLength(130_000)

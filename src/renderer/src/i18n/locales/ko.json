@@ -3733,7 +3733,8 @@
           "908c470587": "codex",
           "eb6a066185": "claude",
           "eee19cfade": "개요",
-          "grokUsageTab": "Grok"
+          "grokUsageTab": "Grok",
+          "piUsageTab": "Pi"
         },
         "UsageOverviewPane": {
           "22ed1b7669": "세션",
@@ -3753,7 +3754,8 @@
           "ca6bc5fded": "새로고침",
           "e06d1baf5c": "사용량 개요 새로고침",
           "c760c481c5": "사용량 개요",
-          "55c910f4f1": "- 일부 모델 가격 확인 불가"
+          "55c910f4f1": "- 일부 모델 가격 확인 불가",
+          "enablePi": "Pi 사용"
         },
         "share": {
           "card": {
@@ -3798,7 +3800,8 @@
             "model": {
               "bc474051e5": "OpenCode",
               "eb220d193b": "Codex",
-              "544d6d4c16": "Claude"
+              "544d6d4c16": "Claude",
+              "piLabel": "Pi"
             },
             "sections": {
               "9564a3b21b": "세션 -",
@@ -3851,6 +3854,46 @@
           "e5a6b7c8d9": "사용한 주간 크레딧",
           "f6b7c8d9e0": "결제 기간 재설정",
           "a7b8c9d0e1": "Grok 계정 설정"
+        },
+        "PiUsagePane": {
+          "title": "Pi 사용량 추적",
+          "disabledDescription": "로컬 Pi 세션 로그를 읽어 토큰, 모델, 세션 통계를 표시합니다.",
+          "enableLabel": "Pi 사용량 분석 사용",
+          "scanError": " • 마지막 스캔 오류: {{value0}}",
+          "optionsLabel": "Pi 사용량 옵션",
+          "filtersLabel": "필터",
+          "refreshAriaLabel": "Pi 사용량 새로 고침",
+          "refreshLabel": "새로 고침",
+          "rangeLabel": "범위",
+          "rangeLast7Days": "최근 7일",
+          "rangeLast30Days": "최근 30일",
+          "rangeLast90Days": "최근 90일",
+          "rangeAllTime": "전체 기간",
+          "emptyMessage": "이 범위에는 아직 로컬 Pi 사용 기록이 없습니다.",
+          "inputTokens": "입력 토큰",
+          "outputTokens": "출력 토큰",
+          "cachedInput": "캐시된 입력",
+          "reasoningOutput": "추론 출력",
+          "sessionsEvents": "세션 / 이벤트",
+          "recordedCost": "기록된 비용",
+          "costNote": "비용은 어시스턴트 메시지가 기록한 Pi 세션 로그의 값에서 가져옵니다.",
+          "piNote": "참고: Pi 사용량은 로컬 세션 로그 ~/.pi/agent/sessions 에서 수집됩니다.",
+          "byModel": "모델별",
+          "topModel": "주요 모델:",
+          "byProvider": "공급자별",
+          "topProvider": "주요 공급자:",
+          "byProject": "프로젝트별",
+          "topProject": "주요 프로젝트:",
+          "recentSessions": "최근 세션",
+          "recentSessionsDescription": "이 범위에서 가장 최근의 로컬 Pi 세션.",
+          "lastActive": "마지막 활동",
+          "project": "프로젝트",
+          "model": "모델",
+          "events": "이벤트",
+          "input": "입력",
+          "output": "출력",
+          "total": "합계",
+          "unknown": "알 수 없음"
         }
       },
       "sparse": {

@@ -21,6 +21,7 @@ import {
   createClaudeUsageSlice,
   createCodexUsageSlice,
   createOpenCodeUsageSlice,
+  createPiUsageSlice,
   createZCodeUsageSlice
 } from './slices/usage-provider-slices'
 import { createBrowserSlice } from './slices/browser'
@@ -86,6 +87,7 @@ export const useAppStore = create<AppState>()(
       ...createCodexUsageSlice(...a),
       ...createOpenCodeUsageSlice(...a),
       ...createZCodeUsageSlice(...a),
+      ...createPiUsageSlice(...a),
       ...createBrowserSlice(...a),
       ...createRateLimitSlice(...a),
       ...createSshSlice(...a),
@@ -138,6 +140,8 @@ export type { AppState } from './types'
 // to avoid fragile DOM scraping. Harmless — the store is already reachable
 // via React DevTools in any environment.
 if ((import.meta.env.DEV || e2eConfig.exposeStore) && typeof window !== 'undefined') {
+  // SAFETY: attaching debug/E2E-only store handles to window; window carries no
+  // statically typed __store/__webRuntimeSessionE2E members to narrow against.
   const testWindow = window as unknown as Record<string, unknown>
   testWindow.__store = useAppStore
   if (e2eConfig.exposeStore) {

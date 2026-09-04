@@ -2,6 +2,7 @@ import { ipcMain } from 'electron'
 import type { ClaudeUsageStore } from '../claude-usage/store'
 import type { CodexUsageStore } from '../codex-usage/store'
 import type { OpenCodeUsageStore } from '../opencode-usage/store'
+import type { PiUsageStore } from '../pi-usage/store'
 import type { ZCodeUsageStore } from '../zcode-usage/store'
 
 type UsageProviderStores = {
@@ -9,6 +10,7 @@ type UsageProviderStores = {
   codexUsage: CodexUsageStore
   openCodeUsage: OpenCodeUsageStore
   zcodeUsage: ZCodeUsageStore
+  piUsage: PiUsageStore
 }
 
 type UsageProviderChannelPrefix = keyof UsageProviderStores
@@ -68,4 +70,5 @@ export function registerUsageProviderHandlers(stores: UsageProviderStores): void
   registerProviderHandlers('codexUsage', stores.codexUsage)
   registerProviderHandlers('openCodeUsage', stores.openCodeUsage)
   registerProviderHandlers('zcodeUsage', stores.zcodeUsage)
+  registerProviderHandlers('piUsage', stores.piUsage)
 }

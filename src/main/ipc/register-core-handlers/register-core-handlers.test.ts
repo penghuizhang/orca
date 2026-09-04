@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const {
+  ipcMainHandleMock,
   getPathMock,
   listEnvironmentsMock,
   callRuntimeEnvironmentMock,
@@ -131,10 +132,14 @@ const {
   registerLocalhostWorktreeLabelHandlersMock: vi.fn(),
   registerNativeChatHandlersMock: vi.fn(),
   registerEmulatorFrameStreamHandlersMock: vi.fn(),
-  registerEmulatorVideoStreamHandlersMock: vi.fn()
+  registerEmulatorVideoStreamHandlersMock: vi.fn(),
+  ipcMainHandleMock: vi.fn()
 }))
 
 vi.mock('electron', () => ({
+  // Why: registerCalendarHandlers (fork-added) registers real ipcMain channels here,
+  // so the mock must expose ipcMain.handle even though the other registrars are mocked out.
+  ipcMain: { handle: ipcMainHandleMock },
   app: {
     getPath: getPathMock
   }
@@ -464,6 +469,7 @@ describe('registerCoreHandlers', () => {
     const codexUsage = { marker: 'codexUsage' }
     const openCodeUsage = { marker: 'openCodeUsage' }
     const zcodeUsage = { marker: 'zcodeUsage' }
+    const piUsage = { marker: 'piUsage' }
     const codexAccounts = { marker: 'codexAccounts', runtimeHomeService: { marker: 'runtimeHome' } }
     const claudeAccounts = { marker: 'claudeAccounts' }
     const rateLimits = { marker: 'rateLimits' }
@@ -479,6 +485,7 @@ describe('registerCoreHandlers', () => {
       codexUsage as never,
       openCodeUsage as never,
       zcodeUsage as never,
+      piUsage as never,
       codexAccounts as never,
       claudeAccounts as never,
       rateLimits as never,
@@ -503,7 +510,8 @@ describe('registerCoreHandlers', () => {
       claudeUsage,
       codexUsage,
       openCodeUsage,
-      zcodeUsage
+      zcodeUsage,
+      piUsage
     })
     expect(registerAppHandlersMock).toHaveBeenCalledWith(store, { onBeforeRelaunch })
     expect(registerCodexAccountHandlersMock).toHaveBeenCalledWith(
@@ -641,6 +649,7 @@ describe('registerCoreHandlers', () => {
     const codexUsage2 = { marker: 'codexUsage2' }
     const openCodeUsage2 = { marker: 'openCodeUsage2' }
     const zcodeUsage2 = { marker: 'zcodeUsage2' }
+    const piUsage2 = { marker: 'piUsage2' }
     const codexAccounts2 = { marker: 'codexAccounts2' }
     const claudeAccounts2 = { marker: 'claudeAccounts2' }
     const rateLimits2 = { marker: 'rateLimits2' }
@@ -653,6 +662,7 @@ describe('registerCoreHandlers', () => {
       codexUsage2 as never,
       openCodeUsage2 as never,
       zcodeUsage2 as never,
+      piUsage2 as never,
       codexAccounts2 as never,
       claudeAccounts2 as never,
       rateLimits2 as never,

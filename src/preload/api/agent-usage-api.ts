@@ -4,6 +4,7 @@ import type {
   OpenCodeUsageBreakdownKind,
   OpenCodeUsageSnapshot
 } from '../../shared/opencode-usage-types'
+import type { PiUsageBreakdownKind, PiUsageSnapshot } from '../../shared/pi-usage-types'
 import type { ZCodeUsageBreakdownKind, ZCodeUsageSnapshot } from '../../shared/zcode-usage-types'
 import type {
   CodexRateLimitResetResult,
@@ -46,6 +47,8 @@ export type CodexUsageApi = UsageProviderApi<CodexUsageSnapshot, CodexUsageBreak
 export type OpenCodeUsageApi = UsageProviderApi<OpenCodeUsageSnapshot, OpenCodeUsageBreakdownKind>
 
 export type ZCodeUsageApi = UsageProviderApi<ZCodeUsageSnapshot, ZCodeUsageBreakdownKind>
+
+export type PiUsageApi = UsageProviderApi<PiUsageSnapshot, PiUsageBreakdownKind>
 
 export type RateLimitsApi = {
   get: () => Promise<RateLimitState>
