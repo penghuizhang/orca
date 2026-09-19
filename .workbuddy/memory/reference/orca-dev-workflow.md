@@ -131,6 +131,21 @@ node config/scripts/orca-sync-and-build.mjs --install # 同步 + 打包 + 安装
 node config/scripts/verify-features.mjs              # 单独验证
 ```
 
+⚠️ **2026-09-19 起：`sync-upstream.mjs` / `orca-sync-and-build.mjs` 在浅克隆下不可用**（写死 `upstream → main → custom` 三步，第一步就失败，见 [[orca-shallow-clone-sync]]）。浅克隆未修复前改走「正确的人工同步流程」。**遗留待拍板**：是否把脚本改成直接 `custom merge upstream/main`。
+
+### 打包脚本耗时与产物（2026-09-19 实测）
+
+`build-orca-s.mjs --install` 全程约 10 分钟；依次执行 `build:desktop` → `build:computer-macos` → `build:notification-status-macos` → `ensure:electron-runtime` → `electron-builder --mac --arm64` → ditto 安装到 `/Applications` → `xattr -cr` 去隔离 → `open`。
+
+- 本地构建号：`1.4.197-local.1789782638720.140117ca1732`（约定 `基础版本号.local.时间戳.commit hash`）
+- 产物：`dist/orca-s-<版本>-arm64-mac.zip`（约 206M）、`dist/orca-s-macos-arm64.dmg`（约 205M）
+- 签名：Apple Development 证书 + `skipped macOS notarization`（本地包无需公证）
+- 装好后用 `codesign --verify --deep --strict /Applications/orca-s.app`（exit 0）+ `xattr -l`（应为空）确认可正常启动
+
+### 合并后回归验证的实际范围（2026-09-19）
+
+`pnpm tc`（tsconfig.node / tc.cli / tc.web / mobile-web 四工程并行）→ exit 0；`verify-features.mjs` 全绿；**外加自建核对**：6 语言包逐键三向对照（参见 [[orca-merge-upstream-conflict-playbook]]）+ `app.asar` 特征串抽查（日历 / customDbPath / zcode / pi / 浏览器 MCP 共 8 项全命中）。`pnpm install` 本次仅 40.8s（electron 43.4.1→43.7.0、tiptap 3.22→3.31、新增 `@xterm/addon-image`）。
+
 ## orca-dev-workflow Skill
 
 工程专属 skill，位于 `.agents/skills/orca-dev-workflow/`（被 .gitignore 忽略，不提交）。注意：此 skill 不在全局 `~/.agents/skills/`，而是在项目目录内，随项目走。
