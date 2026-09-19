@@ -4,7 +4,30 @@ import { pathToFileURL } from 'node:url'
 const SERVICE_ACCOUNT_EMAIL =
   /^[a-z][a-z0-9-]{4,28}[a-z0-9]@[a-z0-9-]+\.iam\.gserviceaccount\.com$/
 
-function parseArguments(argv) {
+const REHOME_CONFIG =
+  /^  printf 'ORCA_RELAY_REHOME_(?:DIRECTOR_SERVICE_ACCOUNT|AUDIENCE)=%s\\n' '[^'\n]+'$/
+
+const DATABASE_POOL_MAX = /^  printf 'ORCA_RELAY_DATABASE_POOL_MAX=%s\\n' '[0-9]+'$/
+
+// Only cells listed as regional rehome sources get rehome trust lines in their startup script.
+function rehomeProtocol({ regionalRehomeProtocol }) {
+  if (![0, 1, 3, '0', '1', '3'].includes(regionalRehomeProtocol)) {
+    throw new Error('same-cap Terraform plan has an invalid regional rehome protocol')
+  }
+  return Number(regionalRehomeProtocol)
+}
+
+// Only cells off the root pool default get a pool line, so the caller states whether to expect one.
+function databasePoolMax({ databasePoolMax: value }) {
+  if (value === undefined) return undefined
+  const pool = Number(value)
+  if (!/^[0-9]+$/.test(String(value)) || pool < 1 || pool > 100) {
+    throw new Error('same-cap Terraform plan has an invalid database pool max')
+  }
+  return String(pool)
+}
+
+export function parseCapacityPlanArguments(argv) {
   const values = {}
   for (let index = 0; index < argv.length; index += 2) {
     const key = argv[index]
@@ -24,15 +47,25 @@ function parseArguments(argv) {
     return value
   }
   if (!values.image) throw new Error('missing --image')
-  if (values.mode === 'bootstrap-cell' && !values['capacity-service-account']) {
+  if (
+    ['bootstrap-cell', 'same-cap-cell'].includes(values.mode) &&
+    !values['capacity-service-account']
+  ) {
     throw new Error('missing --capacity-service-account')
   }
   if (
     values.mode === 'same-cap-cell' &&
     (!values['rollback-image'] ||
       !values['rehome-director-service-account'] ||
-      !values['rehome-audience'])
+      !values['rehome-audience'] ||
+      !['0', '1', '3'].includes(values['regional-rehome-protocol']))
   ) throw new Error('same-cap validation requires rollback image and rehome trust config')
+  if (values.mode !== 'same-cap-cell' && values['regional-rehome-protocol'] !== undefined) {
+    throw new Error('--regional-rehome-protocol applies only to same-cap-cell validation')
+  }
+  if (values.mode !== 'same-cap-cell' && values['database-pool-max'] !== undefined) {
+    throw new Error('--database-pool-max applies only to same-cap-cell validation')
+  }
   if (values.mode === 'same-cap-image' && !values['rollback-image']) {
     throw new Error('same-cap image validation requires a rollback image')
   }
@@ -51,7 +84,9 @@ function parseArguments(argv) {
     capacityServiceAccount: values['capacity-service-account'],
     rollbackImage: values['rollback-image'],
     rehomeDirectorServiceAccount: values['rehome-director-service-account'],
-    rehomeAudience: values['rehome-audience']
+    rehomeAudience: values['rehome-audience'],
+    regionalRehomeProtocol: values['regional-rehome-protocol'],
+    databasePoolMax: values['database-pool-max']
   }
 }
 
@@ -166,7 +201,8 @@ function normalizedStartupScript(
   script,
   stripCapacityIdentity = false,
   stripRehomeConfig = false,
-  preserveCapacity = false
+  preserveCapacity = false,
+  stripDatabasePoolMax = false
 ) {
   const image = relayImage(script)
   if (!image) throw new Error('cell plan startup script has no Relay image')
@@ -175,15 +211,14 @@ function normalizedStartupScript(
     /^  printf 'ORCA_RELAY_CELL_CONNECTION_(?:HARD_CAP|UNOBSERVED_BOUND)=%s\\n' '[0-9]+'$/
   const capacityIdentity =
     /^  printf 'ORCA_RELAY_CAPACITY_SERVICE_ACCOUNT=%s\\n' '[a-z][a-z0-9-]{4,28}[a-z0-9]@[a-z0-9-]+\.iam\.gserviceaccount\.com'$/
-  const rehomeConfig =
-    /^  printf 'ORCA_RELAY_REHOME_(?:DIRECTOR_SERVICE_ACCOUNT|AUDIENCE)=%s\\n' '[^'\n]+'$/
   return script
     .split('\n')
     .filter(
       (line) =>
         (preserveCapacity || !capacityAssignment.test(line)) &&
         (!stripCapacityIdentity || !capacityIdentity.test(line)) &&
-        (!stripRehomeConfig || !rehomeConfig.test(line))
+        (!stripRehomeConfig || !REHOME_CONFIG.test(line)) &&
+        (!stripDatabasePoolMax || !DATABASE_POOL_MAX.test(line))
     )
     .join('\n')
     .replaceAll(image, '<relay-image>')
@@ -207,13 +242,17 @@ function requireDesiredStartupScript(script, config) {
       `  printf 'ORCA_RELAY_CELL_CONNECTION_UNOBSERVED_BOUND=%s\\n' '${config.unobservedBound}'`
     ]
   ]
-  if (config.mode === 'bootstrap-cell') {
+  // A same-cap cell whose template predates this line gains it on its next roll, so the
+  // before/after comparison ignores it; pinning the exact identity here is what reviews it,
+  // and what stops a roll dropping or rewriting the line it lets through.
+  if (['bootstrap-cell', 'same-cap-cell'].includes(config.mode)) {
     expected.push([
       /^  printf 'ORCA_RELAY_CAPACITY_SERVICE_ACCOUNT=%s\\n' '[a-z][a-z0-9-]{4,28}[a-z0-9]@[a-z0-9-]+\.iam\.gserviceaccount\.com'$/,
       `  printf 'ORCA_RELAY_CAPACITY_SERVICE_ACCOUNT=%s\\n' '${config.capacityServiceAccount}'`
     ])
   }
-  if (config.mode === 'same-cap-cell') {
+  const rehomeTrusted = config.mode === 'same-cap-cell' && rehomeProtocol(config) >= 1
+  if (rehomeTrusted) {
     expected.push(
       [
         /^  printf 'ORCA_RELAY_REHOME_DIRECTOR_SERVICE_ACCOUNT=%s\\n' '[^'\n]+'$/,
@@ -225,9 +264,28 @@ function requireDesiredStartupScript(script, config) {
       ]
     )
   }
+  // A protocol-0 cell is not a rehome source, so gaining any rehome trust line is real drift.
+  const unexpectedRehome =
+    config.mode === 'same-cap-cell' &&
+    !rehomeTrusted &&
+    lines.some((line) => REHOME_CONFIG.test(line))
+  const pool = config.mode === 'same-cap-cell' ? databasePoolMax(config) : undefined
+  if (pool !== undefined) {
+    expected.push([
+      DATABASE_POOL_MAX,
+      `  printf 'ORCA_RELAY_DATABASE_POOL_MAX=%s\\n' '${pool}'`
+    ])
+  }
+  // An unpinned cell sits on the root pool default, so gaining a pool line is real drift.
+  const unexpectedDatabasePoolMax =
+    config.mode === 'same-cap-cell' &&
+    pool === undefined &&
+    lines.some((line) => DATABASE_POOL_MAX.test(line))
   if (
     typeof script !== 'string' ||
     relayImage(script) !== config.image ||
+    unexpectedRehome ||
+    unexpectedDatabasePoolMax ||
     expected.some(([pattern, line]) => !hasExactSingleAssignment(lines, pattern, line))
   ) {
     throw new Error('cell plan does not contain the reviewed image and capacity')
@@ -400,19 +458,27 @@ function cellPlan(plan, changes, config) {
   const script = template.change.after?.metadata_startup_script
   requireDesiredStartupScript(script, config)
   const sameCap = ['same-cap-cell', 'same-cap-image'].includes(config.mode)
+  // Only a pinned pool may move here; requireDesiredStartupScript holds the after value exactly.
+  const stripPool = config.mode === 'same-cap-cell' && config.databasePoolMax !== undefined
+  // Only a template stale enough to predate the line may move it, and only by gaining it;
+  // requireDesiredStartupScript holds the after value to the exact reviewed identity.
+  const stripCapacityIdentity =
+    ['bootstrap-cell', 'same-cap-cell'].includes(config.mode)
   if (
     typeof beforeScript !== 'string' ||
     (sameCap && relayImage(beforeScript) !== config.rollbackImage) ||
     normalizedStartupScript(
       beforeScript,
-      config.mode === 'bootstrap-cell',
+      stripCapacityIdentity,
       config.mode === 'same-cap-cell',
-      sameCap
+      sameCap,
+      stripPool
     ) !== normalizedStartupScript(
       script,
-      config.mode === 'bootstrap-cell',
+      stripCapacityIdentity,
       config.mode === 'same-cap-cell',
-      sameCap
+      sameCap,
+      stripPool
     )
   ) {
     throw new Error('cell plan does not contain the reviewed image and capacity')
@@ -445,10 +511,14 @@ export function validateCapacityPlan(plan, config) {
     throw new Error('capacity Terraform plans may change only a cell')
   }
   if (
-    config.mode === 'bootstrap-cell' &&
+    ['bootstrap-cell', 'same-cap-cell'].includes(config.mode) &&
     !SERVICE_ACCOUNT_EMAIL.test(config.capacityServiceAccount ?? '')
   ) {
     throw new Error('capacity Terraform plan has an invalid service account')
+  }
+  if (config.mode === 'same-cap-cell') {
+    rehomeProtocol(config)
+    databasePoolMax(config)
   }
   if (
     config.mode === 'same-cap-cell' &&
@@ -504,7 +574,7 @@ export function validateCapacityPlan(plan, config) {
 }
 
 export function main(argv = process.argv.slice(2)) {
-  const config = parseArguments(argv)
+  const config = parseCapacityPlanArguments(argv)
   const plan = JSON.parse(readFileSync(0, 'utf8'))
   process.stdout.write(`${JSON.stringify({ event: 'relay_capacity_plan_verified', ...validateCapacityPlan(plan, config) })}\n`)
 }
