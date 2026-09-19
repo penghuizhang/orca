@@ -48,6 +48,7 @@ metadata:
 
 ## 项目结构与工作流
 
+- **防重踩预检（同步/打包前先跑）**：`node .agents/skills/orca-dev-workflow/scripts/orca-workflow.mjs preflight` —— 一条命令自动查「fetch 静默过期 / main 无共同祖先 / 发布 tag 过期致构建号旧 / 运行中仍是旧版」，覆盖四个坑；脚本在 `.agents/skills/`（本机，不提交）
 - [团队知识入库约定](daily/2026-09-04.md#任务团队知识入库约定agentsmd--gitignore) — 记忆、设计文档、踩坑必须提交进仓库共享（`.workbuddy/` 与 `docs/**` 被 gitignore，须 `git add -f`）
 - **打包安装 ≠ 升级生效（2026-09-19 实测）**：ditto 替换 `/Applications/orca-s.app` 后旧进程仍在跑（`open` 只激活旧实例）；用 `ps aux | grep daemon-entry.js` 看 `--app-version` 判断实际运行版本；若 agent 会话跑在 orca-s 终端内（进程链 `zsh ← zcode-cli ← node ← login ← orca-s Helper ← orca-s`），只能交用户手动重启。详见 [工作流程规范](reference/orca-dev-workflow.md)
 

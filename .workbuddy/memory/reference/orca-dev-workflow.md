@@ -74,6 +74,8 @@ git checkout custom && git merge main --no-edit && git push origin custom
 4. 运行 typecheck/oxlint/build 验证
 5. 运行 `node config/scripts/build-orca-s.mjs`
 6. **工作区必须干净（含未跟踪文件）**（2026-09-19 补）：`verify-features.mjs` 第 6 项只豁免 `?? .codegraph/`，仓库根残留任何未跟踪文件（如 `.zcode/plans/plan-*.md`）都会 exit 1 直接阻塞打包。
+7. **核对构建号基数 ≥ 远端最新发布 tag**（2026-09-19 补）：本地 tag 过期会导致「代码最新但版本号看着旧」（本次先出 1.4.197 后修成 1.4.206）——打包前跑 `resolveVersionBase`，见 [[orca-build-version-base]]。
+8. **增量同步时先查新提交是否动了依赖**：`git diff --stat <旧tip> <新tip> -- pnpm-lock.yaml package.json pnpm-workspace.yaml`，动了就重跑 `pnpm install`。
 
 **验收必须用打包安装版**：部分缺陷（如 React #185 无限重渲染）dev 下只打警告不报错，`pnpm dev` 看着正常不代表装出来的包正常。
 
@@ -150,14 +152,18 @@ node config/scripts/verify-features.mjs              # 单独验证
 
 工程专属 skill，位于 `.agents/skills/orca-dev-workflow/`（被 .gitignore 忽略，不提交）。注意：此 skill 不在全局 `~/.agents/skills/`，而是在项目目录内，随项目走。
 触发词："同步 orca"、"打包 orca"、"更新 orca"、"orca sync"、"orca build"
-命令：sync-and-build（默认）、sync、build、verify、status
+命令：preflight（防重踩预检，推荐先跑）、sync-and-build（默认）、sync、build、verify、status
+
+**防重踩预检（2026-09-19 新增）**：`node .agents/skills/orca-dev-workflow/scripts/orca-workflow.mjs preflight`
+一条命令自动检查四个坑：① fetch 静默过期（远端 tip vs 本地引用）② main 无共同祖先（merge-base）③ 发布 tag 过期导致构建号旧（含 `resolveVersionBase` 实测）④ 运行中进程是否仍是旧版 + 会话是否跑在 orca-s 内。
+退出码：有 ❌ 阻塞项 → 1。`sync-and-build` 会自动先跑同步侧预检。**记忆会忘，脚本不会** —— 每次同步/打包前先跑它。
 
 ## 团队知识入库必须 force-add（2026-09-13 核实）
 
 仓库 `.gitignore` 忽略 **`.workbuddy/`（line 152）** 与 **`docs/**`（line 96）**，所以「记忆/设计文档要提交进仓库共享」在本仓库必须用 **`git add -f`** 强制入库：
 
 - 记忆与设计文档默认处于 ignored 状态，裸 `git add` 无效（`git check-ignore -v` 会命中上述两条）。
-- 既有约定是**强制暂存但不由 agent 提交**：`git add -f` 后留 staged（`A`），由用户统一 commit。
+- 提交方式（2026-09-19 更新）：原约定是「强制暂存但不由 agent 提交」，现已改为**直接 commit 并 push**（AGENTS.md 要求知识入库共享；本仓库 `.gitignore` 忽略 + 无人接手暂存会导致知识烂在工作区）。
 - `.workbuddy/memory` 与 zcode 自动记忆目录 `~/.zcode/cli/memories/projects/<proj>/memory` 是**同一目录**（同 inode 软链接）——改一处即两处生效，不要当两份维护。
 
 ## 设计文档

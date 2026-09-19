@@ -39,6 +39,8 @@ git diff --stat $BASE <theirs> -- <file>    # 上游改了什么
 | `src/shared/global-settings-types.ts` | 叠加 | 上游 `aiVaultSearch` + 二开 `browserAutomationMcp` / `customDbPath` |
 | `src/renderer/src/i18n/locales/en.json` | 双方全留 | 两处均为 JSON 对象同位置新增（邻接冲突） |
 
+**第二轮增量合并（`b4d72ff19e`，只撞了同一个 usage 模块）**：`src/main/usage/usage-provider-contract.ts` —— 上游给 `UsageProviderId` 加了 `'devin'`，二开有 `'zcode'/'pi'` ⇒ **取并集**（顺便改成多行联合类型，便于后续再加）。印证上表规则：「双方各新增枚举成员 → 并集，不要选边」。
+
 **上移枚举补丁（本次唯一的非同文件补丁）**：视图枚举 `TopLevelViewSchema` 随实现搬到 `src/shared/rpc-contract/client-ui-params.ts`，必须把二开的 `'calendar'` 补进新的 6 个视图值中。**教训**：上游搬走实现后，取上游版会静默丢掉二开在新位置的值（该文件本身可能无冲突标记），必须按「上游搬了哪个枚举/联合类型」主动补。
 
 ## en.json 邻接冲突的隐藏坑（本次卡住 3 轮）
