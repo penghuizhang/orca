@@ -43,8 +43,11 @@ git checkout custom && git merge main --no-edit && git push origin custom
 
 1. 确认在 custom 分支
 2. 确认 custom 包含所有功能分支：`git branch --no-merged custom | grep -v upstream | grep -v remotes`
-3. 运行 typecheck/oxlint/build 验证
-4. 运行 `node config/scripts/build-orca-s.mjs`
+3. **同步上游后跑一遍受影响模块的测试**（2026-09-12 补）：合并无冲突 ≠ 新引入的上游代码没坑。1.4.197 状态栏崩掉就是上游新代码带进来的（合并干净，但新 hook 的 selector 引用不稳定），若同步后先跑 ports/状态栏相关测试即可拦下，详见 [[zustand-v5-unstable-selector-react-185]]
+4. 运行 typecheck/oxlint/build 验证
+5. 运行 `node config/scripts/build-orca-s.mjs`
+
+**验收必须用打包安装版**：部分缺陷（如 React #185 无限重渲染）dev 下只打警告不报错，`pnpm dev` 看着正常不代表装出来的包正常。
 
 ## 版本号策略
 
@@ -89,6 +92,14 @@ node config/scripts/verify-features.mjs              # 单独验证
 工程专属 skill，位于 `.agents/skills/orca-dev-workflow/`（被 .gitignore 忽略，不提交）。注意：此 skill 不在全局 `~/.agents/skills/`，而是在项目目录内，随项目走。
 触发词："同步 orca"、"打包 orca"、"更新 orca"、"orca sync"、"orca build"
 命令：sync-and-build（默认）、sync、build、verify、status
+
+## 团队知识入库必须 force-add（2026-09-13 核实）
+
+仓库 `.gitignore` 忽略 **`.workbuddy/`（line 152）** 与 **`docs/**`（line 96）**，所以「记忆/设计文档要提交进仓库共享」在本仓库必须用 **`git add -f`** 强制入库：
+
+- 记忆与设计文档默认处于 ignored 状态，裸 `git add` 无效（`git check-ignore -v` 会命中上述两条）。
+- 既有约定是**强制暂存但不由 agent 提交**：`git add -f` 后留 staged（`A`），由用户统一 commit。
+- `.workbuddy/memory` 与 zcode 自动记忆目录 `~/.zcode/cli/memories/projects/<proj>/memory` 是**同一目录**（同 inode 软链接）——改一处即两处生效，不要当两份维护。
 
 ## 设计文档
 

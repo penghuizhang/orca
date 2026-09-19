@@ -24,6 +24,9 @@ metadata:
 
 - [doc-workflow hook 校验规则](pitfalls/doc-workflow-hook.md) — 设计文档现放 `.workbuddy/docs/<分类>/`，但 hook 仍扫描仓库根 `docs/`
 - [GitHub 推送被账户未验证邮箱拦截](pitfalls/orca-github-push-email-verify.md) — 硬性 blocker；推 GitHub 仍须 https_proxy=127.0.0.1:54687
+- [元数据复杂度风险](pitfalls/metadata-complexity-risk.md) — 过度设计元数据会导致数据查不到或丢失；简化元数据，通过 MEMORY.md 索引实现关联
+- [electron-builder 国内镜像](pitfalls/orca-electron-builder-mirror.md) — .npmrc electron_mirror 对 electron-builder 无效，必须用 `ELECTRON_MIRROR` 环境变量
+- [zustand v5 selector 不稳定 ⇒ React #185](pitfalls/zustand-v5-unstable-selector-react-185.md) — **已修复**：1.4.197 打包版状态栏被错误边界兜底；selector 内构造对象必炸，dev 只告警须打包验收；已取上游 `5412276776fb`（=custom `2c4e15b625e8`）
 
 ## 参考资料（reference/）
 
@@ -35,6 +38,8 @@ metadata:
 - [orca 二开工作流程规范](reference/orca-dev-workflow.md) — 分支结构明确；标准化脚本已提交；工程专属 skill `.agents/skills/orca-dev-workflow/`
 - [orca 选中代码 AI 解释功能](reference/orca-select-explain-feature.md) — 编辑器选中代码片段→AI 解释（选中即问）；已实现
 - [.workbuddy/docs/ 分类整理](reference/orca-workbuddy-docs-classification.md) — 46 篇二开设计文档从 docs/ 迁移到 .workbuddy/docs/ 下 8 个分类目录
+- [Orca 外部 agent 集成机制与边界](reference/orca-agent-integration-surfaces.md) — 注册表约 15 处；检测/启动在执行宿主本地；6 种注入模式均要求长驻进程、**无 one-shot 通道**；MCP 只读 4 处配置；附「能否直接注册」三问
+- [uni-agent 集成 Orca](reference/orca-uni-agent-integration.md) — **待评审**；uni-agent 是 HBuilderX 本地 socket 客户端 + 一次性 CLI，需自研 PTY 壳才能当 TuiAgent
 
 ## 项目结构与工作流
 
@@ -48,6 +53,8 @@ metadata:
 
 ## 设计文档
 
+- `.workbuddy/docs/zcode/2026-09-13-uni-agent集成方案与可行性分析.md` — uni-agent 集成 Orca：**待评审**；结论=上游为一次性 CLI + HBuilderX 本地 socket 客户端（非独立 runtime），需自研 PTY 壳才能当 TuiAgent；含 Phase1 验证清单
+- `.workbuddy/docs/reference/2026-09-12-状态栏报错根因分析与修复建议.md` — 状态栏 #185 根因 + 修复与验收记录（已实施）
 - `docs/2026-09-04-分支结构规范化说明.md` — 分支结构与 PR 规范
 - `docs/2026-09-04-ZCode全局记忆迁移到工程目录方案.md` — 记忆迁移方案
 - `docs/2026-09-04-Pi智能体下拉入口与用量统计设计.md` — Pi 智能体功能设计
