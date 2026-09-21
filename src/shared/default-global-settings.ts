@@ -16,6 +16,7 @@ import {
 } from './left-sidebar-appearance'
 import { DEFAULT_SOURCE_CONTROL_GROUP_ORDER } from './source-control-group-order'
 import { DESKTOP_TERMINAL_SCROLLBACK_ROWS_DEFAULT } from './terminal-scrollback-policy'
+import { DEFAULT_NOTES_ROOT_DIRECTORY } from './constants'
 
 export function buildDefaultSettings(args: {
   workspaceDir: string
@@ -161,6 +162,7 @@ export function buildDefaultSettings(args: {
     browserClientHostedRemoteEnabled: true,
     floatingTerminalDefaultedForAllUsers: true,
     floatingTerminalCwd: '~',
+    notesRootDirectory: DEFAULT_NOTES_ROOT_DIRECTORY,
     floatingTerminalTrustedCwds: [],
     floatingTerminalCwdMigratedToAppWorkspace: true,
     floatingTerminalTriggerLocation: 'floating-button',

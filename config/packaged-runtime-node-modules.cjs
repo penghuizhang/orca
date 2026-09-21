@@ -70,7 +70,11 @@ const VERSIONED_ONNXRUNTIME_DYLIB_RE = /^libonnxruntime\.\d[\d.]*\.dylib$/
 
 const NODE_BUILTINS = new Set([
   ...builtinModules,
-  ...builtinModules.map((moduleName) => `node:${moduleName}`)
+  ...builtinModules.map((moduleName) => `node:${moduleName}`),
+  // Why: node:sqlite is experimental in Node 22 and absent from builtinModules, but it ships
+  // with Electron's Node and must not be treated as an external npm dependency during packaging.
+  'node:sqlite',
+  'node:sqlite/sync'
 ])
 
 function packageNameFromSpecifier(specifier) {

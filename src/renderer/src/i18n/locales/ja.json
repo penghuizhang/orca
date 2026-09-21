@@ -4455,7 +4455,8 @@
           "196c1b5362": "GitLab タスクを開く",
           "0ccba862b8": "GitHub タスクを開く",
           "fee535205b": "タスク",
-          "d599269755": "サイドバーから非表示"
+          "d599269755": "サイドバーから非表示",
+          "notes": "ノート"
         },
         "SidebarRepositoryFilterSection": {
           "d3a9c4cea1": "クリア",
@@ -14583,6 +14584,35 @@
         "description": "このワークスペースをサイドバー内の別のワークスペースの配下にネストします。ベースブランチは変更されません。",
         "searchPlaceholder": "ワークスペースを検索...",
         "noMatches": "一致する項目がありません。"
+      },
+      "notes": {
+        "pageTitle": "ノート",
+        "searchPlaceholder": "ノートを検索…",
+        "rootDirectory": "ノートの保存先",
+        "refresh": "更新",
+        "newNote": "新規ノート",
+        "newFolder": "新規フォルダー",
+        "rename": "名前の変更",
+        "delete": "削除",
+        "emptyTreeHint": "ノートがありません。右クリックで作成できます。",
+        "emptyEditorHint": "左側からノートを選択して編集を開始します。",
+        "loadingEditor": "エディターを読み込み中…",
+        "newNoteDescription": "Markdown ノートを作成します。.md 拡張子は自動で付きます。",
+        "newFolderDescription": "現在のディレクトリにフォルダーを作成します。",
+        "renameTitle": "名前の変更",
+        "renameDescription": "「{{name}}」の新しい名前を入力してください。",
+        "namePlaceholder": "名前",
+        "create": "作成",
+        "save": "保存",
+        "cancel": "キャンセル",
+        "deleteTitle": "{{kind}}を削除",
+        "folder": "フォルダー",
+        "note": "ノート",
+        "deleteFolderDescription": "「{{name}}」とその中身すべてを削除しますか？この操作は元に戻せません。",
+        "deleteNoteDescription": "「{{name}}」を削除しますか？この操作は元に戻せません。",
+        "loadFailed": "ノートの読み込みに失敗しました。",
+        "rootFailed": "ノートディレクトリを開けませんでした。",
+        "operationFailed": "操作に失敗しました。"
       }
     },
     "i18n": {

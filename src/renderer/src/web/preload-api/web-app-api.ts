@@ -47,6 +47,8 @@ export function createWebAppApi(): Partial<PreloadApi> {
       getFloatingMarkdownDirectory: () => Promise.resolve(''),
       pickFloatingMarkdownDocument: () => Promise.resolve(null),
       pickFloatingWorkspaceDirectory: () => Promise.resolve(null),
+      // The web client has no local notes root to authorize.
+      getNotesRootDirectory: () => Promise.resolve(''),
       // Browser fallback has no app-owned userData dir; reject so the sentinel can't claim sensitive evidence was persisted.
       writeTerminalRenderDesyncEvidence: () =>
         Promise.reject(

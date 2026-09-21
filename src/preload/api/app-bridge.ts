@@ -74,6 +74,7 @@ export const appApi = {
     ipcRenderer.invoke('app:pickFloatingMarkdownDocument'),
   pickFloatingWorkspaceDirectory: (): Promise<string | null> =>
     ipcRenderer.invoke('app:pickFloatingWorkspaceDirectory'),
+  getNotesRootDirectory: (): Promise<string> => ipcRenderer.invoke('notes:getRootDirectory'),
   writeTerminalRenderDesyncEvidence: (args: WriteTerminalRenderDesyncEvidenceArgs) =>
     ipcRenderer.invoke('terminal:writeRenderDesyncEvidence', args)
 } satisfies PreloadApi['app']

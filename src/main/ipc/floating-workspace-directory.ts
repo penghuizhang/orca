@@ -6,21 +6,9 @@ import type { GlobalSettings } from '../../shared/global-settings-types'
 import type { FloatingTerminalCwdRequest } from '../../shared/ui-chrome-types'
 import type { Store } from '../persistence'
 import { authorizeExternalPath } from './filesystem-auth'
+import { expandHomePath } from './expand-home-path'
 
 const FLOATING_WORKSPACE_DIRNAME = 'floating-workspace'
-
-function expandHomePath(input: string, home: string): string {
-  if (input === '~') {
-    return home
-  }
-  if (input.startsWith(`~${path.sep}`)) {
-    return path.join(home, input.slice(2))
-  }
-  if (process.platform === 'win32' && input.startsWith('~/')) {
-    return path.join(home, input.slice(2))
-  }
-  return input
-}
 
 function resolveFloatingWorkspaceInput(input: string): string {
   const home = app.getPath('home')

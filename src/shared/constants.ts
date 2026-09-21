@@ -105,6 +105,17 @@ export const ORPHAN_WORKTREE_ID = '__orphan__'
 // Why: synthetic local workspace; persistence pruning must classify it without the repo catalog.
 export const FLOATING_TERMINAL_WORKTREE_ID = 'global-floating-terminal'
 
+// Why: synthetic local workspace for Notes-page files; keeps notes out of the floating-workspace tab group.
+export const NOTES_WORKTREE_ID = 'global-notes'
+
+/** Virtual workspace ids that are always local — never route through a remote host. */
+export function isLocalOnlyVirtualWorktree(worktreeId: string | undefined | null): boolean {
+  return worktreeId === FLOATING_TERMINAL_WORKTREE_ID || worktreeId === NOTES_WORKTREE_ID
+}
+
+/** Default Notes page root; '~' expands against the home dir on first open. Single source shared by defaults and the main-side resolver. */
+export const DEFAULT_NOTES_ROOT_DIRECTORY = '~/OrcaNotes'
+
 export const REPO_COLORS = [
   '#737373', // neutral
   '#ef4444', // red

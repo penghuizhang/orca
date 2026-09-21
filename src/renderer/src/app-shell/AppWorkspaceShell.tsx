@@ -19,6 +19,7 @@ const WorktreeCreationPanel = lazy(
 const TaskPage = lazy(() => import('../components/task-page/TaskPage'))
 const AutomationsPage = lazy(() => import('../components/automations/AutomationsPage'))
 const CalendarPage = lazy(() => import('../components/calendar/CalendarPage'))
+const NotesPage = lazy(() => import('../components/notes/NotesPage'))
 const ActivityPrototypePage = lazy(() => import('../components/activity/ActivityPrototypePage'))
 const Settings = lazy(() => import('../components/settings/Settings'))
 const SkillsPage = lazy(() => import('../components/skills/SkillsPage'))
@@ -75,6 +76,7 @@ function ActivePage({ layout }: { layout: AppChromeLayout }): React.JSX.Element 
       {activeView === 'tasks' ? <TaskPage /> : null}
       {activeView === 'automations' ? <AutomationsPage /> : null}
       {activeView === 'calendar' ? <CalendarPage /> : null}
+      {activeView === 'notes' ? <NotesPage /> : null}
       {activeView === 'activity' ? <ActivityPrototypePage /> : null}
       {activeView === 'space' ? <WorkspaceSpacePage /> : null}
       {activeView === 'mobile' ? <MobilePage /> : null}
@@ -157,11 +159,12 @@ export function AppWorkspaceShell(props: {
               )
             ) : null}
             <div className="flex flex-col flex-1 min-w-0 min-h-0 overflow-hidden">
-{/* Why: automations/artifacts/calendar own their page headers; the stacked titlebar would be an empty 36px stripe. */}
+              {/* Why: automations/artifacts/calendar/notes own their page headers; the stacked titlebar would be an empty 36px stripe. */}
               {layout.stackedSidebarOpen &&
               layout.activeView !== 'automations' &&
               layout.activeView !== 'artifacts' &&
-              layout.activeView !== 'calendar' ? (
+              layout.activeView !== 'calendar' &&
+              layout.activeView !== 'notes' ? (
                 <div className="titlebar">{titlebarMainStrip}</div>
               ) : null}
               <div className="relative flex flex-1 min-w-0 min-h-0 overflow-hidden">

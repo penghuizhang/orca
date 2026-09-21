@@ -70,6 +70,10 @@ export type AppApi = {
   /** Opens a native directory picker and authorizes the selected directory
    *  for Floating Workspace markdown file creation. */
   pickFloatingWorkspaceDirectory: () => Promise<string | null>
+  /** Resolves the Notes page root: expands the configured setting, creates the
+   *  directory when missing, and authorizes it for the session so descendant
+   *  fs CRUD calls pass the allowed-roots check. */
+  getNotesRootDirectory: () => Promise<string>
   /** Persists flag-gated terminal render evidence under app-owned userData. */
   writeTerminalRenderDesyncEvidence: (
     args: WriteTerminalRenderDesyncEvidenceArgs

@@ -6,6 +6,7 @@ import {
   CalendarClock,
   EyeOff,
   Files,
+  NotebookPen,
   Search,
   Smartphone
 } from 'lucide-react'
@@ -73,6 +74,7 @@ const SidebarNav = React.memo(function SidebarNav() {
   const worktreePaletteShortcutCombos = useShortcutKeyComboDetails('worktree.palette')
   const openAutomationsPage = useAppStore((s) => s.openAutomationsPage)
   const openCalendarPage = useAppStore((s) => s.openCalendarPage)
+  const openNotesPage = useAppStore((s) => s.openNotesPage)
   const openActivityPage = useAppStore((s) => s.openActivityPage)
   const openMobilePage = useAppStore((s) => s.openMobilePage)
   const openArtifactsPage = useAppStore((s) => s.openArtifactsPage)
@@ -88,6 +90,7 @@ const SidebarNav = React.memo(function SidebarNav() {
   const showSkillsButton = useAppStore((s) => shouldShowSkillsButton(s.settings))
   const automationsActive = activeView === 'automations'
   const calendarActive = activeView === 'calendar'
+  const notesActive = activeView === 'notes'
   const activityActive = activeView === 'activity'
   const mobileActive = activeView === 'mobile'
   const artifactsActive = activeView === 'artifacts'
@@ -250,6 +253,25 @@ const SidebarNav = React.memo(function SidebarNav() {
         />
         <span className="flex-1">
           {translate('auto.components.sidebar.SidebarNav.calendar', 'Calendar')}
+        </span>
+      </button>
+      <button
+        type="button"
+        onClick={openNotesPage}
+        aria-current={notesActive ? 'page' : undefined}
+        className={cn(
+          'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-[13px] font-medium tracking-tight transition-colors',
+          notesActive
+            ? 'bg-worktree-sidebar-accent text-worktree-sidebar-accent-foreground'
+            : 'text-worktree-sidebar-foreground/60 hover:bg-worktree-sidebar-foreground/8'
+        )}
+      >
+        <NotebookPen
+          className={cn('size-4 shrink-0', !notesActive && 'text-worktree-sidebar-foreground/30')}
+          strokeWidth={notesActive ? 2.25 : 1.75}
+        />
+        <span className="flex-1">
+          {translate('auto.components.sidebar.SidebarNav.notes', 'Notes')}
         </span>
       </button>
       {showAgentDashboardButton ? (

@@ -5061,7 +5061,8 @@
           "fee535205b": "Tâches",
           "d599269755": "Masquer de la barre latérale",
           "artifacts": "Artefacts",
-          "skills": "Skills"
+          "skills": "Skills",
+          "notes": "Notes"
         },
         "SidebarRepositoryFilterSection": {
           "d3a9c4cea1": "Effacer",
@@ -15926,6 +15927,35 @@
         "expiredCompact": "Expiré",
         "typeMarkdown": "Markdown",
         "typeHtml": "HTML"
+      },
+      "notes": {
+        "pageTitle": "Notes",
+        "searchPlaceholder": "Rechercher des notes…",
+        "rootDirectory": "Répertoire des notes",
+        "refresh": "Actualiser",
+        "newNote": "Nouvelle note",
+        "newFolder": "Nouveau dossier",
+        "rename": "Renommer",
+        "delete": "Supprimer",
+        "emptyTreeHint": "Aucune note pour le moment. Faites un clic droit pour en créer une.",
+        "emptyEditorHint": "Sélectionnez une note pour commencer à écrire.",
+        "loadingEditor": "Chargement de l'éditeur…",
+        "newNoteDescription": "Crée une note Markdown. L'extension .md est ajoutée automatiquement.",
+        "newFolderDescription": "Crée un dossier dans le répertoire actuel.",
+        "renameTitle": "Renommer",
+        "renameDescription": "Saisissez un nouveau nom pour « {{name}} ».",
+        "namePlaceholder": "Nom",
+        "create": "Créer",
+        "save": "Enregistrer",
+        "cancel": "Annuler",
+        "deleteTitle": "Supprimer {{kind}}",
+        "folder": "dossier",
+        "note": "note",
+        "deleteFolderDescription": "Supprimer « {{name}} » et tout son contenu ? Cette action est irréversible.",
+        "deleteNoteDescription": "Supprimer « {{name}} » ? Cette action est irréversible.",
+        "loadFailed": "Échec du chargement des notes.",
+        "rootFailed": "Impossible d'ouvrir le répertoire des notes.",
+        "operationFailed": "L'opération a échoué."
       }
     },
     "i18n": {
