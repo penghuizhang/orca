@@ -46,6 +46,7 @@ import { registerWorkspacePortHandlers } from '../workspace-ports'
 import { registerLocalhostWorktreeLabelHandlers } from '../localhost-worktree-labels'
 import { registerAutomationHandlers } from '../automations'
 import { registerCalendarHandlers } from '../calendar'
+import { registerNotesDirectoryHandlers } from '../notes-directory'
 import { registerKeybindingHandlers } from '../keybindings'
 import { registerTelemetryHandlers } from '../telemetry'
 import { registerShellHandlers } from '../shell'
@@ -189,6 +190,7 @@ export function registerCoreHandlers(
     registerAutomationHandlers(store, automations)
   }
   registerCalendarHandlers(store)
+  registerNotesDirectoryHandlers(store)
   if (keybindings) {
     registerKeybindingHandlers(keybindings, () => {
       void pluginService?.reconcileActivationState()

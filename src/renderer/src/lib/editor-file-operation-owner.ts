@@ -1,5 +1,5 @@
 import { parseExecutionHostId } from '../../../shared/execution-host'
-import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../shared/constants'
+import { isLocalOnlyVirtualWorktree } from '../../../shared/constants'
 import { parseWorkspaceKey } from '../../../shared/workspace-scope'
 import type { AppState } from '@/store/types'
 import {
@@ -48,25 +48,24 @@ export function captureEditorFileOperationProvenance(
   const explicitResolution = resolveExplicitWorktreeOperationRouteResult(state, worktreeId)
   const worktreeIsPublished = isWorktreePublished(state, worktreeId)
   const ownershipProjection =
-    worktreeId === FLOATING_TERMINAL_WORKTREE_ID || explicitResolution.kind === 'resolved'
+    isLocalOnlyVirtualWorktree(worktreeId) || explicitResolution.kind === 'resolved'
       ? 'explicit'
       : 'legacy'
   const hintedRuntimeEnvironmentId = ownerHint?.trim() || null
-  const route =
-    worktreeId === FLOATING_TERMINAL_WORKTREE_ID
-      ? { executionHostId: 'local' as const, runtimeEnvironmentId: null }
-      : explicitResolution.kind === 'resolved'
-        ? explicitResolution.route
-        : explicitResolution.kind === 'ambiguous'
-          ? null
-          : ownerHintProvided && worktreeIsPublished
-            ? {
-                executionHostId: hintedRuntimeEnvironmentId
-                  ? (`runtime:${encodeURIComponent(hintedRuntimeEnvironmentId)}` as const)
-                  : ('local' as const),
-                runtimeEnvironmentId: hintedRuntimeEnvironmentId
-              }
-            : resolveWorktreeOperationRoute(state, worktreeId)
+  const route = isLocalOnlyVirtualWorktree(worktreeId)
+    ? { executionHostId: 'local' as const, runtimeEnvironmentId: null }
+    : explicitResolution.kind === 'resolved'
+      ? explicitResolution.route
+      : explicitResolution.kind === 'ambiguous'
+        ? null
+        : ownerHintProvided && worktreeIsPublished
+          ? {
+              executionHostId: hintedRuntimeEnvironmentId
+                ? (`runtime:${encodeURIComponent(hintedRuntimeEnvironmentId)}` as const)
+                : ('local' as const),
+              runtimeEnvironmentId: hintedRuntimeEnvironmentId
+            }
+          : resolveWorktreeOperationRoute(state, worktreeId)
   if (!route || (ownerHintProvided && (ownerHint?.trim() || null) !== route.runtimeEnvironmentId)) {
     throw new Error(OWNER_CHANGED_MESSAGE)
   }
@@ -102,7 +101,7 @@ function resolveCurrentEditorRoute(
   worktreeId: string,
   provenance: EditorFileOperationProvenance
 ): WorktreeOperationRoute | null {
-  if (worktreeId === FLOATING_TERMINAL_WORKTREE_ID) {
+  if (isLocalOnlyVirtualWorktree(worktreeId)) {
     return { executionHostId: 'local', runtimeEnvironmentId: null }
   }
   const explicitResolution = resolveExplicitWorktreeOperationRouteResult(state, worktreeId)

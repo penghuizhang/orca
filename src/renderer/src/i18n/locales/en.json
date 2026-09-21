@@ -5484,7 +5484,8 @@
           "d599269755": "Hide from sidebar",
           "artifacts": "Artifacts",
           "skills": "Skills",
-          "calendar": "Calendar"
+          "calendar": "Calendar",
+          "notes": "Notes"
         },
         "SidebarRepositoryFilterSection": {
           "d3a9c4cea1": "Clear",
@@ -17255,6 +17256,35 @@
         "categorySaveFailed": "Failed to save category.",
         "categoriesLoadFailed": "Failed to load calendar categories.",
         "workListWorkList": "Work list"
+      },
+      "notes": {
+        "pageTitle": "Notes",
+        "searchPlaceholder": "Search notes…",
+        "rootDirectory": "Notes directory",
+        "refresh": "Refresh",
+        "newNote": "New note",
+        "newFolder": "New folder",
+        "rename": "Rename",
+        "delete": "Delete",
+        "emptyTreeHint": "No notes yet. Right-click to create one.",
+        "emptyEditorHint": "Select a note to start writing.",
+        "loadingEditor": "Loading editor…",
+        "newNoteDescription": "Create a markdown note. The .md extension is added automatically.",
+        "newFolderDescription": "Create a folder inside the current directory.",
+        "renameTitle": "Rename",
+        "renameDescription": "Enter a new name for \"{{name}}\".",
+        "namePlaceholder": "Name",
+        "create": "Create",
+        "save": "Save",
+        "cancel": "Cancel",
+        "deleteTitle": "Delete {{kind}}",
+        "folder": "folder",
+        "note": "note",
+        "deleteFolderDescription": "Delete \"{{name}}\" and everything inside it? This cannot be undone.",
+        "deleteNoteDescription": "Delete \"{{name}}\"? This cannot be undone.",
+        "loadFailed": "Failed to load notes.",
+        "rootFailed": "Failed to open the notes directory.",
+        "operationFailed": "The operation failed."
       },
       "GiteeItemDialog": {
         "createdAt": "Created",

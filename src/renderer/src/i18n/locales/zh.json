@@ -4543,7 +4543,8 @@
           "0ccba862b8": "打开 GitHub 任务",
           "fee535205b": "任务",
           "d599269755": "从侧边栏隐藏",
-          "calendar": "日历"
+          "calendar": "日历",
+          "notes": "笔记"
         },
         "SidebarRepositoryFilterSection": {
           "d3a9c4cea1": "清除",
@@ -14769,6 +14770,35 @@
         "categoryDeleted": "分类已删除。",
         "categorySaveFailed": "保存分类失败。",
         "categoriesLoadFailed": "加载分类失败。"
+      },
+      "notes": {
+        "pageTitle": "笔记",
+        "searchPlaceholder": "搜索笔记…",
+        "rootDirectory": "笔记目录",
+        "refresh": "刷新",
+        "newNote": "新建笔记",
+        "newFolder": "新建文件夹",
+        "rename": "重命名",
+        "delete": "删除",
+        "emptyTreeHint": "还没有笔记，右键即可创建。",
+        "emptyEditorHint": "从左侧选择一篇笔记开始编辑。",
+        "loadingEditor": "正在加载编辑器…",
+        "newNoteDescription": "创建 Markdown 笔记，自动补充 .md 后缀。",
+        "newFolderDescription": "在当前目录下创建文件夹。",
+        "renameTitle": "重命名",
+        "renameDescription": "为“{{name}}”输入新名称。",
+        "namePlaceholder": "名称",
+        "create": "创建",
+        "save": "保存",
+        "cancel": "取消",
+        "deleteTitle": "删除{{kind}}",
+        "folder": "文件夹",
+        "note": "笔记",
+        "deleteFolderDescription": "删除“{{name}}”及其全部内容？此操作不可恢复。",
+        "deleteNoteDescription": "删除“{{name}}”？此操作不可恢复。",
+        "loadFailed": "笔记加载失败。",
+        "rootFailed": "打开笔记目录失败。",
+        "operationFailed": "操作失败。"
       },
       "pluginCatalog": {
         "PluginCatalogLayout": {

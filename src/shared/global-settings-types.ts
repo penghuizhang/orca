@@ -288,6 +288,8 @@ export type GlobalSettings = {
   floatingTerminalDefaultedForAllUsers?: boolean
   /** Start dir for new floating-workspace terminal tabs; empty or '~' = home dir. */
   floatingTerminalCwd: string
+  /** Notes page root directory; '~'-prefixed paths expand against the home dir. Created on first open. */
+  notesRootDirectory?: string
   /** Picker-approved floating-workspace dirs reauthorized across restarts; renderer text alone must not populate this. */
   floatingTerminalTrustedCwds?: string[]
   /** One-shot migration marker for legacy floating workspace cwd trust grants. */

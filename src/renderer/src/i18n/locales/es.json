@@ -4474,7 +4474,8 @@
           "196c1b5362": "Abrir tareas de GitLab",
           "0ccba862b8": "Abrir tareas de GitHub",
           "fee535205b": "Tareas",
-          "d599269755": "Ocultar de la barra lateral"
+          "d599269755": "Ocultar de la barra lateral",
+          "notes": "Notas"
         },
         "SidebarRepositoryFilterSection": {
           "d3a9c4cea1": "Limpiar",
@@ -14583,6 +14584,35 @@
         "description": "Anida este espacio de trabajo bajo otro en la barra lateral. No cambia la rama base.",
         "searchPlaceholder": "Buscar espacios de trabajo...",
         "noMatches": "No hay coincidencias."
+      },
+      "notes": {
+        "pageTitle": "Notas",
+        "searchPlaceholder": "Buscar notas…",
+        "rootDirectory": "Directorio de notas",
+        "refresh": "Actualizar",
+        "newNote": "Nueva nota",
+        "newFolder": "Nueva carpeta",
+        "rename": "Cambiar nombre",
+        "delete": "Eliminar",
+        "emptyTreeHint": "Aún no hay notas. Haz clic derecho para crear una.",
+        "emptyEditorHint": "Selecciona una nota para empezar a escribir.",
+        "loadingEditor": "Cargando el editor…",
+        "newNoteDescription": "Crea una nota Markdown. La extensión .md se añade automáticamente.",
+        "newFolderDescription": "Crea una carpeta dentro del directorio actual.",
+        "renameTitle": "Cambiar nombre",
+        "renameDescription": "Escribe un nuevo nombre para «{{name}}».",
+        "namePlaceholder": "Nombre",
+        "create": "Crear",
+        "save": "Guardar",
+        "cancel": "Cancelar",
+        "deleteTitle": "Eliminar {{kind}}",
+        "folder": "carpeta",
+        "note": "nota",
+        "deleteFolderDescription": "¿Eliminar «{{name}}» y todo su contenido? No se puede deshacer.",
+        "deleteNoteDescription": "¿Eliminar «{{name}}»? No se puede deshacer.",
+        "loadFailed": "No se pudieron cargar las notas.",
+        "rootFailed": "No se pudo abrir el directorio de notas.",
+        "operationFailed": "La operación falló."
       }
     },
     "i18n": {

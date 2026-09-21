@@ -116,6 +116,19 @@ export function createUiViewActions(set: UISliceSet, get: UISliceGet): Partial<U
       set((state) => ({
         activeView: state.previousViewBeforeCalendar,
         worktreeNavHistoryIndex: rewindHistoryIndexPastView(state, 'calendar')
+      })),
+    openNotesPage: () => {
+      get().recordViewVisit('notes')
+      set((state) => ({
+        activeView: 'notes',
+        previousViewBeforeNotes:
+          state.activeView === 'notes' ? state.previousViewBeforeNotes : state.activeView
+      }))
+    },
+    closeNotesPage: () =>
+      set((state) => ({
+        activeView: state.previousViewBeforeNotes,
+        worktreeNavHistoryIndex: rewindHistoryIndexPastView(state, 'notes')
       }))
   }
 }
