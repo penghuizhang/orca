@@ -1,5 +1,4 @@
-import AsyncStorage from '@react-native-async-storage/async-storage'
-import { noteMirroredWrite } from '../storage/mirrored-storage-keys'
+import { persistMirrored } from '../storage/mirrored-storage-keys'
 import { getRepoIdFromMobileWorktreeId } from '../session/mobile-session-route-helpers'
 
 export const LAST_VISITED_WORKTREE_STORAGE_KEY = 'orca:last-visited-worktree'
@@ -57,7 +56,9 @@ export function readLastVisitedWorktreeRepoId(raw: string | null, hostId: string
  * would open on the repo the user left rather than the one they just came from.
  */
 export function writeLastVisitedWorktree(record: LastVisitedWorktreeRecord): void {
-  const value = JSON.stringify(record)
-  noteMirroredWrite(LAST_VISITED_WORKTREE_STORAGE_KEY, value)
-  void AsyncStorage.setItem(LAST_VISITED_WORKTREE_STORAGE_KEY, value)
+  // Through the path that notes on an accepted write (ruling 35): this module is in the page's
+  // own closure, so the store behind it may be the bridge's adapter, which refuses a key this
+  // route was never given. Nothing is owed a caller that cannot act on one, so the refusal is the
+  // adapter's log rather than a rejection here.
+  void persistMirrored(LAST_VISITED_WORKTREE_STORAGE_KEY, JSON.stringify(record)).catch(() => {})
 }

@@ -47,6 +47,7 @@ export function createClaudeProvider(input: UsageOverviewInput['claude']): Usage
     cacheTokens: summary ? summary.cacheReadTokens + summary.cacheWriteTokens : 0,
     reasoningTokens: 0,
     estimatedCostUsd: summary?.estimatedCostUsd ?? null,
+    hasPartialCost: false,
     topModel: summary?.topModel ?? null,
     topProject: summary?.topProject ?? null,
     activeDays: countActiveDays(dailyActiveDays)
@@ -75,6 +76,7 @@ export function createCodexProvider(input: UsageOverviewInput['codex']): UsagePr
     cacheTokens: summary?.cachedInputTokens ?? 0,
     reasoningTokens: summary?.reasoningOutputTokens ?? 0,
     estimatedCostUsd: summary?.estimatedCostUsd ?? null,
+    hasPartialCost: summary?.hasUnpricedModels ?? false,
     topModel: summary?.topModel ?? null,
     topProject: summary?.topProject ?? null,
     activeDays: countActiveDays(dailyActiveDays)
@@ -105,6 +107,7 @@ export function createOpenCodeProvider(
     cacheTokens: summary?.cachedInputTokens ?? 0,
     reasoningTokens: summary?.reasoningOutputTokens ?? 0,
     estimatedCostUsd: summary?.estimatedCostUsd ?? null,
+    hasPartialCost: false,
     topModel: summary?.topModel ?? null,
     topProject: summary?.topProject ?? null,
     activeDays: countActiveDays(dailyActiveDays)
