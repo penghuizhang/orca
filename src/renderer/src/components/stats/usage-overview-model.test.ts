@@ -270,7 +270,9 @@ describe('usage overview model', () => {
       return buildUsageOverview({
         claude: { scanState: null, summary: null, daily: [] },
         codex: { scanState: enabledCodexScanState(), summary: codexSummary, daily: [] },
-        opencode: { scanState: null, summary: null, daily: [] }
+        opencode: { scanState: null, summary: null, daily: [] },
+        zcode: { scanState: null, summary: null, daily: [] },
+        pi: { scanState: null, summary: null, daily: [] }
       })
     }
 

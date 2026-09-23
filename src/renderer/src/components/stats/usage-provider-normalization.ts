@@ -143,6 +143,7 @@ export function createZCodeProvider(input: UsageOverviewInput['zcode']): UsagePr
     cacheTokens: summary?.cachedInputTokens ?? 0,
     reasoningTokens: summary?.reasoningOutputTokens ?? 0,
     estimatedCostUsd: summary?.estimatedCostUsd ?? null,
+    hasPartialCost: false,
     topModel: summary?.topModel ?? null,
     topProject: summary?.topProvider ?? null,
     activeDays: countActiveDays(dailyActiveDays)
@@ -178,6 +179,7 @@ export function createPiProvider(input: UsageOverviewInput['pi']): UsageProvider
     cacheTokens: summary?.cachedInputTokens ?? 0,
     reasoningTokens: summary?.reasoningOutputTokens ?? 0,
     estimatedCostUsd: summary?.estimatedCostUsd ?? null,
+    hasPartialCost: false,
     topModel: summary?.topModel ?? null,
     topProject: summary?.topProvider ?? null,
     activeDays: countActiveDays(dailyActiveDays)
