@@ -5,6 +5,7 @@ import type { StatsCollector } from '../stats/collector'
 import type { ClaudeUsageStore } from '../claude-usage/store'
 import type { CodexUsageStore } from '../codex-usage/store'
 import type { OpenCodeUsageStore } from '../opencode-usage/store'
+import type { MuseUsageStore } from '../muse-usage/store'
 import type { ZCodeUsageStore } from '../zcode-usage/store'
 import type { PiUsageStore } from '../pi-usage/store'
 import type { CodexAccountService } from '../codex-accounts/service'
@@ -59,6 +60,8 @@ export const mainProcessState = {
   openCodeUsage: null as OpenCodeUsageStore | null,
   zcodeUsage: null as ZCodeUsageStore | null,
   piUsage: null as PiUsageStore | null,
+  // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: widens the null slot to the store type assigned by main-process-observers.
+  museUsage: null as MuseUsageStore | null,
   codexAccounts: null as CodexAccountService | null,
   codexRuntimeHome: null as CodexRuntimeHomeService | null,
   codexSessionMigration: null as ReturnType<typeof createCodexSessionMigrationScheduler> | null,

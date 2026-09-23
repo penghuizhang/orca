@@ -23,8 +23,13 @@ import type {
   PiUsageScanState,
   PiUsageSummary
 } from '../../../../shared/pi-usage-types'
+import type {
+  MuseUsageDailyPoint,
+  MuseUsageScanState,
+  MuseUsageSummary
+} from '../../../../shared/muse-usage-types'
 
-export type UsageProviderId = 'claude' | 'codex' | 'opencode' | 'zcode' | 'pi'
+export type UsageProviderId = 'claude' | 'codex' | 'opencode' | 'zcode' | 'pi' | 'muse'
 
 export type UsageProviderOverview = {
   id: UsageProviderId
@@ -58,6 +63,7 @@ export type UsageOverviewDailyPoint = {
   openCodeTokens: number
   zcodeTokens: number
   piTokens: number
+  museTokens: number
   intensity: 0 | 1 | 2 | 3 | 4
 }
 
@@ -108,5 +114,10 @@ export type UsageOverviewInput = {
     scanState: PiUsageScanState | null
     summary: PiUsageSummary | null
     daily: PiUsageDailyPoint[]
+  }
+  muse: {
+    scanState: MuseUsageScanState | null
+    summary: MuseUsageSummary | null
+    daily: MuseUsageDailyPoint[]
   }
 }

@@ -14,6 +14,7 @@ export type UsageProviderId =
   | 'opencode'
   | 'zcode'
   | 'pi'
+  | 'muse'
   | `plugin:${string}`
 
 /** Scan input. Distinct from `UsageWorktreeRef` in usage-worktree-metadata, which lacks `repoId`. */

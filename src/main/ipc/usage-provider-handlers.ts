@@ -4,6 +4,7 @@ import type { CodexUsageStore } from '../codex-usage/store'
 import type { OpenCodeUsageStore } from '../opencode-usage/store'
 import type { PiUsageStore } from '../pi-usage/store'
 import type { ZCodeUsageStore } from '../zcode-usage/store'
+import type { MuseUsageStore } from '../muse-usage/store'
 
 type UsageProviderStores = {
   claudeUsage: ClaudeUsageStore
@@ -11,6 +12,7 @@ type UsageProviderStores = {
   openCodeUsage: OpenCodeUsageStore
   zcodeUsage: ZCodeUsageStore
   piUsage: PiUsageStore
+  museUsage: MuseUsageStore
 }
 
 type UsageProviderChannelPrefix = keyof UsageProviderStores
@@ -71,4 +73,5 @@ export function registerUsageProviderHandlers(stores: UsageProviderStores): void
   registerProviderHandlers('openCodeUsage', stores.openCodeUsage)
   registerProviderHandlers('zcodeUsage', stores.zcodeUsage)
   registerProviderHandlers('piUsage', stores.piUsage)
+  registerProviderHandlers('museUsage', stores.museUsage)
 }

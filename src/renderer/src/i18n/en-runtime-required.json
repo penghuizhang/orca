@@ -34,6 +34,7 @@
         "3ab6ac0fc8": "Preview and edit the selected GitHub issue or pull request.",
         "45af57999b": "Close preview",
         "474c59b4b3": "Close · Esc",
+        "5dddefdf58": "Open in GitHub",
         "68796dafa0": "pr",
         "88fd82474d": "page",
         "924c2fe05e": "destructive",
@@ -50,6 +51,18 @@
         "4186685c78": "reopen",
         "881e522e04": "merge",
         "cae2712a23": "close"
+      },
+      "GiteeItemDialog": {
+        "close": "Close",
+        "commits": "Commits",
+        "createdAt": "Created",
+        "loadError": "Could not load Gitee item details.",
+        "milestone": "Milestone",
+        "noComments": "No comments yet.",
+        "noCommits": "No commits.",
+        "noFiles": "No files changed.",
+        "openOnGitee": "Open on Gitee",
+        "updatedAt": "Updated"
       },
       "JiraIssueWorkspace": {
         "2a829a2f00": "priority",
@@ -122,6 +135,7 @@
         "aae99c6c04": "pr",
         "b0e80f083d": "wants to merge into",
         "b6bda618cf": "compact",
+        "b8c6cbb8c4": "Failed to {{value0}} PR",
         "c9de94b07a": "Show more lines above",
         "checkActionRequiredHint": "This check needs a manual action on GitHub (for example, approving the workflow run) before merging is unblocked.",
         "d65f70786e": "closed",
@@ -208,7 +222,16 @@
         }
       },
       "artifacts": {
+        "ArtifactListPane": {
+          "listLabel": "Shared artifacts",
+          "noMatches": "No matches",
+          "search": "Search artifacts"
+        },
         "ArtifactsPage": {
+          "closeArtifacts": "Close artifacts",
+          "closeTooltip": "Close · Esc",
+          "loadedCount": "{{count}} shared",
+          "loadedCountMore": "{{count}} loaded · more available",
           "openArtifact": "Open artifact",
           "signInCopy": "Sign in to view and manage artifacts shared through your account.",
           "signInHeading": "Sign in to Orca"
@@ -341,6 +364,25 @@
             }
           }
         }
+      },
+      "calendar": {
+        "category": {
+          "feature": "Feature",
+          "meeting": "Meeting",
+          "milestone": "Milestone",
+          "other": "Other"
+        },
+        "copyToClipboard": "Copy to clipboard",
+        "copyWeekList": "Copy week list",
+        "holidayDays_one": "{{count}} day",
+        "holidayDays_other": "{{count}} days",
+        "manageCategories": "Manage",
+        "newCategoryPlaceholder": "e.g. Learning, Ops",
+        "weekListHourUnit": "h",
+        "weekListSubtotal": "Subtotal",
+        "weekListTotal": "Total",
+        "weekListUntimed": "untimed",
+        "weekSummary": "This week"
       },
       "contextual": {
         "tours": {
@@ -843,16 +885,21 @@
             "9bb062a886": "uncommitted",
             "9febd8ab5f": "create_pr",
             "a0cc0e6b4e": "loading",
+            "b715ef615b": "{{value0}} commits ahead of {{value1}}",
             "c105a61960": "merge",
+            "c1a8f3e204": "1 commit behind {{value0}}",
             "conflictsSection": "Conflicts",
             "createPrIntentConfigureAi": "Add a commit message or configure Source Control AI settings.",
+            "createPrIntentEmptyGeneratedBody": "Generated review details did not include a description. Retry Create PR.",
             "createPrIntentGenerateFailed": "Could not generate a commit message. Add one and retry.",
+            "d2b9g4f315": "{{value0}} commits behind {{value1}}",
             "d2e9189866": "all",
             "d4ef4bafc5": "Changes",
             "d62bc0c7d8": "untracked",
             "e59bca888a": "markdown",
             "f3a1b8c204": "upstream",
             "f62ce91ade": "origin",
+            "f9b2441bb6": "1 commit ahead of {{value0}}",
             "tooManyChanges": "Too many changes detected. Only the first {{value0}} changes are shown."
           },
           "SourceControlAgentActionDialogForm": {
@@ -1238,6 +1285,12 @@
         "GrokAccountsSection": {
           "c3d4e5f6a7": "Signed in. Orca only reads that file on disk — run grok login again if usage fails.",
           "d4e5f6a7b8": "Session expired — run grok login in a terminal to refresh."
+        },
+        "HiddenExperimentalGroup": {
+          "1014ddbfaf": "Does nothing today. Reserved as the first slot for hidden experimental options.",
+          "232cf83de8": "Unlisted toggles for internal testing. Nothing here is supported.",
+          "3e9e827ca5": "Hidden experimental",
+          "d0f914a528": "Placeholder toggle"
         },
         "IntegrationsPane": {
           "01f6c7582e": "Learn more",
@@ -1910,9 +1963,6 @@
           "backToAll": "All hosts",
           "scopedTo": "{{value0}} visible"
         },
-        "SidebarNav": {
-          "9c95e1ce91": "Agents"
-        },
         "SidebarSettingsHelpMenu": {
           "d396773ef0": "checking"
         },
@@ -2205,6 +2255,10 @@
           "8095a63426": "n/a",
           "bc0cb89901": "sessions •"
         },
+        "PiUsagePane": {
+          "byProvider": "By provider",
+          "topProvider": "Top provider:"
+        },
         "StatsPane": {
           "908c470587": "codex",
           "eb6a066185": "claude",
@@ -2225,6 +2279,7 @@
         "usage": {
           "overview": {
             "sections": {
+              "3bc4a01b24": "Combined input, output, and cache tokens across enabled providers.",
               "9564a3b21b": "sessions -"
             }
           }
@@ -2232,6 +2287,12 @@
       },
       "status": {
         "bar": {
+          "CaffeinateStatusSegment": {
+            "auto": "Agent",
+            "off": "Off",
+            "on": "On",
+            "title": "Caffeinate"
+          },
           "PortsStatusSegment": {
             "4ae65d871a": "external",
             "9aa11005bf": "workspace ·",
@@ -2459,6 +2520,9 @@
             }
           }
         }
+      },
+      "taskPageEmptyState": {
+        "addWorkspace": "Add workspace"
       },
       "terminal": {
         "pane": {

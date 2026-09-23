@@ -15,8 +15,7 @@ import type {
   ZCodeUsageSnapshot,
   ZCodeUsageSummary
 } from './types'
-import type { ZCodeUsageBreakdownKind } from '../../shared/zcode-usage-types'
-import type { ZCodeUsageRange } from '../../shared/zcode-usage-types'
+import type { ZCodeUsageBreakdownKind, ZCodeUsageRange } from '../../shared/zcode-usage-types'
 
 let _zcodeUsageFile: string | null = null
 

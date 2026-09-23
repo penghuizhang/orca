@@ -2,6 +2,7 @@ import * as monaco from 'monaco-editor'
 import type { editor } from 'monaco-editor'
 import type React from 'react'
 import { toast } from 'sonner'
+import { translate } from '@/i18n/i18n'
 import { resolveDefinitionTarget } from './code-navigation-trigger'
 import { useAppStore } from '@/store'
 import { getRightSidebarWorktreeRuntimeSettings } from '@/components/right-sidebar/file-explorer-runtime-owner'
@@ -51,7 +52,15 @@ export function installCodeNavigationBindings(params: {
     const filePath = getFilePath()
     const target = await resolveDefinitionTarget({ word, language, content, filePath, worktreeId })
     if (!target) {
-      toast.info(`No definition found for "${word}"`)
+      toast.info(
+        translate(
+          'auto.lib.code-navigation.noDefinitionFound',
+          'No definition found for "{{value0}}"',
+          {
+            value0: word
+          }
+        )
+      )
       return
     }
     if (target.filePath === filePath) {
@@ -66,7 +75,15 @@ export function installCodeNavigationBindings(params: {
       return
     }
     if (!worktreeId) {
-      toast.info(`No definition found for "${word}"`)
+      toast.info(
+        translate(
+          'auto.lib.code-navigation.noDefinitionFound',
+          'No definition found for "{{value0}}"',
+          {
+            value0: word
+          }
+        )
+      )
       return
     }
     const state = useAppStore.getState()
@@ -120,7 +137,7 @@ export function installCodeNavigationBindings(params: {
 
   const action = editorInstance.addAction({
     id: 'orca.goToDefinition',
-    label: 'Go to Definition',
+    label: translate('auto.lib.code-navigation.goToDefinition', 'Go to Definition'),
     keybindings: [monaco.KeyCode.F12],
     contextMenuGroupId: 'navigation',
     contextMenuOrder: 1,

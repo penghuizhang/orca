@@ -16,7 +16,7 @@ import {
 } from './left-sidebar-appearance'
 import { DEFAULT_SOURCE_CONTROL_GROUP_ORDER } from './source-control-group-order'
 import { DESKTOP_TERMINAL_SCROLLBACK_ROWS_DEFAULT } from './terminal-scrollback-policy'
-import { DEFAULT_NOTES_ROOT_DIRECTORY } from './constants'
+import { DEFAULT_NOTES_ROOT_DIRECTORY } from './notes-root-directory'
 
 export function buildDefaultSettings(args: {
   workspaceDir: string
@@ -222,6 +222,7 @@ export function buildDefaultSettings(args: {
     agentStatusHooksEnabled: true,
     tabAutoGenerateTitle: false,
     confirmClosePinnedTab: true,
+    editorPreviewTabsEnabled: true,
     keepComputerAwakeWhileAgentsRun: false,
     // Why: 'auto' probes keyboard layout so non-US users can type Option chars like @/€/[ out of the box (issue #903). See src/renderer/src/lib/keyboard-layout/*.
     terminalMacOptionAsAlt: 'auto',

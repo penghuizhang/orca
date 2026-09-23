@@ -18,6 +18,7 @@ import type { WorkspaceSpaceSlice } from './slices/workspace-space'
 import type {
   ClaudeUsageSlice,
   CodexUsageSlice,
+  MuseUsageSlice,
   OpenCodeUsageSlice,
   PiUsageSlice,
   ZCodeUsageSlice
@@ -68,6 +69,7 @@ export type AppState = RepoSlice &
   OpenCodeUsageSlice &
   ZCodeUsageSlice &
   PiUsageSlice &
+  MuseUsageSlice &
   BrowserSlice &
   RateLimitSlice &
   SshSlice &

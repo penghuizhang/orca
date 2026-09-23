@@ -114,7 +114,6 @@ export function isLocalOnlyVirtualWorktree(worktreeId: string | undefined | null
 }
 
 /** Default Notes page root; '~' expands against the home dir on first open. Single source shared by defaults and the main-side resolver. */
-export const DEFAULT_NOTES_ROOT_DIRECTORY = '~/OrcaNotes'
 
 export const REPO_COLORS = [
   '#737373', // neutral

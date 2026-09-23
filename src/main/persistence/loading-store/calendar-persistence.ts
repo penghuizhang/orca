@@ -160,7 +160,7 @@ export class CalendarPersistence {
 }
 
 export function installCalendarPersistenceContext(
-  target: object,
+  target: CalendarPersistence,
   source: CalendarPersistence
 ): void {
   Object.defineProperty(target, calendarPersistenceContext, {

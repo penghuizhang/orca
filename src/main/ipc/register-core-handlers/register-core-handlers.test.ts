@@ -477,6 +477,7 @@ describe('registerCoreHandlers', () => {
     const openCodeUsage = { marker: 'openCodeUsage' }
     const zcodeUsage = { marker: 'zcodeUsage' }
     const piUsage = { marker: 'piUsage' }
+    const museUsage = { marker: 'museUsage' }
     const codexAccounts = { marker: 'codexAccounts', runtimeHomeService: { marker: 'runtimeHome' } }
     const claudeAccounts = { marker: 'claudeAccounts' }
     const rateLimits = { marker: 'rateLimits' }
@@ -493,6 +494,8 @@ describe('registerCoreHandlers', () => {
       openCodeUsage as never,
       zcodeUsage as never,
       piUsage as never,
+      // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: registration only forwards this marker to the mocked usage registrar.
+      museUsage as never,
       codexAccounts as never,
       claudeAccounts as never,
       rateLimits as never,
@@ -518,7 +521,8 @@ describe('registerCoreHandlers', () => {
       codexUsage,
       openCodeUsage,
       zcodeUsage,
-      piUsage
+      piUsage,
+      museUsage
     })
     expect(registerAppHandlersMock).toHaveBeenCalledWith(store, { onBeforeRelaunch })
     expect(registerCodexAccountHandlersMock).toHaveBeenCalledWith(
@@ -657,6 +661,7 @@ describe('registerCoreHandlers', () => {
     const openCodeUsage2 = { marker: 'openCodeUsage2' }
     const zcodeUsage2 = { marker: 'zcodeUsage2' }
     const piUsage2 = { marker: 'piUsage2' }
+    const museUsage2 = { marker: 'museUsage2' }
     const codexAccounts2 = { marker: 'codexAccounts2' }
     const claudeAccounts2 = { marker: 'claudeAccounts2' }
     const rateLimits2 = { marker: 'rateLimits2' }
@@ -670,6 +675,8 @@ describe('registerCoreHandlers', () => {
       openCodeUsage2 as never,
       zcodeUsage2 as never,
       piUsage2 as never,
+      // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: registration only forwards this marker to the mocked usage registrar.
+      museUsage2 as never,
       codexAccounts2 as never,
       claudeAccounts2 as never,
       rateLimits2 as never,

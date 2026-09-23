@@ -17,6 +17,7 @@ import { AgentSessionTransitionRecorder } from '../stats/agent-session-transitio
 import { ClaudeUsageStore } from '../claude-usage/store'
 import { CodexUsageStore } from '../codex-usage/store'
 import { OpenCodeUsageStore } from '../opencode-usage/store'
+import { MuseUsageStore } from '../muse-usage/store'
 import { PiUsageStore } from '../pi-usage/store'
 import { ZCodeUsageStore } from '../zcode-usage/store'
 import { installRepoMaintenanceIdleGate } from '../repo-maintenance-idle-gate'
@@ -128,4 +129,5 @@ export function initializeMainProcessObservers(): void {
   state.openCodeUsage = new OpenCodeUsageStore(store)
   state.zcodeUsage = new ZCodeUsageStore(store)
   state.piUsage = new PiUsageStore(store)
+  state.museUsage = new MuseUsageStore(store)
 }
