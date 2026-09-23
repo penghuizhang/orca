@@ -19,3 +19,4 @@ metadata:
   - 本机 `git config credential.helper=osxkeychain`，当前 keychain **无** github.com 条目（push 会 `unable to get password from user`）；需 PAT 或 `gh auth setup-git`。
   - `gh` token 缺 `user` scope → `gh api user/emails` 返回 404；要查已验证邮箱需先 `gh auth refresh -s user`。
   - 推 GitHub 仍须走代理：`git -c http.proxy=http://127.0.0.1:54687 push`。
+  - **2026-09-21 实测**：即使设置了 `http.proxy`，git push 仍可能完全挂起（无输出、无超时）。SSH 也不通（DNS 解析失败）。**变通方案**：用 GitHub Git Data API 逐 blob 上传 → 创建 tree/commit/ref → `pulls` API 建 PR。`gh` CLI 的 OAuth token 可通过 API 完成等效操作（`curl -H "Authorization: token $GH_TOKEN"`）。36 个文件的完整流程约 2 分钟。

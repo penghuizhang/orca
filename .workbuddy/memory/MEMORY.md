@@ -4,6 +4,14 @@ description: > 日记忆已分离到 daily/ 子目录；功能记忆按类型分
 metadata:
   type: memory
   source: zcode-auto
+AIGC:
+  ContentProducer: '001191110102MAD55U9H0F10002'
+  ContentPropagator: '001191110102MAD55U9H0F10002'
+  Label: '1'
+  ProduceID: '854a78a9-b2f1-44ee-ac04-752659fc80ef'
+  PropagateID: '854a78a9-b2f1-44ee-ac04-752659fc80ef'
+  ReservedCode1: 'f162e97e-4f90-4e11-b270-0d49f3dfaf94'
+  ReservedCode2: 'f162e97e-4f90-4e11-b270-0d49f3dfaf94'
 ---
 
 # MEMORY.md — orca 二开工程精华索引
@@ -12,6 +20,7 @@ metadata:
 
 ## 活跃功能（active/）
 
+- [orca 笔记功能](active/orca-notes-feature.md) — 2026-09-21 实施完成+编辑器修复+打包验证；PR #23 待合并；语雀式目录树+编辑器（真实文件夹落盘 ~/OrcaNotes）；新增 TopLevelView 12 处注册 checklist 在 daily/2026-09-21
 - [orca 日历功能](active/orca-calendar-feature.md) — PR #4 已合并；二期=阴历四层+周末底纹+法定休/班调休表+跨月弱化+验收微调；数据存储 orca-custom.db；**待用户拍板：2027+ 节假日数据更新机制**
 - [orca 日历清单历史周月查看优化](active/orca-calendar-worklist-history.md) — PR #15 已合并；纯 renderer 展示层改造，零 schema/IPC/main 改动
 - [orca-custom.db 业务库](active/orca-custom-db.md) — PR #6 已合入 custom；通用业务库 orca-custom.db（node:sqlite 接口）
@@ -31,6 +40,8 @@ metadata:
 - [元数据复杂度风险](pitfalls/metadata-complexity-risk.md) — 过度设计元数据会导致数据查不到或丢失；简化元数据，通过 MEMORY.md 索引实现关联
 - [electron-builder 国内镜像](pitfalls/orca-electron-builder-mirror.md) — .npmrc electron_mirror 对 electron-builder 无效，必须用 `ELECTRON_MIRROR` 环境变量
 - [zustand v5 selector 不稳定 ⇒ React #185](pitfalls/zustand-v5-unstable-selector-react-185.md) — **已修复**：1.4.197 打包版状态栏被错误边界兜底；selector 内构造对象必炸，dev 只告警须打包验收；已取上游 `5412276776fb`（=custom `2c4e15b625e8`）
+- [虚拟 worktree EditorPanel 加载失败](pitfalls/orca-virtual-worktree-editor-loading.md) — **已修复**：新 TopLevelView 的虚拟 worktree ID 必须在 3 处（connection-owner-resolution + editor-file-operation-owner×2）标记为 local-only，否则 EditorPanel 走远程 host 连接；用 `isLocalOnlyVirtualWorktree()` 统一处理
+- [node:sqlite 打包验证失败](pitfalls/orca-node-sqlite-packaging.md) — **已修复**：Node 22 的 `node:sqlite` 不在 `builtinModules` 中，打包验证脚本误判为外部依赖；需在 `config/packaged-runtime-node-modules.cjs` 的 `NODE_BUILTINS` 手动添加
 
 
 ## 参考资料（reference/）
@@ -68,3 +79,5 @@ metadata:
 - `docs/2026-09-04-Pi智能体下拉入口与用量统计设计.md` — Pi 智能体功能设计
 - `docs/2026-09-04-记忆目录优化方案.md` — 记忆目录优化方案
 - `docs/2026-09-04-记忆目录子分类方案.md` — 记忆目录子分类方案
+
+> AI生成
