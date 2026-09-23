@@ -31,6 +31,9 @@ AIGC:
 
 ## 坑与经验（pitfalls/）
 
+- [合并集成缺口靠 tc 兜](pitfalls/orca-merge-integration-gap-typecheck.md) — **2026-09-23**：零/少冲突≠集成完成；上游给共享类型加必填字段（`hasPartialCost`）时二开 zcode/pi 扩展点 TS2741/2739 编译失败，报错文件不在冲突列表；修法按上游同类型成员先例补；`pnpm tc` 是合并后硬门禁
+- [打包返工两坑+管道假成功](pitfalls/orca-packaging-rework-20260923.md) — **2026-09-23**：`mobile/` 独立 workspace 须 `cd mobile && pnpm install`（否则 419 expo resolve 错）；gitignored `.DS_Store` 绕过干净检查撞死 buildId CRLF 校验；`cmd | tail` 会把失败显示成 exit 0
+- [changed 门禁大合并后失真](pitfalls/orca-changed-gate-baseline-degenerate.md) — **2026-09-23**：`check:code-quality:changed` 基线 origin/main，合上游后变更集=10173 文件报 3184 存量噪音；改对自己改的文件跑 5 套 oxlint 配置矩阵；zsh `for f in $var` 不分词要用 `${=var}`
 - [构建号卡在旧版本](pitfalls/orca-build-version-base.md) — **2026-09-19 实测**：构建号基数 = `max(package.json 版本, 本地最高纯 vX.Y.Z tag)`；上游 main 的 package.json 长期停留旧号（main=1.4.197 而发布 tag 已 v1.4.206，`release:` 提交不在 main 历史）⇒ 本地 tag 过期就会「代码最新但版本号看着旧」；打包前用 `resolveVersionBase` 核对
 - [合并上游冲突解法手册](pitfalls/orca-merge-upstream-conflict-playbook.md) — 先判「谁改了这个文件」再取舍（禁 `--ours/--theirs` 一把梭）；8 个冲突的具体解法；en.json 邻接冲突（对象闭合括号在共享后缀）；键丢失核对脚本（注意 `:2:` stage 提交后失效）
 - [orca 浅克隆下的上游同步](pitfalls/orca-shallow-clone-sync.md) — **2026-09-19 实测**：`git fetch upstream` 会静默不更新引用（退出码 0 零输出，实测漏 15 天/1186 提交）；`main` 与上游无共同祖先 ⇒ 三步流程失效，改为直接 `custom merge upstream/main`；恢复需 `--unshallow`
@@ -72,6 +75,7 @@ AIGC:
 
 ## 设计文档
 
+- `.workbuddy/docs/workflow/2026-09-23-切分支删合并分支与上游同步打包说明.md` — **2026-09-23 已实施**：切 custom + 删已合并分支（feat/notes-editor-fix 本地+远端）+ 强拉上游 304 提交合并（2 冲突叠加 + hasPartialCost 集成修复，三向键位零丢失）+ 打包安装 **`1.4.208-local.1790130615259.c8f75151e828`**（返工 2 次：mobile 独立 workspace 未装依赖、.DS_Store 撞 buildId 校验）；回退锚点 `backup/pre-sync-2026023`；遗留=用户手动重启 orca-s
 - `.workbuddy/docs/workflow/2026-09-19-上游同步与orca-s打包升级影响说明.md` — **2026-09-19 已实施**：合并上游 1186 提交（8 冲突全解）+ 追平最新 6 提交（`e2afb5eef9`）、electron 43.7.0、修掉「构建号卡 197」后装出版本 **`1.4.206-local.1789785189109.117aa480069c`**；含冲突明细、版本号机制、验证结果、遗留项（main 未同步 / 应用待手动重启）
 - `.workbuddy/docs/zcode/2026-09-13-uni-agent集成方案与可行性分析.md` — uni-agent 集成 Orca：**待评审**；结论=上游为一次性 CLI + HBuilderX 本地 socket 客户端（非独立 runtime），需自研 PTY 壳才能当 TuiAgent；含 Phase1 验证清单
 - `.workbuddy/docs/reference/2026-09-12-状态栏报错根因分析与修复建议.md` — 状态栏 #185 根因 + 修复与验收记录（已实施）
