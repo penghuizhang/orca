@@ -198,6 +198,12 @@
       "rules": {
         "max-lines": ["error", { "max": 550, "skipBlankLines": true, "skipComments": true }]
       }
+    },
+    {
+      "files": ["src/shared/global-settings-types.ts"],
+      "rules": {
+        "max-lines": ["error", { "max": 320, "skipBlankLines": true, "skipComments": true }]
+      }
     }
   ],
   "ignorePatterns": [
