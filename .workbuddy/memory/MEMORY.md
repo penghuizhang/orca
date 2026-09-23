@@ -42,6 +42,7 @@ AIGC:
 - [zustand v5 selector 不稳定 ⇒ React #185](pitfalls/zustand-v5-unstable-selector-react-185.md) — **已修复**：1.4.197 打包版状态栏被错误边界兜底；selector 内构造对象必炸，dev 只告警须打包验收；已取上游 `5412276776fb`（=custom `2c4e15b625e8`）
 - [虚拟 worktree EditorPanel 加载失败](pitfalls/orca-virtual-worktree-editor-loading.md) — **已修复**：新 TopLevelView 的虚拟 worktree ID 必须在 3 处（connection-owner-resolution + editor-file-operation-owner×2）标记为 local-only，否则 EditorPanel 走远程 host 连接；用 `isLocalOnlyVirtualWorktree()` 统一处理
 - [node:sqlite 打包验证失败](pitfalls/orca-node-sqlite-packaging.md) — **已修复**：Node 22 的 `node:sqlite` 不在 `builtinModules` 中，打包验证脚本误判为外部依赖；需在 `config/packaged-runtime-node-modules.cjs` 的 `NODE_BUILTINS` 手动添加
+- [mobile 独立 workspace 打包坑](reference/orca-dev-workflow.md#-mobile-是独立-workspace根-install-不覆盖2026-09-23-踩坑) — **2026-09-23 实测**：上游把 `build:mobile-web` 改走 app-bundle 新脚本后，打包前必须 `cd mobile && pnpm install`，否则 419 个 expo/react-native-web resolve 错挂掉打包；另 changed 门禁基线是 origin/main、合并上游后失真勿用；勿用 `cmd | tail` 的退出码判打包成败
 
 
 ## 参考资料（reference/）

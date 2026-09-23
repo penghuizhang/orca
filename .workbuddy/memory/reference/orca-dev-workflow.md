@@ -76,6 +76,9 @@ git checkout custom && git merge main --no-edit && git push origin custom
 6. **工作区必须干净（含未跟踪文件）**（2026-09-19 补）：`verify-features.mjs` 第 6 项只豁免 `?? .codegraph/`，仓库根残留任何未跟踪文件（如 `.zcode/plans/plan-*.md`）都会 exit 1 直接阻塞打包。
 7. **核对构建号基数 ≥ 远端最新发布 tag**（2026-09-19 补）：本地 tag 过期会导致「代码最新但版本号看着旧」（本次先出 1.4.197 后修成 1.4.206）——打包前跑 `resolveVersionBase`，见 [[orca-build-version-base]]。
 8. **增量同步时先查新提交是否动了依赖**：`git diff --stat <旧tip> <新tip> -- pnpm-lock.yaml package.json pnpm-workspace.yaml`，动了就重跑 `pnpm install`。
+9. **mobile/ 是独立 workspace，根 install 不覆盖（2026-09-23 踩坑）**：根 `pnpm-workspace.yaml` 显式排除 `mobile/`；上游 2026-09-23 起 `build:mobile-web` 改走 `build-mobile-web-app-bundle.mjs`（挂在 build:desktop 链上）并从 `mobile/` 解析依赖 ⇒ 打包前必须 `cd mobile && pnpm install`，否则 419 个 `Could not resolve "expo-router"/"react-native-web"` 直接把打包打挂。
+10. **`check:code-quality:changed` 基线是 origin/main，合并上游后失真**：custom 合完上游它会把全库（实测 10173 文件）当"变更集"报 3000+ 存量噪音；大合并后不要用它当门禁，改为对**本次自改文件**跑 5 套 oxlint 配置矩阵（root/design-system/casting/react-doctor/type-aware，注意 zsh `for f in $var` 不分词要用 `${=var}`）。
+11. **别用 `cmd | tail` 判打包成败**：管道让 `$?` 变成 tail 的退出码，2026-09-23 打包实际失败却显示 `build_exit=0`——成败只看后台任务通知的真实退出码或日志末尾的 `[orca-s] pnpm failed`。
 
 **验收必须用打包安装版**：部分缺陷（如 React #185 无限重渲染）dev 下只打警告不报错，`pnpm dev` 看着正常不代表装出来的包正常。
 
