@@ -31,6 +31,7 @@ AIGC:
 
 ## 坑与经验（pitfalls/）
 
+- [PR 门禁地图：直 merge 不触发、首走 PR 全暴露](pitfalls/orca-pr-first-run-gate-map.md) — **2026-09-23 PR #24 实测**：pr.yml 真门禁 = changed（本地等价 `-- $(git rev-parse HEAD^1)` 正确基线）+ typecheck + localization×4，**不跑** native；历次直 merge 从没跑过 ⇒ 首个 PR 一次炸出全部二开存量（anti-slop shape×36、缺键、coverage 文案、断言行逐行推进）；修法速查见坑文件；native 剩 9 个上游 mobile 警告=两侧同态非门禁
 - [合并集成缺口靠 tc 兜](pitfalls/orca-merge-integration-gap-typecheck.md) — **2026-09-23**：零/少冲突≠集成完成；上游给共享类型加必填字段（`hasPartialCost`）时二开 zcode/pi 扩展点 TS2741/2739 编译失败，报错文件不在冲突列表；修法按上游同类型成员先例补；`pnpm tc` 是合并后硬门禁
 - [打包返工两坑+管道假成功](pitfalls/orca-packaging-rework-20260923.md) — **2026-09-23**：`mobile/` 独立 workspace 须 `cd mobile && pnpm install`（否则 419 expo resolve 错）；gitignored `.DS_Store` 绕过干净检查撞死 buildId CRLF 校验；`cmd | tail` 会把失败显示成 exit 0
 - [changed 门禁大合并后失真](pitfalls/orca-changed-gate-baseline-degenerate.md) — **2026-09-23**：`check:code-quality:changed` 基线 origin/main，合上游后变更集=10173 文件报 3184 存量噪音；改对自己改的文件跑 5 套 oxlint 配置矩阵；zsh `for f in $var` 不分词要用 `${=var}`
