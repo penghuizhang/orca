@@ -42,21 +42,27 @@ export function UsageOverviewPane(): React.JSX.Element {
   const piScanState = useAppStore((state) => state.piUsageScanState)
   const piSummary = useAppStore((state) => state.piUsageSummary)
   const piDaily = useAppStore((state) => state.piUsageDaily)
+  const museScanState = useAppStore((state) => state.museUsageScanState)
+  const museSummary = useAppStore((state) => state.museUsageSummary)
+  const museDaily = useAppStore((state) => state.museUsageDaily)
   const fetchClaudeUsage = useAppStore((state) => state.fetchClaudeUsage)
   const fetchCodexUsage = useAppStore((state) => state.fetchCodexUsage)
   const fetchOpenCodeUsage = useAppStore((state) => state.fetchOpenCodeUsage)
   const fetchZCodeUsage = useAppStore((state) => state.fetchZCodeUsage)
   const fetchPiUsage = useAppStore((state) => state.fetchPiUsage)
+  const fetchMuseUsage = useAppStore((state) => state.fetchMuseUsage)
   const refreshClaudeUsage = useAppStore((state) => state.refreshClaudeUsage)
   const refreshCodexUsage = useAppStore((state) => state.refreshCodexUsage)
   const refreshOpenCodeUsage = useAppStore((state) => state.refreshOpenCodeUsage)
   const refreshZCodeUsage = useAppStore((state) => state.refreshZCodeUsage)
   const refreshPiUsage = useAppStore((state) => state.refreshPiUsage)
+  const refreshMuseUsage = useAppStore((state) => state.refreshMuseUsage)
   const enableClaudeUsage = useAppStore((state) => state.enableClaudeUsage)
   const enableCodexUsage = useAppStore((state) => state.enableCodexUsage)
   const enableOpenCodeUsage = useAppStore((state) => state.enableOpenCodeUsage)
   const enableZCodeUsage = useAppStore((state) => state.enableZCodeUsage)
   const enablePiUsage = useAppStore((state) => state.enablePiUsage)
+  const enableMuseUsage = useAppStore((state) => state.enableMuseUsage)
   const recordFeatureInteraction = useAppStore((state) => state.recordFeatureInteraction)
 
   useEffect(() => {
@@ -65,7 +71,15 @@ export function UsageOverviewPane(): React.JSX.Element {
     void fetchOpenCodeUsage()
     void fetchZCodeUsage()
     void fetchPiUsage()
-  }, [fetchClaudeUsage, fetchCodexUsage, fetchOpenCodeUsage, fetchZCodeUsage, fetchPiUsage])
+    void fetchMuseUsage()
+  }, [
+    fetchClaudeUsage,
+    fetchCodexUsage,
+    fetchOpenCodeUsage,
+    fetchZCodeUsage,
+    fetchPiUsage,
+    fetchMuseUsage
+  ])
 
   const overview = useMemo(
     () =>
@@ -94,6 +108,11 @@ export function UsageOverviewPane(): React.JSX.Element {
           scanState: piScanState,
           summary: piSummary,
           daily: piDaily
+        },
+        muse: {
+          scanState: museScanState,
+          summary: museSummary,
+          daily: museDaily
         }
       }),
     [
@@ -103,6 +122,9 @@ export function UsageOverviewPane(): React.JSX.Element {
       codexDaily,
       codexScanState,
       codexSummary,
+      museDaily,
+      museScanState,
+      museSummary,
       openCodeDaily,
       openCodeScanState,
       openCodeSummary,
@@ -126,7 +148,8 @@ export function UsageOverviewPane(): React.JSX.Element {
       codexScanState?.enabled ? refreshCodexUsage() : Promise.resolve(),
       openCodeScanState?.enabled ? refreshOpenCodeUsage() : Promise.resolve(),
       zcodeScanState?.enabled ? refreshZCodeUsage() : Promise.resolve(),
-      piScanState?.enabled ? refreshPiUsage() : Promise.resolve()
+      piScanState?.enabled ? refreshPiUsage() : Promise.resolve(),
+      museScanState?.enabled ? refreshMuseUsage() : Promise.resolve()
     ])
   }
 
@@ -229,6 +252,16 @@ export function UsageOverviewPane(): React.JSX.Element {
                 >
                   {translate('auto.components.stats.UsageOverviewPane.enablePi', 'Enable Pi')}
                 </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    recordFeatureInteraction('usage-tracking')
+                    void enableMuseUsage()
+                  }}
+                >
+                  {translate('auto.components.stats.UsageOverviewPane.enableMuse', 'Enable Muse')}
+                </Button>
               </div>
             </div>
           </div>
@@ -269,8 +302,8 @@ export function UsageOverviewPane(): React.JSX.Element {
             {!overview.hasAnyData ? (
               <div className="mt-4 rounded-lg border border-dashed border-border/60 bg-card/30 px-4 py-5 text-sm text-muted-foreground">
                 {translate(
-                  'auto.components.stats.UsageOverviewPane.60002bb22f',
-                  'No local Claude, Codex, or OpenCode usage found yet. The overview will populate after the next agent session writes token logs.'
+                  'auto.components.stats.UsageOverviewPane.noLocalUsageYet',
+                  'No local Claude, Codex, OpenCode, or Muse usage found yet. The overview will populate after the next agent session writes token logs.'
                 )}
               </div>
             ) : (
@@ -318,8 +351,10 @@ export function UsageOverviewPane(): React.JSX.Element {
                   void enableOpenCodeUsage()
                 } else if (provider.id === 'zcode') {
                   void enableZCodeUsage()
-                } else {
+                } else if (provider.id === 'pi') {
                   void enablePiUsage()
+                } else if (provider.id === 'muse') {
+                  void enableMuseUsage()
                 }
               }}
             />

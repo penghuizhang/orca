@@ -81,6 +81,7 @@ import { codexUsageApi } from './api/codex-usage-bridge'
 import { openCodeUsageApi } from './api/open-code-usage-bridge'
 import { zcodeUsageApi } from './api/zcode-usage-bridge'
 import { piUsageApi } from './api/pi-usage-bridge'
+import { museUsageApi } from './api/muse-usage-bridge'
 import { aiVaultApi } from './api/ai-vault-bridge'
 import { nativeChatApi } from './api/native-chat-bridge'
 import { runtimeApi } from './api/runtime-bridge'
@@ -181,6 +182,7 @@ const api = {
   openCodeUsage: openCodeUsageApi,
   zcodeUsage: zcodeUsageApi,
   piUsage: piUsageApi,
+  museUsage: museUsageApi,
   aiVault: aiVaultApi,
   nativeChat: nativeChatApi,
   runtime: runtimeApi,

@@ -7,6 +7,7 @@ import type {
 import {
   createClaudeProvider,
   createCodexProvider,
+  createMuseProvider,
   createOpenCodeProvider,
   createPiProvider,
   createZCodeProvider
@@ -18,7 +19,8 @@ export function buildUsageOverview(input: UsageOverviewInput): UsageOverviewMode
     createCodexProvider(input.codex),
     createOpenCodeProvider(input.opencode),
     createZCodeProvider(input.zcode),
-    createPiProvider(input.pi)
+    createPiProvider(input.pi),
+    createMuseProvider(input.muse)
   ]
   const daily = buildDailyOverview(input)
   const bestDay =
@@ -37,10 +39,13 @@ export function buildUsageOverview(input: UsageOverviewInput): UsageOverviewMode
   const activityCount = providers.reduce((sum, provider) => sum + provider.activityCount, 0)
   const knownCost = providers.reduce((sum, provider) => sum + (provider.estimatedCostUsd ?? 0), 0)
   const hasKnownCost = providers.some((provider) => provider.estimatedCostUsd !== null)
-  const hasPartialCost = providers.some(
-    (provider) =>
-      provider.hasPartialCost || (provider.hasData && provider.estimatedCostUsd === null)
-  )
+  // Why: with no priced provider the total already reads n/a; "some prices unavailable" would mislead.
+  const hasPartialCost =
+    hasKnownCost &&
+    providers.some(
+      (provider) =>
+        provider.hasPartialCost || (provider.hasData && provider.estimatedCostUsd === null)
+    )
   const lastUpdatedAt =
     providers.reduce<number | null>(
       (latest, provider) =>

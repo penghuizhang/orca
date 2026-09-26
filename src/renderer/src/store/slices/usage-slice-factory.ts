@@ -15,7 +15,7 @@ export type UsageSnapshot = {
   recentSessions: object[]
 }
 
-export type UsageShape<
+export type UsageContract<
   Scope extends string,
   Range extends string,
   Snapshot extends UsageSnapshot
@@ -25,7 +25,7 @@ export type UsageShape<
   snapshot: Snapshot
 }
 
-export type UsageData<T extends UsageShape<string, string, UsageSnapshot>> = {
+export type UsageData<T extends UsageContract<string, string, UsageSnapshot>> = {
   scope: T['scope']
   range: T['range']
   scanState: T['snapshot']['scanState'] | null
@@ -36,7 +36,7 @@ export type UsageData<T extends UsageShape<string, string, UsageSnapshot>> = {
   recentSessions: T['snapshot']['recentSessions']
 }
 
-type UsageApi<T extends UsageShape<string, string, UsageSnapshot>> = {
+type UsageApi<T extends UsageContract<string, string, UsageSnapshot>> = {
   getScanState: () => Promise<T['snapshot']['scanState']>
   setEnabled: (args: { enabled: boolean }) => Promise<T['snapshot']['scanState']>
   refresh: (args?: { force?: boolean }) => Promise<T['snapshot']['scanState']>
@@ -50,7 +50,7 @@ type UsageApi<T extends UsageShape<string, string, UsageSnapshot>> = {
 export type ProviderUsageSlice<
   Prefix extends string,
   Name extends string,
-  T extends UsageShape<string, string, UsageSnapshot>
+  T extends UsageContract<string, string, UsageSnapshot>
 > = {
   [K in keyof UsageData<T> as `${Prefix}Usage${Capitalize<K & string>}`]: UsageData<T>[K]
 } & Record<`set${Name}UsageEnabled`, (enabled: boolean) => Promise<void>> &
@@ -63,7 +63,7 @@ export type ProviderUsageSlice<
 type UsageProviderConfig<
   Prefix extends string,
   Name extends string,
-  T extends UsageShape<string, string, UsageSnapshot>
+  T extends UsageContract<string, string, UsageSnapshot>
 > = {
   prefix: Prefix
   name: Name
@@ -82,13 +82,13 @@ const usageDataFields = [
   'modelBreakdown',
   'projectBreakdown',
   'recentSessions'
-] as const satisfies readonly (keyof UsageData<UsageShape<string, string, UsageSnapshot>>)[]
+] as const satisfies readonly (keyof UsageData<UsageContract<string, string, UsageSnapshot>>)[]
 
 function usageDataKey(prefix: string, field: string): string {
   return `${prefix}Usage${field[0].toUpperCase()}${field.slice(1)}`
 }
 
-function readUsageData<T extends UsageShape<string, string, UsageSnapshot>>(
+function readUsageData<T extends UsageContract<string, string, UsageSnapshot>>(
   state: AppState,
   prefix: string
 ): UsageData<T> {
@@ -100,7 +100,7 @@ function readUsageData<T extends UsageShape<string, string, UsageSnapshot>>(
   ) as UsageData<T>
 }
 
-function createUsagePatch<T extends UsageShape<string, string, UsageSnapshot>>(
+function createUsagePatch<T extends UsageContract<string, string, UsageSnapshot>>(
   prefix: string,
   patch: Partial<UsageData<T>>
 ): Partial<AppState> {
@@ -114,7 +114,7 @@ function createUsagePatch<T extends UsageShape<string, string, UsageSnapshot>>(
 export function createUsageProviderSlice<
   Prefix extends string,
   Name extends string,
-  T extends UsageShape<string, string, UsageSnapshot>
+  T extends UsageContract<string, string, UsageSnapshot>
 >(
   config: UsageProviderConfig<Prefix, Name, T>
 ): StateCreator<AppState, [], [], ProviderUsageSlice<Prefix, Name, T>> {

@@ -77,6 +77,7 @@ import type { CodexUsageStore } from '../../codex-usage/store'
 import type { OpenCodeUsageStore } from '../../opencode-usage/store'
 import type { PiUsageStore } from '../../pi-usage/store'
 import type { ZCodeUsageStore } from '../../zcode-usage/store'
+import type { MuseUsageStore } from '../../muse-usage/store'
 import type { RateLimitService } from '../../rate-limits/service'
 import type { CodexAccountService } from '../../codex-accounts/service'
 import type { ClaudeAccountService } from '../../claude-accounts/service'
@@ -119,6 +120,7 @@ export function registerCoreHandlers(
   openCodeUsage: OpenCodeUsageStore,
   zcodeUsage: ZCodeUsageStore,
   piUsage: PiUsageStore,
+  museUsage: MuseUsageStore,
   codexAccounts: CodexAccountService,
   claudeAccounts: ClaudeAccountService,
   rateLimits: RateLimitService,
@@ -148,7 +150,14 @@ export function registerCoreHandlers(
   registerAppHandlers(store, { onBeforeRelaunch: lifecycleOptions.onBeforeRelaunch })
   registerCliHandlers()
   registerPreflightHandlers()
-  registerUsageProviderHandlers({ claudeUsage, codexUsage, openCodeUsage, zcodeUsage, piUsage })
+  registerUsageProviderHandlers({
+    claudeUsage,
+    codexUsage,
+    openCodeUsage,
+    zcodeUsage,
+    piUsage,
+    museUsage
+  })
   registerCodexAccountHandlers(codexAccounts, () => store.getSettings())
   registerAgentHookHandlers(runtime, { getPtyIdForPaneKey })
   registerCodexConfigSyncHandlers(codexAccounts.runtimeHomeService)

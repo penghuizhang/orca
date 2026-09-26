@@ -6,13 +6,15 @@ import { getDefaultState, normalizePersistedState } from './persisted-state-norm
 import { UsageProviderStoreLifecycle } from '../usage/usage-provider-store-lifecycle'
 import type { PiUsageProcessedFile, PiUsageSession, PiUsageDailyAggregate } from './types'
 import type {
+  PiUsageBreakdownKind,
   PiUsageBreakdownRow,
   PiUsageDailyPoint,
+  PiUsageRange,
+  PiUsageScope,
   PiUsageSessionRow,
   PiUsageSnapshot,
   PiUsageSummary
 } from '../../shared/pi-usage-types'
-import type { PiUsageBreakdownKind, PiUsageRange, PiUsageScope } from '../../shared/pi-usage-types'
 
 let _piUsageFile: string | null = null
 

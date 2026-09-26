@@ -13,6 +13,11 @@ import type {
   OpenCodeUsageScope,
   OpenCodeUsageSnapshot
 } from '../../../../shared/opencode-usage-types'
+import type {
+  MuseUsageRange,
+  MuseUsageScope,
+  MuseUsageSnapshot
+} from '../../../../shared/muse-usage-types'
 import type { PiUsageRange, PiUsageScope, PiUsageSnapshot } from '../../../../shared/pi-usage-types'
 import type {
   ZCodeUsageRange,
@@ -22,25 +27,27 @@ import type {
 import {
   createUsageProviderSlice,
   type ProviderUsageSlice,
-  type UsageShape
+  type UsageContract
 } from './usage-slice-factory'
 
-type ClaudeUsageShape = UsageShape<ClaudeUsageScope, ClaudeUsageRange, ClaudeUsageSnapshot>
-type CodexUsageShape = UsageShape<CodexUsageScope, CodexUsageRange, CodexUsageSnapshot>
-type OpenCodeUsageShape = UsageShape<OpenCodeUsageScope, OpenCodeUsageRange, OpenCodeUsageSnapshot>
-type ZCodeUsageShape = UsageShape<ZCodeUsageScope, ZCodeUsageRange, ZCodeUsageSnapshot>
-type PiUsageShape = UsageShape<PiUsageScope, PiUsageRange, PiUsageSnapshot>
+type ClaudeUsageContract = UsageContract<ClaudeUsageScope, ClaudeUsageRange, ClaudeUsageSnapshot>
+type CodexUsageContract = UsageContract<CodexUsageScope, CodexUsageRange, CodexUsageSnapshot>
+type OpenCodeUsageContract = UsageContract<OpenCodeUsageScope, OpenCodeUsageRange, OpenCodeUsageSnapshot>
+type ZCodeUsageContract = UsageContract<ZCodeUsageScope, ZCodeUsageRange, ZCodeUsageSnapshot>
+type PiUsageContract = UsageContract<PiUsageScope, PiUsageRange, PiUsageSnapshot>
+type MuseUsageContract = UsageContract<MuseUsageScope, MuseUsageRange, MuseUsageSnapshot>
 
-export type ClaudeUsageSlice = ProviderUsageSlice<'claude', 'Claude', ClaudeUsageShape>
-export type CodexUsageSlice = ProviderUsageSlice<'codex', 'Codex', CodexUsageShape>
-export type OpenCodeUsageSlice = ProviderUsageSlice<'openCode', 'OpenCode', OpenCodeUsageShape>
-export type ZCodeUsageSlice = ProviderUsageSlice<'zcode', 'ZCode', ZCodeUsageShape>
-export type PiUsageSlice = ProviderUsageSlice<'pi', 'Pi', PiUsageShape>
+export type ClaudeUsageSlice = ProviderUsageSlice<'claude', 'Claude', ClaudeUsageContract>
+export type CodexUsageSlice = ProviderUsageSlice<'codex', 'Codex', CodexUsageContract>
+export type OpenCodeUsageSlice = ProviderUsageSlice<'openCode', 'OpenCode', OpenCodeUsageContract>
+export type ZCodeUsageSlice = ProviderUsageSlice<'zcode', 'ZCode', ZCodeUsageContract>
+export type PiUsageSlice = ProviderUsageSlice<'pi', 'Pi', PiUsageContract>
+export type MuseUsageSlice = ProviderUsageSlice<'muse', 'Muse', MuseUsageContract>
 
 export const createClaudeUsageSlice = createUsageProviderSlice<
   'claude',
   'Claude',
-  ClaudeUsageShape
+  ClaudeUsageContract
 >({
   prefix: 'claude',
   name: 'Claude',
@@ -50,7 +57,7 @@ export const createClaudeUsageSlice = createUsageProviderSlice<
   hasCachedData: (state) => state.hasAnyClaudeData
 })
 
-export const createCodexUsageSlice = createUsageProviderSlice<'codex', 'Codex', CodexUsageShape>({
+export const createCodexUsageSlice = createUsageProviderSlice<'codex', 'Codex', CodexUsageContract>({
   prefix: 'codex',
   name: 'Codex',
   initialScope: 'orca',
@@ -62,7 +69,7 @@ export const createCodexUsageSlice = createUsageProviderSlice<'codex', 'Codex', 
 export const createOpenCodeUsageSlice = createUsageProviderSlice<
   'openCode',
   'OpenCode',
-  OpenCodeUsageShape
+  OpenCodeUsageContract
 >({
   prefix: 'openCode',
   name: 'OpenCode',
@@ -72,7 +79,7 @@ export const createOpenCodeUsageSlice = createUsageProviderSlice<
   hasCachedData: (state) => state.hasAnyOpenCodeData
 })
 
-export const createZCodeUsageSlice = createUsageProviderSlice<'zcode', 'ZCode', ZCodeUsageShape>({
+export const createZCodeUsageSlice = createUsageProviderSlice<'zcode', 'ZCode', ZCodeUsageContract>({
   prefix: 'zcode',
   name: 'ZCode',
   initialScope: 'all',
@@ -81,11 +88,20 @@ export const createZCodeUsageSlice = createUsageProviderSlice<'zcode', 'ZCode', 
   hasCachedData: (state) => state.hasAnyZCodeData
 })
 
-export const createPiUsageSlice = createUsageProviderSlice<'pi', 'Pi', PiUsageShape>({
+export const createPiUsageSlice = createUsageProviderSlice<'pi', 'Pi', PiUsageContract>({
   prefix: 'pi',
   name: 'Pi',
   initialScope: 'all',
   initialRange: '30d',
   getApi: () => window.api.piUsage,
   hasCachedData: (state) => state.hasAnyPiData
+})
+
+export const createMuseUsageSlice = createUsageProviderSlice<'muse', 'Muse', MuseUsageContract>({
+  prefix: 'muse',
+  name: 'Muse',
+  initialScope: 'orca',
+  initialRange: '30d',
+  getApi: () => window.api.museUsage,
+  hasCachedData: (state) => state.hasAnyMuseData
 })
