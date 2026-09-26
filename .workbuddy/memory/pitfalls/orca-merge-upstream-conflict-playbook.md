@@ -50,6 +50,18 @@ git diff --stat $BASE <theirs> -- <file>    # 上游改了什么
 正确做法：给先出现的那一方补 `},`（即 `"最后一条": "…"` → `"最后一条": "…"` + 换行 + `},`），顺带确认对象闭合括号没被吞。
 **验证后必须逐键核对**（只 `json.load` 通过不够）——见下方脚本。
 
+## 2026-09-26 更新：语言包改用按键三向语义合并，别再手工拼
+
+上面那套手工补逗号的做法在 6 文件 22 冲突块时既慢又危险，还有一个更隐蔽的错法：**两侧常常新增同名同值的键**（fork 把 `zcode_label` 放数组末尾，上游放在 `muse_label` 旁边），「两边都留」会产出**重复 JSON 键**——`json.load` 静默接受，UI 里渲染两次。
+
+改用 `python3 .workbuddy/skills/upstream-merge-safety/scripts/merge-locales.py`（merge commit **之前**跑，`:1:/:2:/:3:` 索引 stage 只在未提交时存在）：按 fork / upstream / merge-base 三向按键合并，并集优先，只在「两侧都改且值不同」时打印交人工判定。格式零扰动（与 `json.dumps(indent=2, ensure_ascii=False)+"\n"` 字节一致）。跑完仍要 `verify:localization-catalog` 复核占位符一致性——它查的是 en/目标语言占位符对不对，合并本身不保证。
+
+> 脚本坑：`f'{rev}:{path}'` 而 `rev` 已以 `:` 结尾会拼出 `:1::path`，git 读不到东西，脚本**静默降级成「只取 ours」**。stage spec 不要再拼冒号。
+
+## 同名 id 撞车：另一类「零冲突标记」的合并事故
+
+2026-09-26 的 131 提交同步里，11 个显式冲突之外还藏了 **7 处无冲突标记的静默重复**（上游 first-class ZCode harness × 二开 zcode）。tsc 只抓到 1 处。详见 [[orca-agent-id-collision-silent-duplicates]]。
+
 ## ⚠️ 致命陷阱：`git show :2:file` 在提交后报错 → 静默拿到空串 → 脚本得出「全部丢失」的假结论
 
 `json.loads('')` 抛异常，被 `continue` 吞掉后集合全空，输出「custom 新增键全部丢失」这种惊悚但完全错误的结果（**本次真的被误导了一轮**）。

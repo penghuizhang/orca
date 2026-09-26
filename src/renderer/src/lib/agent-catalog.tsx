@@ -99,13 +99,6 @@ export const getAgentCatalog = createLocalizedCatalog((): AgentCatalogEntry[] =>
     homepageUrl: 'https://opencode.ai/docs/cli/'
   },
   {
-    id: 'zcode',
-    label: translate('auto.lib.agent.catalog.zcode_label', 'ZCode'),
-    cmd: 'zcode',
-    faviconDomain: 'z.ai',
-    homepageUrl: 'https://github.com/kingsword09/zcode-cli'
-  },
-  {
     id: 'mimo-code',
     label: translate('auto.lib.agent.catalog.mimo_code_label', 'MiMo Code'),
     cmd: 'mimo',
@@ -134,6 +127,13 @@ export const getAgentCatalog = createLocalizedCatalog((): AgentCatalogEntry[] =>
     cmd: 'muse',
     faviconDomain: 'dev.meta.ai',
     homepageUrl: 'https://dev.meta.ai/docs/muse-code'
+  },
+  {
+    id: 'zcode',
+    label: translate('auto.lib.agent.catalog.zcode_label', 'ZCode'),
+    cmd: 'zcode',
+    faviconDomain: 'zcode.z.ai',
+    homepageUrl: 'https://zcode.z.ai/en/docs'
   },
   {
     id: 'pi',
@@ -242,13 +242,6 @@ export const getAgentCatalog = createLocalizedCatalog((): AgentCatalogEntry[] =>
     cmd: 'codebuff',
     faviconDomain: 'codebuff.com',
     homepageUrl: 'https://www.codebuff.com/docs/help/quick-start'
-  },
-  {
-    id: 'freebuff',
-    label: translate('auto.lib.agent.catalog.b0b350de65', 'Freebuff'),
-    cmd: 'freebuff',
-    faviconDomain: 'freebuff.com',
-    homepageUrl: 'https://freebuff.com/cli'
   },
   {
     id: 'command-code',

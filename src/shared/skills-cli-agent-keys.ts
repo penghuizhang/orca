@@ -35,7 +35,6 @@ export const SKILLS_CLI_AGENT_KEY_BY_TUI_AGENT = {
   aug: 'augment',
   cline: 'cline',
   codebuff: null,
-  freebuff: null,
   'command-code': 'command-code',
   continue: 'continue',
   cursor: 'cursor',
@@ -52,9 +51,10 @@ export const SKILLS_CLI_AGENT_KEY_BY_TUI_AGENT = {
   ante: null,
   // Why: Orca detects trae by `traecli`, an alias only TRAE CN ships.
   trae: 'trae-cn',
-  // Why: the community skills CLI's --agent namespace does not list zcode yet; dropping avoids its exit-1 validation.
-  zcode: null,
-  muse: null
+  muse: null,
+  // Why: upstream maps this to 'zcode', but the installed community skills CLI (v1.4.6)
+  // has no `zcode` key in its own namespace — `skills add --agent zcode` would exit 1.
+  zcode: null
 } satisfies Record<TuiAgent, string | null>
 
 /**

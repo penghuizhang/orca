@@ -14,6 +14,7 @@ export const TUI_AGENT_DISPLAY_NAMES: Record<TuiAgent, string> = {
   ante: 'Ante',
   trae: 'Trae',
   muse: 'Muse',
+  zcode: 'ZCode',
   autohand: 'Autohand Code',
   opencode: 'OpenCode',
   opencode2: 'OpenCode 2',
@@ -32,7 +33,6 @@ export const TUI_AGENT_DISPLAY_NAMES: Record<TuiAgent, string> = {
   aug: 'Auggie',
   cline: 'Cline',
   codebuff: 'Codebuff',
-  freebuff: 'Freebuff',
   'command-code': 'Command Code',
   continue: 'Continue',
   cursor: 'Cursor',
@@ -44,8 +44,7 @@ export const TUI_AGENT_DISPLAY_NAMES: Record<TuiAgent, string> = {
   hermes: 'Hermes',
   openclaw: 'OpenClaw',
   copilot: 'GitHub Copilot',
-  grok: 'Grok',
-  zcode: 'ZCode'
+  grok: 'Grok'
 }
 
 /** Canonical agent id list derived from the exhaustive display-name record,
