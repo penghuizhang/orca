@@ -45,7 +45,7 @@ TypeScript 只拒绝**对象字面量**里的重复键（TS1117）。**数组元
 
 ```bash
 # 合并后必跑：对比二开侧基线，只报这次合并新引入的重复
-node .agents/skills/upstream-merge-safety/scripts/find-duplicate-ids.mjs --base <二开侧 ref>
+node .workbuddy/skills/upstream-merge-safety/scripts/find-duplicate-ids.mjs --base <二开侧 ref>
 ```
 
 `--head <ref>` 可检查已提交的合并而不看工作区。`--all` 列出全树重复（噪音大，仅调试用）。
@@ -68,7 +68,7 @@ shell 片段数组），所以默认必须带 `--base` 做差集才有意义。
 
 ```bash
 # 必须在 merge commit 之前跑：:1:/:2:/:3: 索引 stage 只在未提交时存在
-python3 .agents/skills/upstream-merge-safety/scripts/merge-locales.py
+python3 .workbuddy/skills/upstream-merge-safety/scripts/merge-locales.py
 ```
 
 - 格式零扰动：仓库语言包与 `json.dumps(obj, indent=2, ensure_ascii=False) + "\n"` 字节一致，
@@ -119,7 +119,7 @@ grep -rlo "claude-code" /opt/homebrew/lib/node_modules/skills/dist | head
 
 ```bash
 pnpm tc                                    # 硬门禁：零冲突 ≠ 集成完成
-node .agents/skills/upstream-merge-safety/scripts/find-duplicate-ids.mjs --base HEAD^1
+node .workbuddy/skills/upstream-merge-safety/scripts/find-duplicate-ids.mjs --base HEAD^1
 for s in verify:localization-catalog verify:localization-runtime-catalog \
            verify:localization-extraction verify:localization-coverage; do
   pnpm run $s || break

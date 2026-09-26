@@ -39,7 +39,7 @@ TypeScript 只拒绝**对象字面量**的重复键（TS1117）。**数组元素
 ## 检测（唯一可靠方式）
 
 ```bash
-node .agents/skills/upstream-merge-safety/scripts/find-duplicate-ids.mjs --base <二开侧 ref>
+node .workbuddy/skills/upstream-merge-safety/scripts/find-duplicate-ids.mjs --base <二开侧 ref>
 ```
 
 - 必须**带 `--base` 做差集**：全树本身有约 119 处**合法**重复（Node `stdio` 的
@@ -83,5 +83,5 @@ grep -rlo "claude-code" /opt/homebrew/lib/node_modules/skills/dist       # 有�
 
 ## 产物
 
-工程 skill `.agents/skills/upstream-merge-safety/`（SKILL.md + 两个脚本）。
+工程 skill `.workbuddy/skills/upstream-merge-safety/`（SKILL.md + 两个脚本）。
 关联 [[orca-merge-upstream-conflict-playbook]]、[[orca-shallow-clone-sync]]。

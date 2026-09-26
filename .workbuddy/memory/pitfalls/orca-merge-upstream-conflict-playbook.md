@@ -54,7 +54,7 @@ git diff --stat $BASE <theirs> -- <file>    # 上游改了什么
 
 上面那套手工补逗号的做法在 6 文件 22 冲突块时既慢又危险，还有一个更隐蔽的错法：**两侧常常新增同名同值的键**（fork 把 `zcode_label` 放数组末尾，上游放在 `muse_label` 旁边），「两边都留」会产出**重复 JSON 键**——`json.load` 静默接受，UI 里渲染两次。
 
-改用 `python3 .agents/skills/upstream-merge-safety/scripts/merge-locales.py`（merge commit **之前**跑，`:1:/:2:/:3:` 索引 stage 只在未提交时存在）：按 fork / upstream / merge-base 三向按键合并，并集优先，只在「两侧都改且值不同」时打印交人工判定。格式零扰动（与 `json.dumps(indent=2, ensure_ascii=False)+"\n"` 字节一致）。跑完仍要 `verify:localization-catalog` 复核占位符一致性——它查的是 en/目标语言占位符对不对，合并本身不保证。
+改用 `python3 .workbuddy/skills/upstream-merge-safety/scripts/merge-locales.py`（merge commit **之前**跑，`:1:/:2:/:3:` 索引 stage 只在未提交时存在）：按 fork / upstream / merge-base 三向按键合并，并集优先，只在「两侧都改且值不同」时打印交人工判定。格式零扰动（与 `json.dumps(indent=2, ensure_ascii=False)+"\n"` 字节一致）。跑完仍要 `verify:localization-catalog` 复核占位符一致性——它查的是 en/目标语言占位符对不对，合并本身不保证。
 
 > 脚本坑：`f'{rev}:{path}'` 而 `rev` 已以 `:` 结尾会拼出 `:1::path`，git 读不到东西，脚本**静默降级成「只取 ours」**。stage spec 不要再拼冒号。
 
