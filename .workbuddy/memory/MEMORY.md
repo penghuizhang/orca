@@ -61,6 +61,8 @@ AIGC:
 - [.workbuddy/docs/ 分类整理](reference/orca-workbuddy-docs-classification.md) — 46 篇二开设计文档从 docs/ 迁移到 .workbuddy/docs/ 下 8 个分类目录
 - [Orca 外部 agent 集成机制与边界](reference/orca-agent-integration-surfaces.md) — 注册表约 15 处；检测/启动在执行宿主本地；6 种注入模式均要求长驻进程、**无 one-shot 通道**；MCP 只读 4 处配置；附「能否直接注册」三问
 - [uni-agent 集成 Orca](reference/orca-uni-agent-integration.md) — **待评审**；uni-agent 是 HBuilderX 本地 socket 客户端 + 一次性 CLI，需自研 PTY 壳才能当 TuiAgent
+- [TeleAgent 档位与真实模型](reference/teleagent-model-tiers.md) — **2026-09-25 实机取证**：极速/旗舰只是服务端路由别名（chat-flash 倍率 0.2 / chat-flagship 1.0）；应用内 `Rie` 表把「旗舰」等同 **GLM-5-Turbo**（`jJe("flagship")={chat-flagship, glm-5-turbo}`），极速无对应真名记录；产品提示词明令 NewApi/ 前缀不得暴露模型名；含取证路径、死胡同、llm_tap 玩法与授权边界
+- [TeleAgent 本地 API 反向代理](reference/teleagent-proxy.md) — 独立探索工程 `~/code/aistudy/2026/teleagent/`；4397 端口 + local_auth HMAC 签名；凭据靠 `sudo ps eww` 读 im-service 环境变量，PID 变即失效
 
 ## 项目结构与工作流
 
