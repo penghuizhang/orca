@@ -6247,7 +6247,6 @@
           "parkTerminal": "Parquer le terminal"
         },
         "SidebarFeedbackImageAttachments": {
-          "screenshotsHint": "Joignez jusqu'à {count} captures d'écran",
           "attachImages": "Joindre",
           "removeImage": "Supprimer {{fileName}}"
         },

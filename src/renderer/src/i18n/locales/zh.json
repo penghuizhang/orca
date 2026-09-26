@@ -6253,7 +6253,6 @@
           "parkTerminal": "Park terminal"
         },
         "SidebarFeedbackImageAttachments": {
-          "screenshotsHint": "最多附加 {count} 张截图",
           "attachImages": "Attach",
           "removeImage": "Remove {{fileName}}"
         },

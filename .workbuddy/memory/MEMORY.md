@@ -31,6 +31,7 @@ AIGC:
 
 ## 坑与经验（pitfalls/）
 
+- [同名 agent id 撞车 ⇒ 7 处零冲突标记的静默重复](pitfalls/orca-agent-id-collision-silent-duplicates.md) — **2026-09-26 实测**：上游 `#22464` 加 first-class ZCode 与二开 PR #5 的 zcode 是同一个 CLI 的两个标注 ⇒ git 干净合并零冲突标记；**tsc 只抓 7 处里的 1 处**（只拒对象字面量重复键，数组/联合类型/目录 id 全正常编译）；检测必须 AST（正则误报 91 处）+ 基线差集（全树另有 119 处合法重复）；skills CLI 的 zcode 键靠搜包本体裁决（`--list` 探针不校验）；7 处统一取上游那份
 - [PR 门禁地图：直 merge 不触发、首走 PR 全暴露](pitfalls/orca-pr-first-run-gate-map.md) — **2026-09-23 PR #24 实测**：pr.yml 真门禁 = changed（本地等价 `-- $(git rev-parse HEAD^1)` 正确基线）+ typecheck + localization×4，**不跑** native；历次直 merge 从没跑过 ⇒ 首个 PR 一次炸出全部二开存量（anti-slop shape×36、缺键、coverage 文案、断言行逐行推进）；修法速查见坑文件；native 剩 9 个上游 mobile 警告=两侧同态非门禁
 - [合并集成缺口靠 tc 兜](pitfalls/orca-merge-integration-gap-typecheck.md) — **2026-09-23**：零/少冲突≠集成完成；上游给共享类型加必填字段（`hasPartialCost`）时二开 zcode/pi 扩展点 TS2741/2739 编译失败，报错文件不在冲突列表；修法按上游同类型成员先例补；`pnpm tc` 是合并后硬门禁
 - [打包返工两坑+管道假成功](pitfalls/orca-packaging-rework-20260923.md) — **2026-09-23**：`mobile/` 独立 workspace 须 `cd mobile && pnpm install`（否则 419 expo resolve 错）；gitignored `.DS_Store` 绕过干净检查撞死 buildId CRLF 校验；`cmd | tail` 会把失败显示成 exit 0
@@ -66,6 +67,7 @@ AIGC:
 
 ## 项目结构与工作流
 
+- **合并正确性 skill（2026-09-26 新增）**：`.agents/skills/upstream-merge-safety/` —— 重复 id 检测脚本（AST + 基线差集）+ i18n 语言包按键三向合并脚本 + 冲突取舍判定表；`orca-dev-workflow` 管流程，新 skill 管正确性
 - **防重踩预检（同步/打包前先跑）**：`node .agents/skills/orca-dev-workflow/scripts/orca-workflow.mjs preflight` —— 一条命令自动查「fetch 静默过期 / main 无共同祖先 / 发布 tag 过期致构建号旧 / 运行中仍是旧版」，覆盖四个坑；脚本在 `.agents/skills/`（本机，不提交）
 - [团队知识入库约定](daily/2026-09-04.md#任务团队知识入库约定agentsmd--gitignore) — 记忆、设计文档、踩坑必须提交进仓库共享（`.workbuddy/` 与 `docs/**` 被 gitignore，须 `git add -f`）
 - **打包安装 ≠ 升级生效（2026-09-19 实测）**：ditto 替换 `/Applications/orca-s.app` 后旧进程仍在跑（`open` 只激活旧实例）；用 `ps aux | grep daemon-entry.js` 看 `--app-version` 判断实际运行版本；若 agent 会话跑在 orca-s 终端内（进程链 `zsh ← zcode-cli ← node ← login ← orca-s Helper ← orca-s`），只能交用户手动重启。详见 [工作流程规范](reference/orca-dev-workflow.md)
@@ -78,6 +80,7 @@ AIGC:
 
 ## 设计文档
 
+- `.workbuddy/docs/workflow/2026-09-26-上游同步8846987c99与合并安全skill说明.md` — **2026-09-26 已实施**：PR #24 已合并（`e566cd15`）后同步上游 131 提交到 `8846987c99`；11 冲突（main.css 并集 / 6 语言包按键语义合并 / 3 处取上游排序 / skills 键实测保留 `zcode: null`）+ **7 处零冲突标记的静默重复**（zcode 撞车，tsc 只抓 1 处，检测脚本全抓）；键丢失审计双方零丢失；新建 `upstream-merge-safety` skill
 - `.workbuddy/docs/workflow/2026-09-23-切分支删合并分支与上游同步打包说明.md` — **2026-09-23 已实施**：切 custom + 删已合并分支（feat/notes-editor-fix 本地+远端）+ 强拉上游 304 提交合并（2 冲突叠加 + hasPartialCost 集成修复，三向键位零丢失）+ 打包安装 **`1.4.208-local.1790130615259.c8f75151e828`**（返工 2 次：mobile 独立 workspace 未装依赖、.DS_Store 撞 buildId 校验）；回退锚点 `backup/pre-sync-2026023`；遗留=用户手动重启 orca-s
 - `.workbuddy/docs/workflow/2026-09-19-上游同步与orca-s打包升级影响说明.md` — **2026-09-19 已实施**：合并上游 1186 提交（8 冲突全解）+ 追平最新 6 提交（`e2afb5eef9`）、electron 43.7.0、修掉「构建号卡 197」后装出版本 **`1.4.206-local.1789785189109.117aa480069c`**；含冲突明细、版本号机制、验证结果、遗留项（main 未同步 / 应用待手动重启）
 - `.workbuddy/docs/zcode/2026-09-13-uni-agent集成方案与可行性分析.md` — uni-agent 集成 Orca：**待评审**；结论=上游为一次性 CLI + HBuilderX 本地 socket 客户端（非独立 runtime），需自研 PTY 壳才能当 TuiAgent；含 Phase1 验证清单

@@ -99,13 +99,6 @@ export const getAgentCatalog = createLocalizedCatalog((): AgentCatalogEntry[] =>
     homepageUrl: 'https://opencode.ai/docs/cli/'
   },
   {
-    id: 'zcode',
-    label: translate('auto.lib.agent.catalog.zcode_label', 'ZCode'),
-    cmd: 'zcode',
-    faviconDomain: 'z.ai',
-    homepageUrl: 'https://github.com/kingsword09/zcode-cli'
-  },
-  {
     id: 'mimo-code',
     label: translate('auto.lib.agent.catalog.mimo_code_label', 'MiMo Code'),
     cmd: 'mimo',
