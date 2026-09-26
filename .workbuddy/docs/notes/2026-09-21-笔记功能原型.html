@@ -1,0 +1,924 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>笔记功能 —— 交互原型（语雀式本地笔记）</title>
+<style>
+  :root {
+    --background: #fff;
+    --foreground: #0a0a0a;
+    --muted: #f5f5f5;
+    --muted-foreground: #6b6b6b;
+    --accent: #f0f0f0;
+    --border: #e5e5e5;
+    --sidebar-bg: #f7f7f7;
+    --active: #2b2b2b;
+    --shadow-popover: 0 12px 32px rgba(0,0,0,.14);
+    --shadow-menu: 0 8px 24px rgba(0,0,0,.16);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { height:100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    font-size: 13px; color: var(--foreground); background: #e8e8e8;
+    display: flex; align-items: center; justify-content: center; padding: 24px;
+  }
+  .app {
+    width: 1320px; height: 840px; background: var(--background);
+    border: 1px solid var(--border); border-radius: 12px; overflow: hidden;
+    display: flex; box-shadow: var(--shadow-popover); position: relative;
+  }
+  /* ============ macOS 标题栏 ============ */
+  .titlebar {
+    position: absolute; top:0; left:0; right:0; height: 40px; z-index: 50;
+    background: #f2f2f2; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; padding: 0 14px; gap: 10px;
+    -webkit-user-select: none; user-select: none;
+  }
+  .traffic { display:flex; gap:7px; }
+  .traffic i { width:12px; height:12px; border-radius:50%; display:block; }
+  .traffic i:nth-child(1){ background:#ff5f57; } .traffic i:nth-child(2){ background:#febc2e; } .traffic i:nth-child(3){ background:#28c840; }
+  .app-name { font-size:12px; font-weight:600; color:#3d3d3d; margin-left:10px; letter-spacing:.2px; }
+  /* ============ 左侧边栏 ============ */
+  .sidebar {
+    width: 236px; background: var(--sidebar-bg); border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; padding-top: 44px; flex-shrink:0;
+  }
+  .searchbox {
+    margin: 10px 10px 8px; display:flex; align-items:center; gap:6px;
+    background:#ececec; border:1px solid transparent; border-radius:7px; padding: 5px 9px;
+    color: var(--muted-foreground); font-size:12px;
+  }
+  .searchbox input { border:0; background:transparent; outline:none; flex:1; font:inherit; color:var(--foreground); }
+  .searchbox input::placeholder { color:#9a9a9a; }
+  .nav { padding: 2px 8px; display:flex; flex-direction:column; gap:1px; }
+  .nav-item {
+    display:flex; align-items:center; gap:8px; padding: 6px 9px; border-radius:7px;
+    color:#5a5a5a; font-size:13px; font-weight:500; cursor:pointer; position:relative;
+  }
+  .nav-item svg { width:15px; height:15px; stroke:#7c7c7c; flex-shrink:0; }
+  .nav-item:hover { background: #ececec; }
+  .nav-item.active { background: var(--active); color:#fff; }
+  .nav-item.active svg { stroke:#fff; }
+  .nav-badge { margin-left:auto; font-size:10px; background:#dedede; color:#666; padding:1px 6px; border-radius:8px; }
+  .nav-item.active .nav-badge { background:#4d4d4d; color:#fff; }
+  .nav-sep { height:1px; background:var(--border); margin:8px 10px; }
+  .group-head {
+    display:flex; align-items:center; padding: 8px 10px 4px; color: var(--muted-foreground);
+    font-size:11px; font-weight:600; letter-spacing:.05em; text-transform:uppercase;
+  }
+  .group-head .ops { margin-left:auto; display:flex; gap:6px; }
+  .group-head .ops span { cursor:pointer; color:#9a9a9a; font-size:12px; }
+  .project {
+    display:flex; align-items:center; gap:8px; padding: 5px 10px; cursor:pointer;
+    color:#5a5a5a; font-size:13px; border-radius:6px; margin:0 6px;
+  }
+  .project:hover { background: #ececec; }
+  .project svg { width:14px; height:14px; stroke:#8a8a8a; flex-shrink:0; }
+  .project .share { margin-left:auto; font-size:9px; color:#9a9a9a; border:1px solid #ddd; border-radius:5px; padding:1px 4px; }
+  .sidebar-foot { margin-top:auto; padding:8px 12px; border-top:1px solid var(--border); display:flex; gap:12px; color:#9a9a9a; font-size:11px; }
+  /* ============ 主内容区 ============ */
+  .main { flex:1; display:flex; flex-direction:column; min-width:0; background:#fff; padding-top:40px; position:relative; }
+  /* --- 笔记页顶部条 --- */
+  .notes-topbar {
+    display:flex; align-items:center; gap:12px; padding: 10px 18px;
+    border-bottom: 1px solid var(--border); flex-shrink:0; background:#fff;
+  }
+  .notes-title { font-size:15px; font-weight:650; letter-spacing:-.01em; }
+  .notes-search {
+    margin-left:14px; display:flex; align-items:center; gap:6px; background:var(--muted);
+    border-radius:7px; padding: 5px 10px; width: 260px; color: var(--muted-foreground); font-size:12px;
+  }
+  .notes-search input { border:0; background:transparent; outline:none; flex:1; font:inherit; }
+  .notes-search input::placeholder { color:#9a9a9a; }
+  .spacer { flex:1; }
+  .root-picker {
+    display:flex; align-items:center; gap:7px; font-size:12px; color:var(--muted-foreground);
+    border:1px solid var(--border); border-radius:6px; padding: 5px 10px; cursor:pointer; background:#fff;
+  }
+  .root-picker:hover { background: var(--muted); }
+  .root-picker svg { width:14px; height:14px; stroke:#7c7c7c; }
+  .root-picker .path { max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .root-picker .caret { width:11px; height:11px; }
+  /* --- 主体两栏 --- */
+  .notes-body { flex:1; display:flex; min-height:0; }
+  /* 目录树 */
+  .tree { width: 236px; border-right: 1px solid var(--border); background: #fcfcfc; display:flex; flex-direction:column; min-height:0; }
+  .tree-head { display:flex; align-items:center; gap:8px; padding: 10px 14px 6px; }
+  .tree-head .label { font-size:11px; font-weight:600; color: var(--muted-foreground); letter-spacing:.06em; }
+  .tree-head .plus {
+    margin-left:auto; width:20px; height:20px; border-radius:5px; display:flex; align-items:center; justify-content:center;
+    cursor:pointer; color:#8a8a8a; border:1px solid transparent;
+  }
+  .tree-head .plus:hover { background: var(--accent); color: var(--foreground); }
+  .tree-scroll { flex:1; overflow-y:auto; padding: 2px 8px 10px; }
+  .tree-scroll::-webkit-scrollbar { width:8px; }
+  .tree-scroll::-webkit-scrollbar-thumb { background:#d9d9d9; border-radius:4px; border:2px solid #fcfcfc; }
+  .node-row {
+    display:flex; align-items:center; gap:5px; padding: 3px 6px; border-radius:6px;
+    cursor:pointer; color:#3f3f3f; font-size:13px; position:relative; min-height:25px;
+  }
+  .node-row:hover { background: var(--accent); }
+  .node-row.selected { background:#e8e8e8; }
+  .node-row.selected .node-name { font-weight:600; }
+  .chev { width:13px; height:13px; stroke:#9a9a9a; flex-shrink:0; transition: transform .12s ease; }
+  .chev.open { transform: rotate(90deg); }
+  .ficon { width:14px; height:14px; flex-shrink:0; }
+  .node-name { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1; min-width:0; }
+  .node-ops { display:none; align-items:center; gap:2px; }
+  .node-row:hover .node-ops { display:flex; }
+  .node-ops button {
+    border:0; background:transparent; cursor:pointer; width:17px; height:17px; border-radius:4px;
+    display:flex; align-items:center; justify-content:center; color:#8a8a8a;
+  }
+  .node-ops button:hover { background:#ddd; color:var(--foreground); }
+  .node-ops svg { width:12px; height:12px; }
+  .children { margin-left: 14px; display:none; }
+  .children.open { display:block; }
+  .rename-input { flex:1; font:inherit; border:1px solid #b9b9b9; border-radius:4px; padding:1px 5px; outline:none; min-width:0; }
+  .tree-foot {
+    border-top:1px solid var(--border); padding: 7px 12px; display:flex; gap:14px;
+    color:#8a8a8a; font-size:11px; align-items:center;
+  }
+  .tree-foot .add { display:flex; align-items:center; gap:5px; cursor:pointer; padding:2px 6px; border-radius:5px; }
+  .tree-foot .add:hover { background: var(--accent); color:var(--foreground); }
+  .tree-foot .add svg { width:12px; height:12px; }
+  .tree-empty { padding: 14px; color:#b5b5b5; font-size:12px; text-align:center; }
+  /* 编辑器区 */
+  .editor { flex:1; display:flex; flex-direction:column; min-width:0; background:#fff; }
+  .editor-tabs { display:flex; align-items:center; border-bottom:1px solid var(--border); background:#fafafa; padding: 0 6px; min-height:36px; }
+  .etab {
+    display:flex; align-items:center; gap:6px; padding: 6px 10px; font-size:12px; cursor:pointer;
+    color:var(--muted-foreground); border-right:1px solid var(--border); position:relative; background:#fafafa;
+  }
+  .etab.active { background:#fff; color:var(--foreground); font-weight:600; }
+  .etab.active::after { content:""; position:absolute; left:0; right:0; bottom:-1px; height:1px; background:#fff; }
+  .etab .dot { width:5px; height:5px; border-radius:50%; background:#7ab7ff; display:none; }
+  .etab.dirty .dot { display:block; }
+  .etab .x { width:14px; height:14px; border-radius:3px; display:flex; align-items:center; justify-content:center; color:#9a9a9a; }
+  .etab .x:hover { background:#e5e5e5; color:var(--foreground); }
+  .etab .x svg { width:10px; height:10px; }
+  .etab-add { width:26px; height:26px; display:flex; align-items:center; justify-content:center; color:#9a9a9a; cursor:pointer; border-radius:5px; margin-left:2px; }
+  .etab-add:hover { background: var(--accent); color:var(--foreground); }
+  .etab-add svg { width:13px; height:13px; }
+  .save-state { margin-left:auto; padding-right:10px; font-size:11px; color:#a3a3a3; }
+  .save-state.saving { color:#7ab7ff; }
+  /* 工具栏（与浮动工作区一致） */
+  .toolbar {
+    display:flex; align-items:center; gap:2px; padding: 6px 10px; border-bottom:1px solid var(--border);
+    flex-wrap:wrap; background:#fff;
+  }
+  .tb-group { display:flex; align-items:center; gap:1px; }
+  .tb-sep { width:1px; height:18px; background: var(--border); margin: 0 6px; }
+  .tb-btn {
+    border:0; background:transparent; cursor:pointer; height:26px; min-width:26px; padding:0 6px;
+    border-radius:5px; display:flex; align-items:center; justify-content:center; gap:5px;
+    font-size:12px; color:#4a4a4a; font-weight:500;
+  }
+  .tb-btn:hover { background: var(--accent); }
+  .tb-btn.active { background:#e3e3e3; color:var(--foreground); font-weight:700; }
+  .tb-btn svg { width:14px; height:14px; }
+  .tb-btn .lbl.para { font-size:13px; }
+  .tb-btn .lbl.h1 { font-size:12.5px; font-weight:700; color:#3f3f3f; }
+  .tb-btn .lbl.h2 { font-size:12px; font-weight:700; color:#3f3f3f; }
+  .tb-btn .lbl.h3 { font-size:11px; font-weight:700; color:#3f3f3f; }
+  .tb-btn .lbl.h4 { font-size:10px; font-weight:700; color:#3f3f3f; }
+  .tb-btn .lbl.h5 { font-size:9.5px; font-weight:700; color:#3f3f3f; }
+  /* 编辑区双栏：大纲 + 正文 */
+  .editor-body { flex:1; display:flex; min-height:0; }
+  .outline {
+    width: 190px; border-right: 1px solid var(--border); background: #fcfcfc;
+    display:flex; flex-direction:column; flex-shrink:0;
+  }
+  .outline-head { padding: 9px 12px 6px; font-size:11px; font-weight:600; color:var(--muted-foreground); letter-spacing:.06em; }
+  .outline-scroll { flex:1; overflow-y:auto; padding: 0 8px 10px; }
+  .otoc { padding: 3px 8px; border-radius:5px; cursor:pointer; color:#555; font-size:12.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .otoc:hover { background: var(--accent); }
+  .otoc.l1 { font-weight:600; color:#2f2f2f; }
+  .otoc.l2 { padding-left: 20px; }
+  .otoc.l3 { padding-left: 32px; color:#7a7a7a; }
+  .otoc.empty { color:#b5b5b5; cursor:default; }
+  .canvas { flex:1; overflow-y:auto; padding: 26px 44px 60px; position:relative; }
+  .canvas::-webkit-scrollbar { width:10px; }
+  .canvas::-webkit-scrollbar-thumb { background:#d9d9d9; border-radius:5px; border:3px solid #fff; }
+  .md { max-width: 720px; margin: 0 auto; line-height:1.7; font-size:14.5px; color:#262626; }
+  .md h1 { font-size: 25px; font-weight: 700; letter-spacing:-.02em; margin: 4px 0 14px; }
+  .md h2 { font-size: 19px; font-weight: 650; margin: 22px 0 8px; letter-spacing:-.01em; }
+  .md h3 { font-size: 16px; font-weight: 600; margin: 18px 0 6px; }
+  .md ul, .md ol { padding-left: 24px; margin: 6px 0; }
+  .md li { margin: 3px 0; }
+  .md li.todo { list-style:none; margin-left: -24px; display:flex; align-items:flex-start; gap:8px; }
+  .md .box { width:14px; height:14px; border:1.5px solid #b0b0b0; border-radius:4px; margin-top:4px; flex-shrink:0; display:inline-block; }
+  .md .box.checked { background:#2b2b2b; border-color:#2b2b2b; position:relative; }
+  .md .box.checked::after { content:"✓"; color:#fff; font-size:10px; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; }
+  .md li.done { color:#9a9a9a; text-decoration: line-through; }
+  .md blockquote {
+    margin: 12px 0; padding: 6px 14px; border-left: 3px solid #d0d0d0; color:#6e6e6e; background:#fafafa; border-radius:0 6px 6px 0;
+  }
+  .md blockquote p { margin: 4px 0; }
+  .md code.inline { background:#f2f2f2; border-radius:4px; padding: 1px 5px; font-size: 13px; font-family: "SF Mono", ui-monospace, Menlo, monospace; }
+  .md pre { background:#f7f7f7; border:1px solid var(--border); border-radius:8px; padding: 12px 14px; font-family:"SF Mono", ui-monospace, Menlo, monospace; font-size:12.5px; overflow-x:auto; margin: 12px 0; }
+  .md hr { border:0; border-top:1px solid var(--border); margin: 18px 0; }
+  .md table { border-collapse: collapse; margin: 12px 0; font-size:13px; }
+  .md th, .md td { border:1px solid var(--border); padding: 5px 12px; text-align:left; }
+  .md th { background:#fafafa; font-weight:600; }
+  .md p { margin: 7px 0; }
+  .md .empty-hint { color:#c2c2c2; }
+  .save-flash {
+    position: absolute; right: 20px; bottom: 20px; background: #2b2b2b; color:#fff;
+    font-size: 12px; padding: 6px 12px; border-radius: 7px; box-shadow: var(--shadow-menu);
+    opacity:0; transition: opacity .25s ease; pointer-events:none; z-index: 60;
+  }
+  .save-flash.show { opacity:1; }
+  .empty-state {
+    flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; color:#b5b5b5;
+  }
+  .empty-state svg { width:44px; height:44px; stroke:#d5d5d5; }
+  /* 右键菜单 */
+  .ctx-menu {
+    position: fixed; z-index: 300; background:#fff; border:1px solid var(--border);
+    border-radius: 8px; box-shadow: var(--shadow-menu); padding: 4px; min-width: 168px; display:none;
+  }
+  .ctx-menu.show { display:block; }
+  .ctx-item {
+    display:flex; align-items:center; gap:8px; padding: 6px 10px; border-radius:6px;
+    cursor:pointer; font-size:12.5px; color:#3f3f3f;
+  }
+  .ctx-item:hover { background: var(--accent); }
+  .ctx-item svg { width:13px; height:13px; stroke:#7c7c7c; }
+  .ctx-item.danger { color:#d70015; }
+  .ctx-item.danger svg { stroke:#ff4d5e; }
+  .ctx-sep { height:1px; background: var(--border); margin:4px 6px; }
+  /* 对话框 */
+  .overlay { position:absolute; inset:0; background: rgba(0,0,0,.35); z-index: 400; display:none; align-items:center; justify-content:center; }
+  .overlay.show { display:flex; }
+  .dialog {
+    width: 380px; background:#fff; border-radius: 12px; box-shadow: var(--shadow-popover); padding: 18px;
+  }
+  .dialog h3 { font-size: 15px; font-weight: 650; margin-bottom: 4px; }
+  .dialog .sub { font-size: 12px; color: var(--muted-foreground); margin-bottom: 12px; }
+  .dialog input {
+    width:100%; border:1px solid #d5d5d5; border-radius:7px; padding: 7px 10px; font:inherit; outline:none;
+  }
+  .dialog input:focus { border-color:#8a8a8a; }
+  .dialog .hint { font-size: 11px; color:#9a9a9a; margin-top: 6px; }
+  .dialog .err { color:#d70015; }
+  .dialog-ops { display:flex; justify-content:flex-end; gap:8px; margin-top: 16px; }
+  .btn {
+    border:1px solid var(--border); background:#fff; font:inherit; font-size:13px; border-radius:7px;
+    padding: 6px 14px; cursor:pointer; color: var(--foreground);
+  }
+  .btn:hover { background: var(--accent); }
+  .btn.primary { background: var(--active); color:#fff; border-color: transparent; }
+  .btn.primary:hover { background:#3d3d3d; }
+  .btn.danger { background:#ff3b30; color:#fff; border-color: transparent; }
+  .btn.danger:hover { background:#e03329; }
+</style>
+</head>
+<body>
+
+<div class="app" id="app">
+
+  <!-- 系统标题栏 -->
+  <div class="titlebar">
+    <div class="traffic"><i></i><i></i><i></i></div>
+    <div class="app-name">Orca</div>
+  </div>
+
+  <!-- 左侧边栏 -->
+  <aside class="sidebar">
+    <div class="searchbox">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      <input placeholder="搜索" />
+    </div>
+    <nav class="nav">
+      <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>任务</div>
+      <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 10h18"/></svg>自动化</div>
+      <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 10h18M8 2v4M16 2v4M8 15l2 2 4-4"/></svg>日历</div>
+      <div class="nav-item active">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.09 12.586a2 2 0 0 1 0 2.828l-5.675 5.675a2 2 0 0 1-2.829 0L2 15.414a2 2 0 0 1 0-2.828l5.675-5.675a2 2 0 0 1 2.828 0"/><path d="M16.5 3.5 20.5 7.5"/><path d="M12.5 5.5 14.5 7.5"/><path d="M9 9l2.5 2.5"/></svg>
+        笔记 <span class="nav-badge">新</span>
+      </div>
+    </nav>
+    <div class="nav-sep"></div>
+    <div class="group-head">项目 <span class="ops"><span>🔔</span><span>☰</span><span>↑</span><span>＋</span></span></div>
+    <div class="project"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="m8 6-5 3 9 5 9-5-5-3"/><path d="m3 12 9 5 9-5"/></svg>my-code</div>
+    <div class="project"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="m8 6-5 3 9 5 9-5-5-3"/><path d="m3 12 9 5 9-5"/></svg>agent</div>
+    <div class="project"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M4 20h16a1 1 0 0 0 1-1V9a1 1 0 0 0-1-1h-7L9 5H4a1 1 0 0 0-1 1v13a1 1 0 0 0 1 1Z"/></svg>orca <span class="share">共享</span></div>
+    <div class="project"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M4 20h16a1 1 0 0 0 1-1V9a1 1 0 0 0-1-1h-7L9 5H4a1 1 0 0 0-1 1v13a1 1 0 0 0 1 1Z"/></svg>需求文档</div>
+    <div class="sidebar-foot"><span>关闭</span><span>1.2 GB</span><span>&gt;_1</span></div>
+  </aside>
+
+  <!-- 主内容区 -->
+  <main class="main">
+
+    <!-- 笔记页顶部条 -->
+    <div class="notes-topbar">
+      <div class="notes-title">笔记</div>
+      <div class="notes-search">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="noteSearch" placeholder="搜索笔记…" />
+      </div>
+      <div class="spacer"></div>
+      <div class="root-picker" id="rootPicker" title="点击可切换笔记根目录（实施后调起系统目录选择器）">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M4 20h16a1 1 0 0 0 1-1V9a1 1 0 0 0-1-1h-7L9 5H4a1 1 0 0 0-1 1v13a1 1 0 0 0 1 1Z"/></svg>
+        <span class="path">~/OrcaNotes</span>
+        <svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg>
+      </div>
+    </div>
+
+    <!-- 笔记主体：目录树 + 编辑器 -->
+    <div class="notes-body">
+
+      <!-- 目录树 -->
+      <section class="tree">
+        <div class="tree-head">
+          <span class="label">目录</span>
+          <div class="plus" id="treePlus" title="新建笔记">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          </div>
+        </div>
+        <div class="tree-scroll" id="treeScroll"></div>
+        <div class="tree-foot">
+          <span class="add" id="addFolder">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1Z"/><path d="M9 7V5h6v2"/></svg>新建文件夹
+          </span>
+          <span class="add" id="addNote">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8Z"/><path d="M14 3v5h5"/></svg>新建笔记
+          </span>
+        </div>
+      </section>
+
+      <!-- 编辑器 -->
+      <section class="editor">
+        <div class="editor-tabs">
+          <div class="etab active" data-tab="t1">
+            <span class="dot"></span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#8a8a8a" stroke-width="2" stroke-linecap="round"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8Z"/><path d="M14 3v5h5"/></svg>
+            <span id="tabTitle">2026-09-21.md</span>
+            <span class="x" title="关闭标签"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></span>
+          </div>
+          <div class="etab-add" title="新建标签（二期：多标签）">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          </div>
+          <div class="save-state" id="saveState">已保存</div>
+        </div>
+
+        <!-- 工具栏（与浮动工作区一致） -->
+        <div class="toolbar">
+          <div class="tb-group">
+            <button class="tb-btn" title="目录"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></button>
+            <button class="tb-btn" title="H1"><span class="lbl h1">H1</span></button>
+            <button class="tb-btn" title="H2"><span class="lbl h2">H2</span></button>
+            <button class="tb-btn" title="H3"><span class="lbl h3">H3</span></button>
+            <button class="tb-btn" title="H4"><span class="lbl h4">H4</span></button>
+            <button class="tb-btn" title="H5"><span class="lbl h5">H5</span></button>
+            <button class="tb-btn" title="关闭"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+          </div>
+          <div class="tb-sep"></div>
+          <div class="tb-group">
+            <button class="tb-btn active" title="段落"><span class="lbl para">¶</span></button>
+            <button class="tb-btn"><span class="lbl h1">H1</span></button>
+            <button class="tb-btn"><span class="lbl h2">H2</span></button>
+            <button class="tb-btn active" title="加粗"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 5h6.3a3.7 3.7 0 0 1 0 7.4H7Zm0 7.4h7a3.8 3.8 0 0 1 0 7.6H7Z"/></svg></button>
+            <button class="tb-btn" title="斜体"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 4h8l-2 6h-5l-4.5 10H3L7.5 12H4.8L7 4Z"/></svg></button>
+            <button class="tb-btn" title="删除线"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M16 4H9a3 3 0 0 0-2.8 4M11 20h6a3 3 0 0 0 2.8-4M3 12h18"/></svg></button>
+          </div>
+          <div class="tb-sep"></div>
+          <div class="tb-group">
+            <button class="tb-btn" title="无序列表"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M9 6h12M9 12h12M9 18h12M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg></button>
+            <button class="tb-btn" title="有序列表"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M10 6h11M10 12h11M10 18h11"/><path d="M4 5h1M4 5v3M3 7h2M3 13h.01M4 12v3M3 16h3v3h-2"/></svg></button>
+            <button class="tb-btn" title="待办列表"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><rect x="3.5" y="4" width="17" height="16" rx="2"/><path d="M8 9.5 10 11.5 15.5 6"/><path d="M9 16h6M9 13h4"/></svg></button>
+          </div>
+          <div class="tb-sep"></div>
+          <div class="tb-group">
+            <button class="tb-btn" title="引用"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 12c0 3.9-2 6-5 6m4.5-7H4c0-4.5 2-7 5-7 3 0 4 2.5 3.5 5L11 11.5c.5 1 2.5 2.5 2.5 4.5"/></svg></button>
+            <button class="tb-btn" title="链接"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg></button>
+            <button class="tb-btn" title="图片"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.5-3.5a2 2 0 0 0-2.8 0L6 20"/></svg></button>
+            <button class="tb-btn" title="更多"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></button>
+          </div>
+        </div>
+
+        <!-- 大纲 + 编辑区 -->
+        <div class="editor-body">
+          <aside class="outline">
+            <div class="outline-head">大纲</div>
+            <div class="outline-scroll" id="outlineList"></div>
+          </aside>
+          <div class="canvas" id="canvas">
+            <div class="md" id="mdCanvas" contenteditable="true"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="save-flash" id="saveFlash">已保存</div>
+  </main>
+
+  <!-- 右键菜单 -->
+  <div class="ctx-menu" id="ctxMenu"></div>
+
+  <!-- 对话框 -->
+  <div class="overlay" id="overlay">
+    <div class="dialog">
+      <h3 id="dlgTitle">新建笔记</h3>
+      <div class="sub" id="dlgSub"></div>
+      <input id="dlgInput" placeholder="名称" autocomplete="off" />
+      <div class="hint" id="dlgHint"></div>
+      <div class="dialog-ops">
+        <button class="btn" id="dlgCancel">取消</button>
+        <button class="btn primary" id="dlgOk">创建</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ================= 模拟数据 ================= */
+const ICONS = {
+  folder: '<svg class="ficon folder" viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M4 20h16a1 1 0 0 0 1-1V9a1 1 0 0 0-1-1h-7L9 5H4a1 1 0 0 0-1 1v13a1 1 0 0 0 1 1Z"/></svg>',
+  note: '<svg class="ficon note" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8Z"/><path d="M14 3v5h5"/></svg>',
+  chev: '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round"><path d="m9 6 6 6-6 6"/></svg>',
+  pen: '<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>',
+  trash: '<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M19 6l-1 14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1L5 6"/></svg>',
+  plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+  search: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>'
+};
+
+/* 笔记内容库：path -> markdown */
+const NOTES = {
+  '工作日志/2026-09-21.md': `# 2026-09-21 工作日志
+
+## 今日要点
+- 完成笔记功能设计方案与界面原型评审
+- 浮动工作区保持共存，新增独立「笔记」固定页
+- 目录树支持创建目录、创建文件，编辑器能力与浮动工作区一致
+
+## 待办清单
+- [x] 笔记视图注册（9 处）方案确认
+- [x] 根目录采用真实文件夹落盘
+- [ ] 跨笔记全文搜索（二期）
+- [ ] 笔记间 [[链接]] 互链（二期）
+
+## 记录
+> 笔记文件就是真实的 .md 文件，存在 ~/OrcaNotes 下，Finder 里可以直接看到，其他编辑器也能打开。
+
+---
+
+## 后续计划
+1. 按设计文档实施视图注册与目录树组件
+2. 主进程 notes IPC 与路径白名单校验
+3. 打包验证后归档当日工作日志`,
+
+  '项目文档/需求/01-需求分析.md': `# 需求分析：笔记中心
+
+## 背景
+参照语雀的目录组织方式，在 Orca 内做本地笔记工具。
+
+## 核心能力
+- 左侧目录树：创建目录 / 创建文件 / 重命名 / 删除
+- 右侧编辑器：与浮动工作区完全一致的 Markdown 编辑面板
+- 存储：真实文件夹落盘（默认 ~/OrcaNotes）
+
+## 验收标准
+- [ ] 侧边栏出现「笔记」入口（日历下方）
+- [ ] 可新建文件夹与笔记
+- [ ] 编辑能力清单与浮动工作区一致`,
+
+  '项目文档/工作/设计.md': `# 笔记中心设计要点
+
+## 布局
+| 区域 | 内容 |
+| --- | --- |
+| 顶部条 | 页名、搜索、根目录选择 |
+| 左侧 | 目录树（多级、右键菜单） |
+| 右侧 | 编辑器（工具栏 + 大纲 + 正文） |
+
+## 技术要点
+- TopLevelView 'notes' 完整注册
+- RichMarkdownEditor 零改动复用
+- 路径白名单校验（防 ../ 越界）
+
+> 详见 .workbuddy/docs/notes/2026-09-21-笔记功能设计方案.md`,
+
+  '会议纪要/周会纪要.md': `# 周会纪要（09-21）
+
+## 议题
+1. 笔记功能评审
+2. 日历二期排期
+
+## 结论
+- 笔记功能按「设计先行」推进
+- 浮动工作区共存
+- 下周启动实施`
+};
+
+/* 树结构 */
+let treeData = [
+  { type: 'folder', name: '项目文档', open: true, children: [
+    { type: 'folder', name: '需求', open: true, children: [
+      { type: 'note', name: '01-需求分析.md' },
+      { type: 'note', name: '02-接口定义.md' }
+    ]},
+    { type: 'folder', name: '工作', open: false, children: [
+      { type: 'note', name: '设计.md' }
+    ]}
+  ]},
+  { type: 'folder', name: '工作日志', open: true, children: [
+    { type: 'note', name: '2026-09-21.md' }
+  ]},
+  { type: 'folder', name: '会议纪要', open: false, children: [
+    { type: 'note', name: '周会纪要.md' }
+  ]}
+];
+
+let selected = { folder: null, note: '工作日志/2026-09-21.md' };
+
+/* ============ Markdown → HTML（简化渲染，模拟 TipTap 效果） ============ */
+function escapeHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function inline(s) {
+  return escapeHtml(s)
+    .replace(/`([^`]+)`/g, '<code class="inline">$1</code>')
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*([^*]+)\*/g, '<em>$1</em>');
+}
+function mdToHtml(md) {
+  const lines = md.split('\n');
+  let html = '';
+  let inList = false, inOl = false, inPre = false, inQuote = false, inTable = false;
+  let table = [];
+  const closeList = () => { if (inList) { html += '</ul>'; inList = false; } if (inOl) { html += '</ol>'; inOl = false; } };
+  const closeQuote = () => { if (inQuote) { html += '</blockquote>'; inQuote = false; } };
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (line.startsWith('```')) {
+      closeList(); closeQuote();
+      if (inPre) { html += '</pre>'; inPre = false; }
+      else { html += '<pre>'; inPre = true; }
+      continue;
+    }
+    if (inPre) { html += escapeHtml(line) + '\n'; continue; }
+
+    let m;
+    if ((m = line.match(/^(#{1,3})\s+(.*)/))) {
+      closeList(); closeQuote();
+      const lv = m[1].length;
+      html += `<h${lv}>${inline(m[2])}</h${lv}>`;
+    } else if ((m = line.match(/^\s*-\s+\[( |x|X)\]\s+(.*)/))) {
+      if (!inList) { closeQuote(); html += '<ul>'; inList = true; }
+      const done = /[xX]/.test(m[1]);
+      html += `<li class="todo${done ? ' done' : ''}"><span class="box${done ? ' checked' : ''}"></span><span>${inline(m[2])}</span></li>`;
+    } else if ((m = line.match(/^\s*[-*]\s+(.*)/))) {
+      if (!inList) { closeQuote(); closeList(); html += '<ul>'; inList = true; }
+      html += `<li>${inline(m[1])}</li>`;
+    } else if ((m = line.match(/^\s*\d+\.\s+(.*)/))) {
+      if (!inOl) { closeQuote(); closeList(); html += '<ol>'; inOl = true; }
+      html += `<li>${inline(m[1])}</li>`;
+    } else if (line.startsWith('> ')) {
+      closeList();
+      if (!inQuote) { html += '<blockquote>'; inQuote = true; }
+      html += `<p>${inline(line.slice(2))}</p>`;
+    } else if (line.match(/^\s*\|.*\|\s*$/)) {
+      closeList(); closeQuote();
+      const cells = line.split('|').slice(1, -1).map(c => c.trim());
+      if (cells.every(c => /^:?-{2,}:?$/.test(c))) continue; // 分隔行
+      table.push(cells);
+    } else if (/^\s*---+\s*$/.test(line)) {
+      closeList(); closeQuote();
+      html += '<hr>';
+    } else if (line.trim() === '') {
+      closeList(); closeQuote();
+      if (table.length) {
+        html += '<table><thead><tr>' + table[0].map(c => `<th>${inline(c)}</th>`).join('') + '</tr></thead><tbody>';
+        for (let r = 1; r < table.length; r++) html += '<tr>' + table[r].map(c => `<td>${inline(c)}</td>`).join('') + '</tr>';
+        html += '</tbody></table>';
+        table = [];
+      }
+    } else {
+      closeList(); closeQuote();
+      if (table.length) {
+        const cells = line.split('|').slice(1, -1).map(c => c.trim());
+        html += '<tr>' + cells.map(c => `<td>${inline(c)}</td>`).join('') + '</tr>';
+      } else {
+        html += `<p>${inline(line)}</p>`;
+      }
+    }
+  }
+  closeList(); closeQuote();
+  if (inPre) html += '</pre>';
+  if (table.length) html += '<table><tbody>' + table.map(r => '<tr>' + r.map(c => `<td>${inline(c)}</td>`).join('') + '</tr>').join('') + '</tbody></table>';
+  return html;
+}
+
+function buildOutline(md) {
+  const heads = [];
+  for (const line of md.split('\n')) {
+    const m = line.match(/^(#{1,3})\s+(.*)/);
+    if (m) heads.push({ lv: m[1].length, text: m[2].replace(/[*`]/g, '') });
+  }
+  return heads;
+}
+
+/* ============ 树渲染 ============ */
+function nodePath() {
+  // 生成节点完整路径 + 父引用（供选中判断与右键新建定位）
+  const walk = (nodes, prefix, parent) => {
+    for (const n of nodes) {
+      const path = prefix ? prefix + '/' + n.name : n.name;
+      n._path = path;
+      n.parent = parent || null;
+      if (n.children) walk(n.children, path, n);
+    }
+  };
+  walk(treeData, '', null);
+}
+function renderTree() {
+  nodePath();
+  const root = document.getElementById('treeScroll');
+  root.innerHTML = '';
+  const draw = (nodes, container) => {
+    nodes.forEach(node => {
+      const wrap = document.createElement('div');
+      wrap.className = 'node';
+
+      const row = document.createElement('div');
+      row.className = 'node-row';
+
+      if (node.type === 'folder') {
+        const chev = document.createElement('span');
+        chev.innerHTML = ICONS.chev;
+        chev.className = 'chev' + (node.open ? ' open' : '');
+        chev.addEventListener('click', (e) => { e.stopPropagation(); node.open = !node.open; renderTree(); });
+        row.appendChild(chev);
+        const fi = document.createElement('span');
+        fi.innerHTML = ICONS.folder;
+        row.appendChild(fi);
+        const name = document.createElement('span');
+        name.className = 'node-name';
+        name.textContent = node.name;
+        row.appendChild(name);
+        row.addEventListener('click', (e) => { node.open = !node.open; renderTree(); });
+        row.addEventListener('contextmenu', (e) => { e.preventDefault(); openCtxMenu(e, 'folder', node); });
+        wrap.appendChild(row);
+        const kids = document.createElement('div');
+        kids.className = 'children' + (node.open ? ' open' : '');
+        draw(node.children, kids);
+        wrap.appendChild(kids);
+      } else {
+        const chev = document.createElement('span');
+        chev.innerHTML = ICONS.chev;
+        chev.className = 'chev leaf';
+        row.appendChild(chev);
+        const fi = document.createElement('span');
+        fi.innerHTML = ICONS.note;
+        row.appendChild(fi);
+        const name = document.createElement('span');
+        name.className = 'node-name';
+        name.textContent = node.name;
+        row.appendChild(name);
+        if (node._path === selected.note) row.classList.add('selected');
+
+        const ops = document.createElement('span');
+        ops.className = 'node-ops';
+        const btnR = document.createElement('button');
+        btnR.title = '重命名'; btnR.innerHTML = ICONS.pen;
+        btnR.addEventListener('click', (e) => { e.stopPropagation(); openDialog('renameNote', node); });
+        const btnD = document.createElement('button');
+        btnD.title = '删除'; btnD.innerHTML = ICONS.trash;
+        btnD.addEventListener('click', (e) => { e.stopPropagation(); openDialog('deleteNote', node); });
+        ops.appendChild(btnR); ops.appendChild(btnD);
+        row.appendChild(ops);
+
+        row.addEventListener('click', () => { openNote(node); });
+        row.addEventListener('contextmenu', (e) => { e.preventDefault(); openCtxMenu(e, 'note', node); });
+        wrap.appendChild(row);
+      }
+      container.appendChild(wrap);
+    });
+  };
+  draw(treeData, root);
+}
+const tree = treeData;
+
+/* ============ 打开笔记 ============ */
+function openNote(node) {
+  selected.note = node._path || node.name;
+  renderTree();
+  const content = NOTES[node._path] || NOTES[node.name] || '# ' + node.name.replace('.md','') + '\n\n（示例笔记，等待写入内容）';
+  document.getElementById('tabTitle').textContent = node.name;
+  document.getElementById('mdCanvas').innerHTML = mdToHtml(content);
+  renderOutline(content);
+  setSaveState(false);
+}
+
+function renderOutline(content) {
+  const box = document.getElementById('outlineList');
+  const heads = buildOutline(content);
+  box.innerHTML = '';
+  if (!heads.length) {
+    box.innerHTML = '<div class="otoc empty">无标题</div>';
+    return;
+  }
+  heads.forEach(h => {
+    const d = document.createElement('div');
+    d.className = 'otoc l' + h.lv;
+    d.textContent = h.text;
+    d.addEventListener('click', () => {
+      const els = document.querySelectorAll('#mdCanvas h1,#mdCanvas h2,#mdCanvas h3');
+      for (const el of els) {
+        if (el.textContent === h.text) { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); break; }
+      }
+    });
+    box.appendChild(d);
+  });
+}
+
+/* ============ 保存状态模拟 ============ */
+function setSaveState(dirty) {
+  const tab = document.querySelector('.etab');
+  const state = document.getElementById('saveState');
+  if (dirty) { tab.classList.add('dirty'); state.textContent = '编辑中…'; state.classList.add('saving'); }
+  else { tab.classList.remove('dirty'); state.textContent = '已保存'; state.classList.remove('saving'); }
+}
+/* 编辑区可实际输入：输入即显示「编辑中…」，Ctrl/Cmd+S 保存 */
+document.getElementById('mdCanvas').addEventListener('input', () => setSaveState(true));
+document.addEventListener('keydown', (e) => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+    e.preventDefault();
+    setSaveState(false);
+    flash('已保存');
+  }
+});
+function flash(txt) {
+  const el = document.getElementById('saveFlash');
+  el.textContent = txt;
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), 1600);
+}
+
+/* ============ 右键菜单 ============ */
+const MENU_ITEMS = {
+  folder: [
+    { label: '新建笔记', icon: ICONS.note, act: (n) => openDialog('newNote', n) },
+    { label: '新建文件夹', icon: ICONS.folder, act: (n) => openDialog('newFolder', n) },
+    { sep: true },
+    { label: '重命名', icon: ICONS.pen, act: (n) => openDialog('renameFolder', n) },
+    { label: '删除', icon: ICONS.trash, act: (n) => openDialog('deleteFolder', n), danger: true }
+  ],
+  note: [
+    { label: '新建笔记', icon: ICONS.note, act: (n) => openDialog('newNote', n.parent) },
+    { sep: true },
+    { label: '重命名', icon: ICONS.pen, act: (n) => openDialog('renameNote', n) },
+    { label: '删除', icon: ICONS.trash, act: (n) => openDialog('deleteNote', n), danger: true }
+  ]
+};
+function openCtxMenu(e, kind, node) {
+  const menu = document.getElementById('ctxMenu');
+  menu.innerHTML = '';
+  const list = kind === 'folder'
+    ? [
+        { label: '新建笔记', icon: ICONS.note, act: () => openDialog('newNote', node) },
+        { label: '新建文件夹', icon: ICONS.folder, act: () => openDialog('newFolder', node) },
+        { sep: true },
+        { label: '重命名', icon: ICONS.pen, act: () => openDialog('renameFolder', node) },
+      { label: '删除', icon: ICONS.trash, act: () => openDialog('deleteFolder', node), danger: true }
+    ]
+    : [
+        { label: '新建笔记', icon: ICONS.note, act: () => openDialog('newNote', node.parent) },
+        { sep: true },
+        { label: '重命名', icon: ICONS.pen, act: () => openDialog('renameNote', node) },
+        { label: '删除', icon: ICONS.trash, act: () => openDialog('deleteNote', node), danger: true }
+      ];
+  menu.innerHTML = '';
+  list.forEach(it => {
+    if (it.sep) { const s = document.createElement('div'); s.className = 'ctx-sep'; menu.appendChild(s); return; }
+    const d = document.createElement('div');
+    d.className = 'ctx-item' + (it.danger ? ' danger' : '');
+    d.innerHTML = it.icon + '<span>' + it.label + '</span>';
+    d.addEventListener('click', () => { hideCtx(); it.act(); });
+    menu.appendChild(d);
+  });
+  menu.classList.add('show');
+  const mw = menu.offsetWidth, mh = menu.offsetHeight;
+  menu.style.left = Math.min(e.clientX, window.innerWidth - mw - 8) + 'px';
+  menu.style.top = Math.min(e.clientY, window.innerHeight - mh - 8) + 'px';
+}
+function hideCtx() { document.getElementById('ctxMenu').classList.remove('show'); }
+document.addEventListener('click', (e) => { if (!e.target.closest('.ctx-menu')) hideCtx(); });
+
+/* ============ 对话框 ============ */
+const DIALOGS = {
+  newNote: {
+    title: '新建笔记', sub: '在当前目录下创建 Markdown 笔记', ph: '笔记名称',
+    hint: '自动补充 .md 后缀，同级重名会提示', ok: '创建',
+    save: (input, node) => { addNode(node, 'note', input); }
+  },
+  newFolder: {
+    title: '新建文件夹', sub: '在当前目录下创建子文件夹', ph: '文件夹名称', hint: '', ok: '创建',
+    save: (input, node) => addNode(node, 'folder', input)
+  },
+  renameNote: {
+    title: '重命名笔记', sub: '修改笔记文件名', ph: '新名称', hint: '', ok: '保存',
+    save: (input, node) => { node.name = /\.md$/i.test(input) ? input : input + '.md'; renderTree(); flash('已重命名'); }
+  },
+  renameFolder: {
+    title: '重命名文件夹', sub: '修改文件夹名称', ph: '新名称', hint: '', ok: '保存',
+    save: (input, node) => { node.name = input; renderTree(); flash('已重命名'); }
+  },
+  deleteNote: {
+    title: '删除笔记', sub: '删除后不可恢复（原型模拟，真实实现会二次确认并同步删除磁盘文件）', ph: '', hint: '', ok: '删除', danger: true,
+    save: (input, node) => removeNode(node), prefill: (node) => '“' + node.name + '”'
+  },
+  deleteFolder: {
+    title: '删除文件夹', sub: '将删除整个文件夹及其内全部笔记（真实实现同步删除磁盘目录）', ph: '', hint: '', ok: '删除', danger: true,
+    save: (input, node) => { removeNode(node); renderTree(); flash('已删除'); }
+  }
+};
+let dialogMode = null, dialogNode = null;
+function openDialog(mode, node) {
+  dialogMode = mode; dialogNode = node;
+  const cfg = DIALOGS[mode];
+  document.getElementById('dlgTitle').textContent = cfg.title;
+  document.getElementById('dlgSub').textContent = cfg.sub;
+  const input = document.getElementById('dlgInput');
+  input.value = cfg.prefill ? cfg.prefill(node) : '';
+  input.placeholder = cfg.ph;
+  document.getElementById('dlgHint').textContent = cfg.hint;
+  document.getElementById('dlgOk').textContent = cfg.ok;
+  document.getElementById('dlgOk').className = 'btn primary' + (cfg.danger ? ' danger' : '');
+  document.getElementById('overlay').classList.add('show');
+  input.focus(); input.select();
+  document.getElementById('dlgOk').onclick = confirmDlg;
+  input.onkeydown = (e) => { if (e.key === 'Enter') confirmDlg(); if (e.key === 'Escape') closeDlg(); };
+}
+function confirmDlg() {
+  const cfg = DIALOGS[dialogMode];
+  const v = document.getElementById('dlgInput').value.trim();
+  if (!v || (cfg.ph && !v)) return;
+  cfg.save(v, dialogNode);
+  closeDlg();
+}
+function closeDlg() { document.getElementById('overlay').classList.remove('show'); dialogMode = null; dialogNode = null; }
+document.getElementById('dlgCancel').addEventListener('click', closeDlg);
+document.getElementById('overlay').addEventListener('click', (e) => { if (e.target.id === 'overlay') closeDlg(); });
+
+/* 新增节点（原型：插入到树并可选自动打开新建的笔记） */
+function addNode(parent, type, name) {
+  let target = tree;
+  if (parent && parent.children) target = parent.children;
+  if (type === 'note') {
+    const fname = /\.md$/i.test(name) ? name : name + '.md';
+    if (target.some(n => n.name === fname)) { document.getElementById('dlgHint').textContent = '⚠ 同名文件已存在'; document.getElementById('dlgHint').classList.add('err'); return; }
+    const node = { type: 'note', name: fname };
+    target.push(node);
+    if (parent && parent.type === 'folder') parent.open = true;
+    renderTree();
+    openNote(node);
+  } else {
+    const fname = name;
+    if (target.some(n => n.name === fname)) { document.getElementById('dlgHint').textContent = '⚠ 同名文件夹已存在'; document.getElementById('dlgHint').classList.add('err'); return; }
+    const node = { type: 'folder', name: fname, open: true, children: [] };
+    target.push(node);
+    renderTree();
+    flash('已创建文件夹');
+  }
+}
+function removeNode(node) {
+  const remove = (nodes, n) => {
+    const idx = nodes.indexOf(n);
+    if (idx >= 0) { nodes.splice(idx, 1); return true; }
+    for (const c of nodes) if (c.children && remove(c.children, n)) return true;
+    return false;
+  };
+  if (remove(tree, node)) { renderTree(); flash('已删除'); }
+}
+
+/* ============ 搜索过滤（原型简化：直接过滤树节点） ============ */
+document.getElementById('noteSearch').addEventListener('input', (e) => {
+  const q = e.target.value.trim().toLowerCase();
+  const rows = document.querySelectorAll('.node-row');
+  rows.forEach(r => {
+    const name = (r.querySelector('.node-name') || {}).textContent || '';
+    r.style.display = name.toLowerCase().includes(q) ? '' : 'none';
+  });
+});
+
+/* ============ 根目录选择（原型提示） ============ */
+document.getElementById('rootPicker').addEventListener('click', () => flash('原型演示：实施时调起系统目录选择器'));
+document.getElementById('treePlus').addEventListener('click', () => openDialog('newNote', null));
+document.getElementById('addFolder').addEventListener('click', () => openDialog('newFolder', null));
+document.getElementById('addNote').addEventListener('click', () => openDialog('newNote', null));
+document.getElementById('dlgOk').addEventListener('click', confirmDlg);
+
+/* ============ 初始化 ============ */
+renderTree();
+const initNode = { name: '2026-09-21.md', _path: '工作日志/2026-09-21.md' };
+openNote(initNode);
+</script>
+</body>
+</html>
