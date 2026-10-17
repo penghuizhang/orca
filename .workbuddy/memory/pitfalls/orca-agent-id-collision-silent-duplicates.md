@@ -83,5 +83,6 @@ grep -rlo "claude-code" /opt/homebrew/lib/node_modules/skills/dist       # 有�
 
 ## 产物
 
-工程 skill `.workbuddy/skills/upstream-merge-safety/`（SKILL.md + 两个脚本）。
+团队共享 skill `.workbuddy/skills/upstream-merge-safety/`（SKILL.md + 两个脚本）；
+可 `/` 调用的主流程 skill `.agents/skills/orca-upstream-sync/`（见 [[orca-skills-location-and-root-guard]]）。
 关联 [[orca-merge-upstream-conflict-playbook]]、[[orca-shallow-clone-sync]]。

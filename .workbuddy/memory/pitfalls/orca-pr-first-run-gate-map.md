@@ -18,6 +18,39 @@ pr.yml **不跑** `audit:code-quality:native`；mobile.yml 的 Lint 在 `working
 - anti-slop `no-shape-in-symbol-names` 禁子串 `shape` → 直接改名（例：`UsageShape`→`UsageContract`，子串替换一次覆盖 `ClaudeUsageShape` 等派生名）
 - `no-object-parameters` → 照兄弟 `installXxxContext(target: OwnType, …)` 先例定型
 
+## 2026-09-26 续测：两个在本 fork 里本就过不了的失败
+
+### `cross-version wire compatibility` —— 结构性跑不通，与源码无关
+
+```
+Error: Cross-version harness found no stable desktop release tags matching vX.Y.Z (saw 0 tag(s) total).
+Error: Cross-version harness could not resolve ref "v1.4.190" to a commit
+```
+
+该测试用**上游 stablyai/orca 的桌面发布 tag**（`v1.4.184`/`v1.4.190`/`v1.4.199`）与当前代码做 skew。
+实测 tag 数：**fork `penghuizhang/orca` 只有 2 个（都是 `backup/pre-sync-*`）**，upstream 有 2181 个
+⇒ GitHub checkout 永远解析不到。
+
+**本地能过是因为本机 clone 里有上游 tag**（同步时 `git fetch upstream 'refs/tags/*:refs/tags/*'` 拉的）
+——**本地过 ≠ CI 能过**，别被自己骗了。
+
+两条出路（都属 CI 基础设施，需维护者拍板）：① job 里加一步 `git remote add upstream https://github.com/stablyai/orca.git && git fetch upstream 'refs/tags/*:refs/tags/*'`（保留真实 skew，代价是每次拉大量 tag）；② 设 `ORCA_CROSS_VERSION_BASELINE_REF` 指向 fork 内存在的 ref（便宜，但「旧客户端」不再是真正的旧发布，削弱检查意义）。
+
+### 4 个既存测试失败 —— 判定「是否本次引入」的手法
+
+2026-09-26 的 4 个失败在 `origin/custom`（合并前基线）上**一模一样**，且相关文件逐字节相同 ⇒ 非本次引入。两个根因：PR #18 移除 Gitee 集成不彻底（测试期望删了 `linkedGiteePR`，`getSelectedReviewLookupHints` 仍返回它）；`host-port-bootstrap-wiring.test.ts` 断言的调用顺序过期（实现新增 `configurePackagedUserDataPath()`）。
+
+**证明手法（以后每次 CI 红都先做这一步）**：
+
+```bash
+git worktree add --detach /tmp/orca-base origin/custom
+ln -s <repo>/node_modules /tmp/orca-base/node_modules
+cd /tmp/orca-base && pnpm test <失败的测试文件>     # 同样失败 = 既存
+git worktree remove --force /tmp/orca-base
+```
+
+**既存问题不要顺手塞进同步 PR**（会把最该被看清的改动埋掉），在 PR 里开评论写根因 + 建议单独开 PR。
+
 ## 遗留（非阻塞）
 本地全量 `pnpm lint` 在 `audit:code-quality:native` 恒红：9 个**上游 mobile 存量** no-cycle 警告（`mobile/src/terminal/document/*`、`transport/*`），`1b85..ae3d` 区间 mobile 零改动=与上游两侧同态；不卡 pr.yml，也不卡 mobile.yml。不要为此改上游 mobile 代码。
 

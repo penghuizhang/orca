@@ -7,6 +7,12 @@ metadata:
   originSessionId: sess_95f46680-c848-4e17-9bac-98fc3986c422
 ---
 
+> ⚠️ **本文件已过期**（2026-09-23 的状态锚点）。最新状态见 `daily/2026-09-26.md`：
+> custom tip = `079b7e63b2`（PR #25 合并后），上游基线 `8846987c99`，已装
+> `1.4.212-local.1790404501373.c422bc84e07d`，**遗留 = 用户手动 Cmd+Q 重启 orca-s**，
+> 且 **custom 分支带 4 个既存测试失败（红的，非同步引入）**。
+> 未被后续沿用的只有：已删分支、回退 tag 命名习惯、以及「装完要提醒手动重启」这一条。
+
 2026-09-23 完成「切 custom、删已合并分支、拉上游合并、打包」全流程，状态锚点：
 
 - **custom tip**：`d4316a24f4`（全部已推 origin/custom）；提交链 `1b7c8a0f93`（oxlintrc max-lines 320 豁免入库）→ `5fb0a55d4d`（记忆）→ `f02c056817`（Merge upstream/main `1b85be67d8`，304 提交，2 冲突叠加）→ `71cbf8bded`（hasPartialCost 集成修复）→ `c8f75151e8`/`d4316a24f4`（记忆与影响说明归档）
