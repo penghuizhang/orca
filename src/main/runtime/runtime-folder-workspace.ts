@@ -56,6 +56,7 @@ export function mergeRuntimeFolderWorkspace(
     linkedGiteaPR: meta.linkedGiteaPR ?? null,
     linkedGiteePR: meta.linkedGiteePR ?? null,
     linkedWorkItem: meta.linkedWorkItem ?? null,
+    ...(meta.linkedItems !== undefined ? { linkedItems: meta.linkedItems } : {}),
     linkedTaskSourceContext: meta.linkedTaskSourceContext ?? null,
     isArchived: meta.isArchived ?? false,
     isUnread: meta.isUnread ?? false,

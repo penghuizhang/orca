@@ -1,8 +1,9 @@
-import { useCallback } from 'react'
+import { useCallback, useLayoutEffect, useRef } from 'react'
 import type { OnMount } from '@monaco-editor/react'
 import { useAppStore } from '@/store'
 import { registerFileSearchSelectedTextProvider } from '@/lib/file-search-selection'
 import { syncContentOnMount } from './monaco-content-sync'
+import { toEditorModelUri } from './editor-model-uri'
 import {
   beginProgrammaticContentSync,
   endProgrammaticContentSync
@@ -26,6 +27,7 @@ export function useMonacoEditorMount(params: MonacoEditorMountParams): OnMount {
   const {
     fileId,
     filePath,
+    modelOwnerKey,
     viewStateKey,
     viewStateId,
     worktreeId,
@@ -63,6 +65,11 @@ export function useMonacoEditorMount(params: MonacoEditorMountParams): OnMount {
     },
     gutterMenu: { setGutterMenuOpen, setGutterMenuPoint, setGutterMenuLine }
   } = params
+  // Why: retained listeners must follow committed ownership, never an abandoned render.
+  const fileIdRef = useRef(fileId)
+  useLayoutEffect(() => {
+    fileIdRef.current = fileId
+  }, [fileId])
 
   return useCallback<OnMount>(
     (editorInstance, monaco) => {
@@ -100,7 +107,8 @@ export function useMonacoEditorMount(params: MonacoEditorMountParams): OnMount {
       updateMarkdownCompletionDocuments()
 
       // Why: see contentRef — reconcile the retained model to the current prop before user interaction (surfaces edits made while unmounted).
-      beginProgrammaticContentSync(filePath)
+      const modelKey = toEditorModelUri(filePath, modelOwnerKey)
+      beginProgrammaticContentSync(modelKey)
       isApplyingProgrammaticContentRef.current = true
       try {
         const didSyncOnMount = syncContentOnMount(
@@ -113,7 +121,7 @@ export function useMonacoEditorMount(params: MonacoEditorMountParams): OnMount {
         }
       } finally {
         isApplyingProgrammaticContentRef.current = false
-        endProgrammaticContentSync(filePath)
+        endProgrammaticContentSync(modelKey)
       }
 
       setupCopy(editorInstance, monaco, filePath, propsRef)
@@ -159,7 +167,7 @@ export function useMonacoEditorMount(params: MonacoEditorMountParams): OnMount {
 
       const { cursorPositionSub, scrollStateSub } = installMonacoViewStateTracking({
         editorInstance,
-        filePath,
+        fileIdRef,
         viewStateKey,
         scrollThrottleTimerRef,
         setEditorCursorLine
@@ -207,12 +215,38 @@ export function useMonacoEditorMount(params: MonacoEditorMountParams): OnMount {
       const revealMatchesEditor = reveal?.fileId
         ? reveal.fileId === fileId
         : reveal?.filePath === filePath
-      if (reveal && revealMatchesEditor) {
-        queueReveal(editorInstance, reveal.line, reveal.column, reveal.matchLength, () => {
-          useAppStore.getState().setPendingEditorReveal(null)
-        })
+      if (
+        reveal &&
+        revealMatchesEditor &&
+        (!reveal.viewStateId || reveal.viewStateId === viewStateId)
+      ) {
+        if (reveal.canApply?.() === false) {
+          restoreMonacoViewState(editorInstance, viewStateKey, () => false)
+          return
+        }
+        queueReveal(
+          editorInstance,
+          reveal.line,
+          reveal.column,
+          reveal.matchLength,
+          () => {
+            reveal.onApplied?.()
+            if (useAppStore.getState().pendingEditorReveal === reveal) {
+              useAppStore.getState().setPendingEditorReveal(null)
+            }
+          },
+          reveal.canApply
+            ? () =>
+                useAppStore.getState().pendingEditorReveal === reveal &&
+                reveal.canApply?.() !== false
+            : undefined
+        )
       } else {
-        restoreMonacoViewState(editorInstance, viewStateKey)
+        restoreMonacoViewState(
+          editorInstance,
+          viewStateKey,
+          reveal?.viewStateId && revealMatchesEditor ? () => false : undefined
+        )
       }
 
       // Why: every mount path above focuses, so an explicit open handoff is already satisfied here.
@@ -230,6 +264,7 @@ export function useMonacoEditorMount(params: MonacoEditorMountParams): OnMount {
       setupCopy,
       fileId,
       filePath,
+      modelOwnerKey,
       setEditorCursorLine,
       updateMarkdownCompletionDocuments,
       viewStateKey,

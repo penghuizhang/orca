@@ -4,11 +4,12 @@ import type {
   CodexConfigSyncApi,
   CursorAccountsApi,
   GrokAccountsApi,
-  MinimaxCredentialsApi
+  MinimaxCredentialsApi,
+  ZcodePlanCredentialsApi
 } from './api/agent-account-api'
 import type { HooksApi } from './api/agent-hook-api'
 import type { SkillsApi } from './api/agent-skill-api'
-import type { AgentAwakeApi, AgentStatusApi, AgentTrustApi } from './api/agent-status-api'
+import type { AgentAwakeApi, AgentStatusApi } from './api/agent-status-api'
 import type {
   ClaudeUsageApi,
   CodexUsageApi,
@@ -56,10 +57,12 @@ import type { BrowserAutomationMcpApi } from './api/browser-automation-mcp-api'
 import type { PtyApi } from './api/pty-api'
 import type { ProjectGroupsApi, ProjectsApi, RepositoryApi } from './api/repository-api'
 import type { RuntimeApi } from './api/runtime-api'
+import type { WslMoveApi } from './api/wsl-move-bridge'
 import type { KeybindingsApi, SettingsApi } from './api/settings-api'
 import type { ShellApi } from './api/shell-api'
 import type { SpeechApi } from './api/speech-api'
 import type { SshApi } from './api/ssh-api'
+import type { LegacyRelayBridgeApi } from './api/legacy-relay-bridge-api'
 import type { DiagnosticsApi, MemoryApi, StatsApi, TelemetryApi } from './api/telemetry-api'
 import type { UiCommandEventApi } from './api/ui-command-event-api'
 import type { UiWindowApi } from './api/ui-window-api'
@@ -110,7 +113,6 @@ export type PreloadApi = {
   claudeAccounts: ClaudeAccountsApi
   cli: CliApi
   codexConfigSync: CodexConfigSyncApi
-  agentTrust: AgentTrustApi
   preflight: PreflightApi
   notifications: NotificationsApi
   onboarding: OnboardingApi
@@ -128,7 +130,6 @@ export type PreloadApi = {
   ephemeralVm: EphemeralVmApi
   cache: WorkspaceSessionApi['cache']
   session: WorkspaceSessionApi['session']
-  remoteWorkspace: WorkspaceSessionApi['remoteWorkspace']
   updater: UpdaterApi
   notebook: FilesystemApi['notebook']
   docPreview: DocPreviewApi['docPreview']
@@ -148,14 +149,23 @@ export type PreloadApi = {
   runtime: RuntimeApi['runtime']
   runtimeEnvironments: RuntimeApi['runtimeEnvironments']
   rateLimits: RateLimitsApi
+  opencodeGoCredentials: {
+    getStatus: () => Promise<{ apiKeyConfigured: boolean }>
+    saveApiKey: (key: string) => Promise<{ apiKeyConfigured: boolean }>
+    clearApiKey: () => Promise<{ apiKeyConfigured: boolean }>
+  }
   minimaxCredentials: MinimaxCredentialsApi
+  zcodePlanCredentials: ZcodePlanCredentialsApi
   grokAccounts: GrokAccountsApi
   cursorAccounts: CursorAccountsApi
   ssh: SshApi
+  /** COMPAT(legacy-relay-bridge): desktop-only, revisit 2027-01-15. */
+  legacyRelayBridge?: LegacyRelayBridgeApi
   automations: AutomationsApi
   browserAutomationMcp: BrowserAutomationMcpApi
   calendar: CalendarApi
   wsl: RuntimeApi['wsl']
+  wslMove: WslMoveApi
   pwsh: RuntimeApi['pwsh']
   gitBash: RuntimeApi['gitBash']
   plugins: PluginsApi
@@ -208,7 +218,9 @@ export type {
   PtyManagementDaemonCwdClass,
   PtyManagementFolderAccessMismatch,
   PtyManagementMacTccAttributionHealth,
-  PtyManagementSession
+  PtyManagementSession,
+  PtyManagementSeveredDaemon,
+  PtyManagementSeveredDaemonRestartResult
 } from './api/pty-management-api'
 export type {
   ShellOpenExternalEditorRequest,

@@ -1,6 +1,7 @@
 import { findSameFileDefinitionRanges, rankSearchMatches } from './code-navigation'
-import { searchRuntimeFiles } from '@/runtime/runtime-file-client'
-import { getRightSidebarWorktreeRuntimeSettings } from '@/components/right-sidebar/file-explorer-runtime-owner'
+import { searchRuntimeFiles } from '@/runtime/runtime-file-search-client'
+import { getRuntimeEnvironmentIdForWorktree } from '@/lib/worktree-runtime-owner'
+import { runtimeTargetForOwnerEnvironment } from '@/runtime/runtime-client-target'
 import { getConnectionId } from '@/lib/connection-context'
 import { getIndexedWorktreeById } from '@/store/worktree-repo-index'
 import { useAppStore } from '@/store'
@@ -48,11 +49,16 @@ export async function resolveDefinitionTarget(params: {
   if (!worktreePath) {
     return null
   }
-  const settings = getRightSidebarWorktreeRuntimeSettings(worktreeId)
+  const runtimeEnvironmentId = getRuntimeEnvironmentIdForWorktree(state, worktreeId)
   const connectionId = getConnectionId(worktreeId) ?? undefined
   try {
     const result = await searchRuntimeFiles(
-      { settings, worktreeId, worktreePath, connectionId },
+      {
+        target: runtimeTargetForOwnerEnvironment(runtimeEnvironmentId),
+        worktreeId,
+        worktreePath,
+        connectionId
+      },
       { query: word, rootPath: worktreePath, wholeWord: true, caseSensitive: true, maxResults: 20 }
     )
     const ranked = rankSearchMatches(

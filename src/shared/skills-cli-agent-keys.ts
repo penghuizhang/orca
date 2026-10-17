@@ -14,6 +14,7 @@ import type { TuiAgent } from './tui-agent'
 export const SKILLS_CLI_AGENT_KEY_BY_TUI_AGENT = {
   claude: 'claude-code',
   'claude-agent-teams': 'claude-code',
+  codebuddy: 'codebuddy',
   // Why: Orca states OpenClaude reads Claude-owned roots (native-chat-agent-profiles).
   openclaude: 'claude-code',
   codex: 'codex',
@@ -24,6 +25,8 @@ export const SKILLS_CLI_AGENT_KEY_BY_TUI_AGENT = {
   pi: 'pi',
   omp: null,
   'prime-agent': null,
+  qoder: 'qoder',
+  'qoder-cn': 'qoder-cn',
   gemini: 'gemini-cli',
   antigravity: 'antigravity',
   aider: null,
@@ -35,6 +38,7 @@ export const SKILLS_CLI_AGENT_KEY_BY_TUI_AGENT = {
   aug: 'augment',
   cline: 'cline',
   codebuff: null,
+  freebuff: null,
   'command-code': 'command-code',
   continue: 'continue',
   cursor: 'cursor',
@@ -52,9 +56,13 @@ export const SKILLS_CLI_AGENT_KEY_BY_TUI_AGENT = {
   // Why: Orca detects trae by `traecli`, an alias only TRAE CN ships.
   trae: 'trae-cn',
   muse: null,
-  // Why: upstream maps this to 'zcode', but the installed community skills CLI (v1.4.6)
-  // has no `zcode` key in its own namespace — `skills add --agent zcode` would exit 1.
-  zcode: null
+  // Why: upstream maps this to 'zcode', but the installed community skills CLI (v1.4.6,
+  // re-checked 2026-10-17) has no `zcode` key in its own namespace — `skills add --agent
+  // zcode` would exit 1. Control keys `claude-code` and `qoder` are both present.
+  zcode: null,
+  // Why: DSH ships skills as Cordis plugins, not a `skills --agent` target.
+  dsh: null,
+  jcode: null
 } satisfies Record<TuiAgent, string | null>
 
 /**

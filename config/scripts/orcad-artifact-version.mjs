@@ -2,10 +2,15 @@ import { createHash } from 'node:crypto'
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { ORCAD_VERSION, orcadArtifactFilenames } from '../../src/shared/orcad-artifacts.ts'
+import { readOrcadMobileWebAssetFilenames } from './orcad-mobile-web-bundle.mjs'
 
-export function computeOrcadFullVersion(artifactDir) {
+/** The runtime enters through `.runtime-node`'s executableSha256 string, never its bytes (design D2). */
+export function computeOrcadFullVersion(artifactDir, { target, agentBrowserFilename }) {
   const hash = createHash('sha256')
-  for (const filename of orcadArtifactFilenames()) {
+  for (const filename of orcadArtifactFilenames(
+    target,
+    readOrcadMobileWebAssetFilenames(artifactDir)
+  )) {
     const artifactPath = join(artifactDir, filename)
     if (!existsSync(artifactPath)) {
       throw new Error(
@@ -14,6 +19,9 @@ export function computeOrcadFullVersion(artifactDir) {
       )
     }
     hash.update(readFileSync(artifactPath))
+  }
+  if (agentBrowserFilename && existsSync(join(artifactDir, agentBrowserFilename))) {
+    hash.update(readFileSync(join(artifactDir, agentBrowserFilename)))
   }
   return `${ORCAD_VERSION}+${hash.digest('hex').slice(0, 12)}`
 }

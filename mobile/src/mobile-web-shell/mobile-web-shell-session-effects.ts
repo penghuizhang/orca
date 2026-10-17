@@ -40,7 +40,9 @@ export async function openCache(
           compat: {
             schemaVersion: active.manifest.schemaVersion,
             runtimeProtocolVersion: active.manifest.runtimeProtocolVersion,
-            minCompatibleRuntimeProtocolVersion: active.manifest.minCompatibleRuntimeProtocolVersion
+            minCompatibleRuntimeProtocolVersion:
+              active.manifest.minCompatibleRuntimeProtocolVersion,
+            pageVersion: active.manifest.pageVersion
           }
         }
   } catch {
@@ -78,10 +80,10 @@ export async function readManifest(
         schemaVersion: manifest.schemaVersion,
         runtimeProtocolVersion: manifest.runtimeProtocolVersion,
         minCompatibleRuntimeProtocolVersion: manifest.minCompatibleRuntimeProtocolVersion,
+        pageVersion: manifest.pageVersion,
         totalBytes: manifest.totalBytes,
         totalAssets: manifest.assets.length,
-        routes: manifest.routes,
-        wire: manifest
+        routes: manifest.routes
       }
     })
   } catch (error) {
