@@ -20,14 +20,9 @@ AIGC:
 
 ## 活跃功能（active/）
 
-- [orca 笔记功能](active/orca-notes-feature.md) — 2026-09-21 实施完成+编辑器修复+打包验证；PR #23 待合并；语雀式目录树+编辑器（真实文件夹落盘 ~/OrcaNotes）；新增 TopLevelView 12 处注册 checklist 在 daily/2026-09-21
+- [orca 笔记功能](active/orca-notes-feature.md) — 2026-09-21 实施完成+编辑器修复+打包验证；PR #23 已合并；语雀式目录树+编辑器（真实文件夹落盘 ~/OrcaNotes）；新增 TopLevelView 12 处注册 checklist 在 daily/2026-09-21
 - [orca 日历功能](active/orca-calendar-feature.md) — PR #4 已合并；二期=阴历四层+周末底纹+法定休/班调休表+跨月弱化+验收微调；数据存储 orca-custom.db；**待用户拍板：2027+ 节假日数据更新机制**
-- [orca 日历清单历史周月查看优化](active/orca-calendar-worklist-history.md) — PR #15 已合并；纯 renderer 展示层改造，零 schema/IPC/main 改动
-- [orca-custom.db 业务库](active/orca-custom-db.md) — PR #6 已合入 custom；通用业务库 orca-custom.db（node:sqlite 接口）
-- [orca zcode 智能体类型](active/orca-zcode-agent-feature.md) — PR #5 已合并；新增 agent 必改注册表
-- [orca ZCode 使用统计独立面板](active/orca-zcode-usage-statistics.md) — PR #20 已合并；ZCode 独立 provider 卡片+完整详情面板
-- [orca 浏览器自动化 MCP Server](active/orca-browser-automation-mcp.md) — PR #16 + PR #17 已合并；22 个工具；`src/main/browser/mcp/`
-- [Pi 智能体下拉入口 + Pi 用量统计](daily/2026-09-04.md#pi-智能体下拉入口--pi-用量统计设计已评审通过) — 已完成并打包；镜像 zcode 模式
+- **已完成且稳定的二开功能**（各自设计文档见下 / 明细在 active/ 与 docs/）：日历清单历史周月查看优化（PR #15，纯 renderer）｜orca-custom.db 业务库（PR #6，node:sqlite）｜zcode 智能体类型（PR #5）｜ZCode 使用统计面板（PR #20）｜浏览器自动化 MCP（PR #16+#17，22 工具）｜Pi 智能体入口+用量（镜像 zcode 模式）
 
 ## 坑与经验（pitfalls/）
 
