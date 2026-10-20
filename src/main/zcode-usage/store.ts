@@ -4,6 +4,7 @@ import type { Store } from '../persistence'
 import { zcodeUsageProvider } from './zcode-usage-provider'
 import { getDefaultState, normalizePersistedState } from './persisted-state-normalization'
 import { UsageProviderStoreLifecycle } from '../usage/usage-provider-store-lifecycle'
+import { splitUsageCacheFileViaWorker } from '../usage/usage-scan-worker-spawn'
 import type {
   ZCodeUsageBreakdownRow,
   ZCodeUsageDailyAggregate,
@@ -185,8 +186,8 @@ export class ZCodeUsageStore extends UsageProviderStoreLifecycle<
       normalizeState: normalizePersistedState,
       sourceKey: 'processedDatabases',
       dataPresenceKey: 'hasAnyZCodeData',
-      jsonIndent: 2,
-      scan: zcodeUsageProvider.scan
+      scan: zcodeUsageProvider.scan,
+      splitCacheFile: splitUsageCacheFileViaWorker
     })
   }
 

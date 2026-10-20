@@ -3,7 +3,7 @@ import path from 'node:path'
 import { app, ipcMain } from 'electron'
 import { DEFAULT_NOTES_ROOT_DIRECTORY } from '../../shared/notes-root-directory'
 import type { Store } from '../persistence'
-import { authorizeExternalPath } from './filesystem-auth'
+import { grantNotesRootAccess } from './notes-path-grant'
 import { expandHomePath } from './expand-home-path'
 
 /**
@@ -24,7 +24,7 @@ export function registerNotesDirectoryHandlers(store: Store): void {
     await mkdir(rootPath, { recursive: true })
     // Why: allowed-roots grants are session-scoped, so authorize on every page open;
     // descendants then pass every fs CRUD authorization check without new IPC.
-    authorizeExternalPath(rootPath)
+    grantNotesRootAccess(rootPath)
     return rootPath
   })
 }

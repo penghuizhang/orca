@@ -2,13 +2,9 @@ import type { ReadStream } from 'node:fs'
 import { createReadStream } from 'node:fs'
 import { basename } from 'node:path'
 import { listPiSessionFiles } from './pi-session-discovery'
-import type {
-  PiUsageDailyAggregate,
-  PiUsageEvent,
-  PiUsageProcessedFile,
-  PiUsageSession
-} from './types'
+import type { PiUsageDailyAggregate, PiUsageEvent, PiUsageSession } from './types'
 import type { UsageScanWorktreeRef } from '../usage/usage-provider-contract'
+import { writeUsageSourceCache, type UsageSourceCacheRef } from '../usage/usage-source-cache-file'
 
 type PiUsagePayload = {
   input: number
@@ -249,13 +245,12 @@ function aggregateEvents(events: PiUsageEvent[]): {
 
 /**
  * Pi usage grows slowly (small JSONL files) so every scan reparses all sessions;
- * the processed-file list is kept only as bookkeeping for the persisted cache.
+ * the processed-file list is kept only as bookkeeping, in the scan's per-source cache.
  */
 export async function scanPiUsageSessions(
   worktrees: UsageScanWorktreeRef[],
-  _previousProcessedFiles: PiUsageProcessedFile[]
+  sourceCache: UsageSourceCacheRef
 ): Promise<{
-  processedFiles: PiUsageProcessedFile[]
   sessions: PiUsageSession[]
   dailyAggregates: PiUsageDailyAggregate[]
 }> {
@@ -270,8 +265,13 @@ export async function scanPiUsageSessions(
   }
 
   const { sessions, dailyAggregates } = aggregateEvents(events)
+  try {
+    await writeUsageSourceCache(sourceCache, sessionFiles)
+  } catch (error) {
+    // Why: an unwritable cache must not turn a successful scan into a failed one.
+    console.warn('[pi-usage] Could not persist the per-source usage cache:', error)
+  }
   return {
-    processedFiles: sessionFiles,
     sessions,
     dailyAggregates: dailyAggregates.sort((a, b) => a.day.localeCompare(b.day))
   }

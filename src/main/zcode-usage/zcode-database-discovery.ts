@@ -1,7 +1,7 @@
 import { stat } from 'node:fs/promises'
 import { isAbsolute, join } from 'node:path'
 import { homedir } from 'node:os'
-import type { ZCodeUsageProcessedDatabase } from './types'
+import type { ZCodeUsageDatabaseInfo } from './types'
 
 type ZCodeDatabaseOverride = {
   isConfigured: boolean
@@ -58,7 +58,7 @@ export async function listZCodeDatabases(): Promise<string[]> {
 
 export async function getProcessedDatabaseInfo(
   dbPath: string
-): Promise<ZCodeUsageProcessedDatabase> {
+): Promise<ZCodeUsageDatabaseInfo> {
   const dbStat = await stat(dbPath)
   return {
     path: dbPath,

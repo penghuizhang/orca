@@ -2,7 +2,10 @@ import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { readUsageSourceCache, type UsageSourceCacheRef } from '../usage/usage-source-cache-file'
+import { PI_USAGE_SCHEMA_VERSION } from './pi-usage-provider'
 import { scanPiUsageSessions } from './scanner'
+import type { PiUsageProcessedFile } from './types'
 
 const WORKTREE_PATH = '/repo/worktree-a'
 
@@ -16,6 +19,17 @@ const worktrees = [
 ]
 
 let sessionsDir: string
+
+let sourceCachePath: string
+
+function sourceCacheRef(): UsageSourceCacheRef {
+  return {
+    path: sourceCachePath,
+    schemaVersion: PI_USAGE_SCHEMA_VERSION,
+    worktreeFingerprint: null,
+    reuse: true
+  }
+}
 
 function writeSessionFile(name: string, lines: unknown[]): void {
   writeFileSync(
@@ -49,6 +63,7 @@ function assistantLine(overrides: Record<string, unknown> = {}): unknown {
 
 beforeEach(() => {
   sessionsDir = mkdtempSync(join(tmpdir(), 'orca-pi-usage-'))
+  sourceCachePath = join(sessionsDir, 'pi-usage-sources.json')
   mkdirSync(join(sessionsDir, 'project-slug'), { recursive: true })
   process.env.PI_SESSIONS_DIR = sessionsDir
 })
@@ -69,7 +84,8 @@ describe('scanPiUsageSessions', () => {
       { type: 'compaction' }
     ])
 
-    const result = await scanPiUsageSessions(worktrees, [])
+    const ref = sourceCacheRef()
+    const result = await scanPiUsageSessions(worktrees, ref)
 
     expect(result.sessions).toHaveLength(1)
     const session = result.sessions[0]
@@ -99,7 +115,7 @@ describe('scanPiUsageSessions', () => {
         totalTokens: 310
       }
     ])
-    expect(result.processedFiles).toHaveLength(1)
+    expect(await readUsageSourceCache<PiUsageProcessedFile>(ref)).toHaveLength(1)
   })
 
   it('falls back to cwd basename outside known worktrees and drops files without usage', async () => {
@@ -109,7 +125,7 @@ describe('scanPiUsageSessions', () => {
     ])
     writeSessionFile('empty.jsonl', [{ type: 'session', id: 'empty', cwd: '/elsewhere/project-x' }])
 
-    const result = await scanPiUsageSessions(worktrees, [])
+    const result = await scanPiUsageSessions(worktrees, sourceCacheRef())
 
     expect(result.sessions).toHaveLength(1)
     expect(result.sessions[0]).toMatchObject({
@@ -120,7 +136,7 @@ describe('scanPiUsageSessions', () => {
 
   it('returns empty results when the sessions directory is missing', async () => {
     process.env.PI_SESSIONS_DIR = join(sessionsDir, 'does-not-exist')
-    const result = await scanPiUsageSessions(worktrees, [])
-    expect(result).toEqual({ processedFiles: [], sessions: [], dailyAggregates: [] })
+    const result = await scanPiUsageSessions(worktrees, sourceCacheRef())
+    expect(result).toEqual({ sessions: [], dailyAggregates: [] })
   })
 })

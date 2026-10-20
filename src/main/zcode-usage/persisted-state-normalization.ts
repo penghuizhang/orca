@@ -1,7 +1,9 @@
+import { ZCODE_USAGE_SCHEMA_VERSION } from './zcode-usage-provider'
 import type { ZCodeUsagePersistedState } from './types'
 
 export function getDefaultState(): ZCodeUsagePersistedState {
   return {
+    schemaVersion: ZCODE_USAGE_SCHEMA_VERSION,
     processedDatabases: [],
     sessions: [],
     dailyAggregates: [],
@@ -16,6 +18,14 @@ export function getDefaultState(): ZCodeUsagePersistedState {
 }
 
 export function normalizePersistedState(state: ZCodeUsagePersistedState): ZCodeUsagePersistedState {
+  // Why: a cache from another schema cannot be trusted; rescan but keep the opt-in.
+  if (state.schemaVersion !== ZCODE_USAGE_SCHEMA_VERSION) {
+    const defaults = getDefaultState()
+    return {
+      ...defaults,
+      scanState: { ...defaults.scanState, enabled: state.scanState?.enabled ?? true }
+    }
+  }
   return {
     ...state,
     processedDatabases: Array.isArray(state.processedDatabases) ? state.processedDatabases : [],

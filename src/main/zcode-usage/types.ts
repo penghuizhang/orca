@@ -138,10 +138,17 @@ export type ZCodeUsageDailyAggregate = {
 }
 
 /** Database metadata for caching */
-export type ZCodeUsageProcessedDatabase = {
+/** Bookkeeping for one database file, without what it contributed. */
+export type ZCodeUsageDatabaseInfo = {
   path: string
   mtimeMs: number
   size: number
+}
+
+/** Per-source cache record: bookkeeping plus what that database contributed, so reuse keeps the totals. */
+export type ZCodeUsageProcessedDatabase = ZCodeUsageDatabaseInfo & {
+  sessions: ZCodeUsageSession[]
+  dailyAggregates: ZCodeUsageDailyAggregate[]
 }
 
 /** Alias for compatibility with UsageProvider interface */
@@ -149,6 +156,7 @@ export type ZCodeUsagePersistedDatabase = ZCodeUsageProcessedDatabase
 
 /** Persisted state for zcode usage cache */
 export type ZCodeUsagePersistedState = {
+  schemaVersion: number
   processedDatabases: ZCodeUsageProcessedDatabase[]
   sessions: ZCodeUsageSession[]
   dailyAggregates: ZCodeUsageDailyAggregate[]

@@ -3,11 +3,17 @@ import { getProcessedDatabaseInfo, listZCodeDatabases } from './zcode-database-d
 import type {
   ZCodeModelUsageRow,
   ZCodeUsageDailyAggregate,
+  ZCodeUsageDatabaseInfo,
   ZCodeUsageEvent,
   ZCodeUsageProcessedDatabase,
   ZCodeUsageSession
 } from './types'
 import type { UsageScanWorktreeRef } from '../usage/usage-provider-contract'
+import {
+  readUsageSourceCache,
+  writeUsageSourceCache,
+  type UsageSourceCacheRef
+} from '../usage/usage-source-cache-file'
 
 function parseModelUsageRow(row: ZCodeModelUsageRow): ZCodeUsageEvent | null {
   if (row.status !== 'completed' && row.status !== 'error') {
@@ -102,7 +108,7 @@ function aggregateEvents(events: ZCodeUsageEvent[]): {
 }
 
 export async function parseZCodeUsageDatabase(dbPath: string): Promise<{
-  processedDatabase: ZCodeUsageProcessedDatabase
+  processedDatabase: ZCodeUsageDatabaseInfo
   sessions: ZCodeUsageSession[]
   dailyAggregates: ZCodeUsageDailyAggregate[]
   events: ZCodeUsageEvent[]
@@ -153,16 +159,14 @@ export async function parseZCodeUsageDatabase(dbPath: string): Promise<{
 
 export async function scanZCodeUsageDatabases(
   _worktrees: UsageScanWorktreeRef[],
-  previousProcessedDatabases: ZCodeUsageProcessedDatabase[]
+  sourceCache: UsageSourceCacheRef
 ): Promise<{
-  processedDatabases: ZCodeUsageProcessedDatabase[]
   sessions: ZCodeUsageSession[]
   dailyAggregates: ZCodeUsageDailyAggregate[]
 }> {
   const dbPaths = await listZCodeDatabases()
-  const previousByPath = new Map(
-    previousProcessedDatabases.map((database) => [database.path, database])
-  )
+  const previousDatabases = await readUsageSourceCache<ZCodeUsageProcessedDatabase>(sourceCache)
+  const previousByPath = new Map(previousDatabases.map((database) => [database.path, database]))
 
   const processedDatabases: ZCodeUsageProcessedDatabase[] = []
   const allSessions: ZCodeUsageSession[] = []
@@ -172,31 +176,37 @@ export async function scanZCodeUsageDatabases(
     const databaseInfo = await getProcessedDatabaseInfo(dbPath)
     const previous = previousByPath.get(dbPath)
 
-    // Skip if unchanged
+    // Skip if unchanged; the reused record carries its own totals, so none are dropped.
     if (
       previous &&
       previous.mtimeMs === databaseInfo.mtimeMs &&
-      previous.size === databaseInfo.size
+      previous.size === databaseInfo.size &&
+      Array.isArray(previous.sessions) &&
+      Array.isArray(previous.dailyAggregates)
     ) {
       processedDatabases.push(previous)
+      allSessions.push(...previous.sessions)
+      allDailyAggregates.push(...previous.dailyAggregates)
       continue
     }
 
     const { processedDatabase, sessions, dailyAggregates } = await parseZCodeUsageDatabase(dbPath)
 
-    processedDatabases.push(processedDatabase)
+    processedDatabases.push({ ...processedDatabase, sessions, dailyAggregates })
     allSessions.push(...sessions)
     allDailyAggregates.push(...dailyAggregates)
   }
 
-  // Merge sessions and daily aggregates
-  const mergedSessions = mergeSessions(allSessions)
-  const mergedDaily = mergeDailyAggregates(allDailyAggregates)
+  try {
+    await writeUsageSourceCache(sourceCache, processedDatabases)
+  } catch (error) {
+    // Why: an unwritable cache must not turn a successful scan into a failed one.
+    console.warn('[zcode-usage] Could not persist the per-source usage cache:', error)
+  }
 
   return {
-    processedDatabases,
-    sessions: mergedSessions,
-    dailyAggregates: mergedDaily
+    sessions: mergeSessions(allSessions),
+    dailyAggregates: mergeDailyAggregates(allDailyAggregates)
   }
 }
 

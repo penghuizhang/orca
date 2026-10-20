@@ -308,6 +308,8 @@ describe('usage overview model', () => {
       claude: { scanState: enabledClaudeScanState(), summary: claudeSummary, daily: [] },
       codex: { scanState: null, summary: null, daily: [] },
       opencode: { scanState: null, summary: null, daily: [] },
+      zcode: { scanState: null, summary: null, daily: [] },
+      pi: { scanState: null, summary: null, daily: [] },
       muse: { scanState: null, summary: null, daily: [] }
     })
 

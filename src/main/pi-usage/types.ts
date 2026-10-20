@@ -67,6 +67,7 @@ export type PiUsageProcessedFile = {
 }
 
 export type PiUsagePersistedState = {
+  schemaVersion: number
   processedFiles: PiUsageProcessedFile[]
   sessions: PiUsageSession[]
   dailyAggregates: PiUsageDailyAggregate[]

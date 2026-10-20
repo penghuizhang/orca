@@ -4,7 +4,8 @@ import type { Store } from '../persistence'
 import { piUsageProvider } from './pi-usage-provider'
 import { getDefaultState, normalizePersistedState } from './persisted-state-normalization'
 import { UsageProviderStoreLifecycle } from '../usage/usage-provider-store-lifecycle'
-import type { PiUsageProcessedFile, PiUsageSession, PiUsageDailyAggregate } from './types'
+import { splitUsageCacheFileViaWorker } from '../usage/usage-scan-worker-spawn'
+import type { PiUsageDailyAggregate, PiUsagePersistedState, PiUsageSession } from './types'
 import type {
   PiUsageBreakdownKind,
   PiUsageBreakdownRow,
@@ -184,18 +185,8 @@ function buildRecentSessions(sessions: PiUsageSession[], limit: number): PiUsage
     }))
 }
 
-export type PiUsagePersistedStoreState = {
-  processedFiles: PiUsageProcessedFile[]
-  sessions: PiUsageSession[]
-  dailyAggregates: PiUsageDailyAggregate[]
-  worktreeFingerprint: string | null
-  scanState: {
-    enabled: boolean
-    lastScanStartedAt: number | null
-    lastScanCompletedAt: number | null
-    lastScanError: string | null
-  }
-}
+/** Alias kept for existing imports; the shape is owned by types.ts. */
+export type PiUsagePersistedStoreState = PiUsagePersistedState
 
 export class PiUsageStore extends UsageProviderStoreLifecycle<
   'processedFiles',
@@ -210,8 +201,8 @@ export class PiUsageStore extends UsageProviderStoreLifecycle<
       normalizeState: normalizePersistedState,
       sourceKey: 'processedFiles',
       dataPresenceKey: 'hasAnyPiData',
-      jsonIndent: 2,
-      scan: piUsageProvider.scan
+      scan: piUsageProvider.scan,
+      splitCacheFile: splitUsageCacheFileViaWorker
     })
   }
 

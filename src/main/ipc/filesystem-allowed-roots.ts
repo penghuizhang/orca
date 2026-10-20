@@ -15,6 +15,7 @@ import type { FolderWorkspace } from '../../shared/folder-workspace-types'
 import type { ProjectGroup } from '../../shared/project-group-types'
 import type { Repo } from '../../shared/repo-types'
 import { hasRemoteFilesystemOwner } from './remote-filesystem-owner'
+import { getGrantedNotesRoot } from './notes-path-grant'
 
 type FolderScopeStore = Pick<RuntimeStore, 'getRepos'> &
   Partial<Pick<RuntimeStore, 'getProjectGroups' | 'getFolderWorkspaces'>>
@@ -164,6 +165,11 @@ export function getAllowedRoots(store: RuntimeStore): string[] {
         )
       }
     }
+  }
+  // Why: the notes root is app-owned but outside every store root; granted on first notes open.
+  const notesRoot = getGrantedNotesRoot()
+  if (notesRoot) {
+    roots.push(resolve(notesRoot))
   }
   return roots
 }
