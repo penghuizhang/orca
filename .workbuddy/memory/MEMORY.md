@@ -92,3 +92,7 @@ AIGC:
 - `docs/2026-09-04-记忆目录子分类方案.md` — 记忆目录子分类方案
 
 > AI生成
+## 并发会话与中断（2026-10-17）
+
+- [并发会话共用 worktree ⇒ 在途合并被抹掉](pitfalls/orca-concurrent-session-shared-worktree.md) — **2026-10-17 实测**：另一会话同目录做同一同步（`git reflog` 见 `reset: moving to HEAD` + 两次 `checkout -b sync/upstream-<sha>`），抹掉第一轮 21 处冲突解决、切走我的分支指针、还把我的 `git add -f .workbuddy` 卷进对方文档。**对策：解完立刻提交（已提交的合并遇 reset 是 no-op）、发现并发后停止动索引/工作区、成果存成分支、打包绝不可并发**。另附 Electron 走 `ELECTRON_MIRROR` 国内镜像 432KB/s（GitHub 仅 50KB/s）的实测
+- [2026-10-17 同步 a87aa4ccdb（3002 提交）状态](../docs/workflow/2026-10-17-上游同步a87aa4ccdb与并发会话冲突说明.md) — 合并 `2c7cc684a7`（存于分支 `backup/sync-a87aa4ccdb-2c7cc68`），21 处冲突决策表可直接复用到后续轮次；**未提 PR、未打包**；遗留 tc 的 5 个错误（2 个 `UsageProviderStores` 缺口确凿）

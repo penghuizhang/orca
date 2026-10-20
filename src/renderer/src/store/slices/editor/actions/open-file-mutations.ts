@@ -3,10 +3,19 @@ import type { EditorSlice } from '../types/editor-slice'
 import { isEditorTabContentType } from '../tabs/editor-tab-content-type'
 import type { Tab } from '../../../../../../shared/tab-types'
 import { ORCA_LAYOUT_OWNER_IS_MAIN } from '../../../../../../shared/layout-owner-switch'
+import { withPreviewEnded } from '../../tabs/tab-preview-flag'
 import {
   previewEditorTabsOf,
   recordPromotedEditorTabsInLayoutOwner
 } from '../tabs/editor-tab-layout-owner'
+import { writeEditorBuffer } from '../buffers/editor-buffer-record'
+import { getDiskBaselineSignature } from '../../../../../../shared/disk-baseline-signature'
+
+function withoutKey<T>(record: Record<string, T>, key: string): Record<string, T> {
+  const next = { ...record }
+  delete next[key]
+  return next
+}
 
 export function createOpenFileMutations(
   set: EditorSet,
@@ -77,19 +86,29 @@ export function createOpenFileMutations(
           return s
         }
         const needsPreviewClear = dirty && file.isPreview
-        if (file.isDirty === dirty && !needsPreviewClear) {
+        // Why: a clean tab holds no draft of the disk text; a kept one could later restore stale
+        // text into a shared model. A draft that differs from disk (whitespace a Markdown view
+        // does not count as an edit) is a real unsaved edit and stays.
+        const draft = s.editorDrafts[fileId]
+        const dropDraft =
+          !dirty &&
+          draft !== undefined &&
+          (file.lastKnownDiskSignature === undefined ||
+            getDiskBaselineSignature(draft) === file.lastKnownDiskSignature)
+        if (file.isDirty === dirty && !needsPreviewClear && !dropDraft) {
           return s
         }
         if (ORCA_LAYOUT_OWNER_IS_MAIN && needsPreviewClear) {
           promoted.push(...previewEditorTabsOf(s.unifiedTabsByWorktree, fileId))
         }
-        const nextOpenFiles = s.openFiles.map((f) =>
-          f.id === fileId
-            ? { ...f, isDirty: dirty, ...(needsPreviewClear ? { isPreview: undefined } : {}) }
-            : f
-        )
         return {
-          openFiles: nextOpenFiles,
+          ...writeEditorBuffer(
+            s,
+            fileId,
+            { isDirty: dirty },
+            needsPreviewClear ? { isPreview: undefined } : undefined
+          ),
+          ...(dropDraft ? { editorDrafts: withoutKey(s.editorDrafts, fileId) } : {}),
           ...(needsPreviewClear
             ? {
                 unifiedTabsByWorktree: Object.fromEntries(
@@ -97,7 +116,7 @@ export function createOpenFileMutations(
                     worktreeId,
                     tabs.map((tab) =>
                       tab.entityId === fileId && isEditorTabContentType(tab.contentType)
-                        ? { ...tab, isPreview: false }
+                        ? withPreviewEnded(tab)
                         : tab
                     )
                   ])
@@ -122,11 +141,7 @@ export function createOpenFileMutations(
         if (file.externalMutation === next) {
           return s
         }
-        return {
-          openFiles: s.openFiles.map((f) =>
-            f.id === fileId ? { ...f, externalMutation: next } : f
-          )
-        }
+        return writeEditorBuffer(s, fileId, { externalMutation: next })
       }),
 
     setLastKnownDiskSignature: (fileId, signature) =>
@@ -135,11 +150,7 @@ export function createOpenFileMutations(
         if (!file || file.lastKnownDiskSignature === signature) {
           return s
         }
-        return {
-          openFiles: s.openFiles.map((f) =>
-            f.id === fileId ? { ...f, lastKnownDiskSignature: signature } : f
-          )
-        }
+        return writeEditorBuffer(s, fileId, { lastKnownDiskSignature: signature })
       }),
 
     clearPendingDiskBaselineVerification: (fileId) =>
@@ -148,11 +159,7 @@ export function createOpenFileMutations(
         if (!file?.pendingDiskBaselineVerification) {
           return s
         }
-        return {
-          openFiles: s.openFiles.map((f) =>
-            f.id === fileId ? { ...f, pendingDiskBaselineVerification: undefined } : f
-          )
-        }
+        return writeEditorBuffer(s, fileId, { pendingDiskBaselineVerification: undefined })
       }),
 
     setPendingDiskBaselineVerification: (fileId, value) =>
@@ -162,11 +169,7 @@ export function createOpenFileMutations(
         if (!file || file.pendingDiskBaselineVerification === next) {
           return s
         }
-        return {
-          openFiles: s.openFiles.map((f) =>
-            f.id === fileId ? { ...f, pendingDiskBaselineVerification: next } : f
-          )
-        }
+        return writeEditorBuffer(s, fileId, { pendingDiskBaselineVerification: next })
       }),
 
     setPendingLiveDiskVerification: (fileId, value) =>
@@ -176,11 +179,7 @@ export function createOpenFileMutations(
         if (!file || file.pendingLiveDiskVerification === next) {
           return s
         }
-        return {
-          openFiles: s.openFiles.map((f) =>
-            f.id === fileId ? { ...f, pendingLiveDiskVerification: next } : f
-          )
-        }
+        return writeEditorBuffer(s, fileId, { pendingLiveDiskVerification: next })
       }),
 
     clearSelfMoveEcho: (fileId) =>

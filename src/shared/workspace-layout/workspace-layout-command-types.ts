@@ -4,6 +4,7 @@
 // `startup_agent_conflict` (host support), `file_outside_workspace` (paths) and
 // `terminal_liveness_unavailable` (PTY host).
 
+import type { LiveTerminalAdoption } from './workspace-layout-terminal-adoption'
 import type { SleepingAgentSessionRecord } from '../agent-session-resume'
 import type { AgentType } from '../agent-status-types'
 import type { AiVaultSessionTitle } from '../ai-vault-session-title'
@@ -24,6 +25,8 @@ export type WindowPaneDetach = {
   ptyId: string | null
   /** The new tab's id, the same in every partition holding the pane; minted when absent. */
   tabId?: string
+  /** The pane's folder, for the shell an unbound pane starts in its new tab. Older mains drop it. */
+  startupCwd?: string
 }
 
 export type LayoutCommand =
@@ -40,8 +43,12 @@ export type LayoutCommand =
       viewMode?: 'terminal' | 'chat'
       /** When the window drew the tab, so a later save of it matches main's copy. */
       createdAt?: number
+      /** A quick command tab's label, so a later save of it matches main's copy. */
+      quickCommandLabel?: string
       creation?: Partial<LayoutTerminalCreation>
       initial?: InitialSurfaceReason
+      /** A live terminal no pane shows: its pane when main holds one, else this tab, bound to it. */
+      adopt?: LiveTerminalAdoption
       split?: NewGroupSplit
     })
   | (On & {
@@ -108,8 +115,9 @@ export type LayoutCommand =
       type: 'openEditorTab'
       /** The window's id for a tab it drew first; minted when absent. */
       tabId?: string
-      /** The editor's file id: the tab's entity. */
-      fileId: string
+      /** The editor's file id: the tab's entity. Absent (main's own opens only; the wire still
+       *  requires it): main picks it for `file`. */
+      fileId?: string
       contentType: Exclude<TabContentType, 'terminal' | 'browser' | 'agent-session' | 'simulator'>
       /** Present for edit-mode files, which are restored after restart. */
       file?: LayoutEditorFile
@@ -124,6 +132,18 @@ export type LayoutCommand =
       split?: NewGroupSplit
     })
   | (On & { type: 'promotePreviewTab'; tabId: string })
+  | (On & {
+      type: 'openSimulatorTab'
+      /** The window's id for the tab it drew; also the tab's entity. */
+      tabId: string
+      groupId?: string
+      /** Placement in the group: after this tab, else at this index, else at its end. */
+      afterTabId?: string
+      index?: number
+      /** When the window drew the tab, so a later save of it matches main's copy. */
+      createdAt?: number
+      split?: NewGroupSplit
+    })
   | (On & {
       type: 'moveTabToWorkspace'
       /** The workspace that owns the tabs' file, as the window resolved it; same partition. */
@@ -174,7 +194,13 @@ export type LayoutCommand =
       sessionId: string
       agent: AgentType
       groupId?: string
+      /** Placement in the group: after this tab, else at this index, else at its end. */
+      afterTabId?: string
+      index?: number
+      /** When the window drew the tab, so a later save of it matches main's copy. */
+      createdAt?: number
       initial?: InitialSurfaceReason
+      split?: NewGroupSplit
     })
   | (On & { type: 'startPane'; paneKey: string })
   | (On & { type: 'restartPane'; paneKey: string })
@@ -187,6 +213,8 @@ export type LayoutCommand =
     })
   /** `recordOnly`: drops the records and starts nothing. */
   | (On & { type: 'wake'; paneKeys?: string[]; recordOnly?: true })
+  /** The workspace's default tabs were applied (or it had none): never apply them again. */
+  | (On & { type: 'setDefaultTabsApplied' })
 
 /**
  * Why a workspace's first surface is asked for: `restore` at relaunch, `activation` when a user
@@ -207,13 +235,37 @@ export type GroupSide = 'left' | 'right' | 'up' | 'down'
 
 /**
  * An open into a new group, named by the command's `groupId`, split off `besideGroupId`: the
- * group and its first tab are made in one step, so no empty group is ever stored.
+ * group and its first tab are made in one step, so no empty group is ever stored. With
+ * `besideLastGroupId`, the split is off the branch from `besideGroupId` to it (its first and last
+ * groups), as when a group the window kept empty sits beside a branch split since.
  */
-export type NewGroupSplit = { besideGroupId: string; direction: GroupSide }
+export type NewGroupSplit = {
+  besideGroupId: string
+  besideLastGroupId?: string
+  direction: GroupSide
+}
 
 export type TabTitle =
   | { kind: 'custom' | 'generated'; title: string | null }
   | { kind: 'aiVault'; title: AiVaultSessionTitle | null }
+
+/** One tab's agent-generated title in a `renameTabs` batch. */
+export type GeneratedTabTitle = { workspace: string; tabId: string; title: string | null }
+
+/**
+ * A window's agent-generated titles for many tabs, of any workspaces, in one `layout.apply`: main
+ * renames them in one write, so one frame shows them all. Each rename is a `renameTab`.
+ */
+export type RenameTabsCommand = {
+  type: 'renameTabs'
+  kind: 'generated'
+  renames: GeneratedTabTitle[]
+}
+
+/** A `renameTabs` title main did not give its tab, and why. */
+export type UntitledTab = Omit<GeneratedTabTitle, 'title'> & {
+  code: Extract<LayoutApplyReply, { ok: false }>['code']
+}
 
 export type LayoutRefusalCode =
   | 'workspace_not_found'
@@ -254,6 +306,8 @@ export type LayoutCommandResult = {
   woken?: string[]
   /** Old tab-bar id → new, for tabs a file rename re-ided; views move their selection with it. */
   renamedTabIds?: Record<string, string>
+  /** `renameTabs`: the titles main did not give; every other tab has its title. */
+  untitled?: UntitledTab[]
 }
 
 /** A command applied to a stored layout: its result, or why it changed nothing. */
@@ -263,12 +317,14 @@ export type LayoutApplyOutcome =
 
 /**
  * `layout.apply`'s reply. `host_not_owned`: a paired server owns that workspace's layout.
- * `other_partition`: a move's two workspaces are in different host partitions. `frameSeq`: the
- * layout stream position whose frames hold the command's effect (absent from older hosts).
+ * `other_partition`: a move's two workspaces are in different host partitions.
+ * `wsl_move_in_progress`: a WSL move has paused the workspace (older windows log it as refused).
+ * `frameSeq`: the layout stream position whose frames hold the command's effect (absent from
+ * older hosts).
  */
 export type LayoutApplyReply = (
   | LayoutApplyOutcome
-  | { ok: false; code: 'host_not_owned' | 'other_partition' }
+  | { ok: false; code: 'host_not_owned' | 'other_partition' | 'wsl_move_in_progress' }
 ) & { frameSeq?: number }
 
 export type LayoutContext = {

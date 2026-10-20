@@ -6,11 +6,13 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ExecutionHostId } from '../../../shared/execution-host'
+import { hostWorktreeTarget } from '../../../shared/worktree/host-qualified-identity'
 import {
   createCompatibleRuntimeStatusResponseIfNeeded,
   type RuntimeEnvironmentCallRequest
 } from '../runtime/runtime-compatibility-test-fixture'
 import { clearRuntimeCompatibilityCacheForTests } from '../runtime/runtime-rpc-client'
+import { hasWorktreeSleepIntent } from '@/lib/worktree-sleep-intent'
 import {
   changedHostTwinState,
   projectHostTwinState,
@@ -107,9 +109,18 @@ type TwinAction = {
   run: (fixture: HostTwinFixture, target: HostTwinSide) => Promise<unknown>
   /** Proves the action reached its target, so an isolated no-op can't pass. */
   applied: (fixture: HostTwinFixture, target: HostTwinSide) => void
+  /**
+   * Set when acting on one copy acts on the whole workspace by design (user decision
+   * 2026-10-17): the cell then asserts the survivor was acted on too.
+   */
+  wholeWorkspace?: (fixture: HostTwinFixture, survivor: HostTwinSide) => void
 }
 
-const isFolderKind = (kind: HostTwinKind) => kind === 'folder local+ssh'
+const survivorStopped = (f: HostTwinFixture, survivor: HostTwinSide) =>
+  expect(f.store.getState().ptyIdsByTabId[survivor.terminalTabId] ?? []).toEqual([])
+
+const isFolderKind = (kind: HostTwinKind) =>
+  kind === 'folder local+ssh' || kind === 'folder group local+ssh'
 const settle = async (run: () => unknown) => {
   try {
     await run()
@@ -132,7 +143,8 @@ const TWIN_ACTIONS: readonly TwinAction[] = [
   {
     id: 'delete folder workspace',
     source: 'store/folder-workspaces/folder-workspace-mutations.ts deleteFolderWorkspace',
-    appliesTo: isFolderKind,
+    // Why: one unstamped row can't be deleted on one host only; the no-host case is below.
+    appliesTo: (kind) => kind === 'folder local+ssh',
     run: (f, target) =>
       f.store.getState().deleteFolderWorkspace(f.projectId, { executionHostId: target.hostId }),
     applied: (f, target) =>
@@ -147,7 +159,9 @@ const TWIN_ACTIONS: readonly TwinAction[] = [
     run: async (f, target) =>
       f.store
         .getState()
-        .purgeWorktreeTerminalState([{ id: f.workspaceKey, hostId: target.hostId }]),
+        .purgeWorktreeTerminalState([
+          hostWorktreeTarget({ id: f.workspaceKey, hostId: target.hostId })
+        ]),
     applied: (f, target) =>
       expect(f.store.getState().ptyIdsByTabId[target.terminalTabId]).toBeUndefined()
   },
@@ -155,10 +169,11 @@ const TWIN_ACTIONS: readonly TwinAction[] = [
     id: 'kill terminals',
     source: 'store/terminals/terminal-shutdown.ts shutdownWorktreeTerminals',
     appliesTo: () => true,
-    // Why raw id: the entry point cannot name a host yet (Stage 1.3 HostWorktreeTarget).
+    // Why raw id: a twin's copies share one workspace, so killing one kills both.
     run: (f) => settle(() => f.store.getState().shutdownWorktreeTerminals(f.workspaceKey)),
     applied: (f, target) =>
-      expect(f.store.getState().ptyIdsByTabId[target.terminalTabId] ?? []).toEqual([])
+      expect(f.store.getState().ptyIdsByTabId[target.terminalTabId] ?? []).toEqual([]),
+    wholeWorkspace: survivorStopped
   },
   {
     id: 'sleep',
@@ -166,49 +181,34 @@ const TWIN_ACTIONS: readonly TwinAction[] = [
     appliesTo: () => true,
     run: (f) => settle(() => sleepWorktreesReportingFailures([f.workspaceKey])),
     applied: (f, target) =>
-      expect(f.store.getState().ptyIdsByTabId[target.terminalTabId] ?? []).toEqual([])
+      expect(f.store.getState().ptyIdsByTabId[target.terminalTabId] ?? []).toEqual([]),
+    wholeWorkspace: survivorStopped
   },
   {
     id: 'select',
     source: 'store/slices/worktrees.ts setActiveWorktree / setActiveFolderWorkspace',
-    appliesTo: () => true,
+    // Why: a single unstamped folder row has no SSH copy to select.
+    appliesTo: (kind) => kind !== 'folder group local+ssh',
     run: async (f, target) =>
       isFolderKind(f.kind)
         ? f.store.getState().setActiveFolderWorkspace(f.projectId, target.hostId)
         : f.store.getState().setActiveWorktree(f.workspaceKey, target.hostId),
     applied: (f, target) =>
-      expect(f.store.getState().activeWorkspaceExecutionHostId).toBe(target.hostId)
+      expect(f.store.getState().activeWorkspaceExecutionHostId).toBe(target.hostId),
+    // Why: opening either copy wakes the shared workspace marker for both.
+    wholeWorkspace: (f) => expect(hasWorktreeSleepIntent(f.workspaceKey)).toBe(false)
   }
 ]
 
-const TWIN_KINDS: readonly HostTwinKind[] = ['local+ssh', 'local+runtime', 'folder local+ssh']
-
-function everyCell(actionId: string, reason: string, kinds = TWIN_KINDS): [string, string][] {
-  return kinds.flatMap((kind) =>
-    (['remote', 'local'] as const).map((target): [string, string] => [
-      `${actionId} | ${kind} | ${target}`,
-      reason
-    ])
-  )
-}
+const TWIN_KINDS: readonly HostTwinKind[] = [
+  'local+ssh',
+  'local+runtime',
+  'folder local+ssh',
+  'folder group local+ssh'
+]
 
 /** `<action> | <kind> | <target>` → why the survivor is touched today (tracker Stage 1 worklist). */
-const KNOWN_TWIN_LEAKS: Readonly<Record<string, string>> = Object.fromEntries([
-  ...everyCell(
-    'purge terminal state',
-    'the purge drops every bucket under the raw id; the target host only scopes visit recency'
-  ),
-  ...everyCell('kill terminals', 'takes a raw worktree id, so it stops both twins’ PTYs'),
-  ...everyCell('sleep', 'takes a raw worktree id, so it sleeps both twins'),
-  [
-    'remove project | local+runtime | local',
-    'a sleeping-agent record with no host evidence is dropped instead of kept for the survivor'
-  ],
-  ...everyCell(
-    'select',
-    'activating a slept twin clears the shared raw-id sleep marker and re-arms both twins’ tabs'
-  )
-])
+const KNOWN_TWIN_LEAKS: Readonly<Record<string, string>> = Object.fromEntries([])
 
 function cellId(action: TwinAction, kind: HostTwinKind, target: 'local' | 'remote'): string {
   return `${action.id} | ${kind} | ${target}`
@@ -220,7 +220,12 @@ describe('an action on one twin leaves the other twin alone', () => {
       for (const targetName of ['remote', 'local'] as const) {
         const id = cellId(action, kind, targetName)
         const knownLeak = KNOWN_TWIN_LEAKS[id]
-        it(knownLeak ? `${id} (known leak: ${knownLeak})` : id, async () => {
+        const label = action.wholeWorkspace
+          ? `${id} (whole workspace by design)`
+          : knownLeak
+            ? `${id} (known leak: ${knownLeak})`
+            : id
+        it(label, async () => {
           const fixture = createHostTwinFixture(kind)
           current = fixture
           appStore.current = fixture.store
@@ -233,6 +238,10 @@ describe('an action on one twin leaves the other twin alone', () => {
           const after = projectHostTwinState(fixture, survivor)
           const changed = changedHostTwinState(before, after)
           action.applied(fixture, target)
+          if (action.wholeWorkspace) {
+            action.wholeWorkspace(fixture, survivor)
+            return
+          }
           if (knownLeak) {
             // Fixed? Delete this cell's KNOWN_TWIN_LEAKS entry.
             expect(changed).not.toEqual([])
@@ -245,6 +254,27 @@ describe('an action on one twin leaves the other twin alone', () => {
         })
       }
     }
+  }
+})
+
+describe('a folder action that names no host', () => {
+  for (const kind of ['folder local+ssh', 'folder group local+ssh'] as const) {
+    it(`refuses to delete a ${kind} twin and touches neither host`, async () => {
+      const fixture = createHostTwinFixture(kind)
+      current = fixture
+      appStore.current = fixture.store
+      const before = [fixture.local, fixture.remote].map((s) => projectHostTwinState(fixture, s))
+
+      await expect(fixture.store.getState().deleteFolderWorkspace(fixture.projectId)).resolves.toBe(
+        false
+      )
+
+      expect(window.api.folderWorkspaces.delete).not.toHaveBeenCalled()
+      const calls = vi.mocked(window.api.runtimeEnvironments.call).mock.calls
+      expect(calls.map(([request]) => request.method)).not.toContain('folderWorkspace.delete')
+      const after = [fixture.local, fixture.remote].map((s) => projectHostTwinState(fixture, s))
+      expect(after.map((state, i) => changedHostTwinState(before[i], state))).toEqual([[], []])
+    })
   }
 })
 

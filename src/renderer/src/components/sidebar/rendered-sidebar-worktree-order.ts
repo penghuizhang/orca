@@ -3,6 +3,7 @@ import type { AppState } from '@/store/types'
 import { getHostDisplayLabelOverrides } from '../../../../shared/host-setting-overrides'
 import {
   ALL_EXECUTION_HOSTS_SCOPE,
+  getLocalExecutionHostLabel,
   getSettingsFocusedExecutionHostId
 } from '../../../../shared/execution-host'
 import { getRepoMapFromState, getWorktreeMapFromState } from '@/store/selectors'
@@ -78,7 +79,7 @@ export function computeRenderedSidebarRows(
     groupBy: state.groupBy,
     worktrees: [...visibleWorktrees],
     repoMap,
-    prGroupOf: createSidebarPRGroupReader(repoMap, prCache, state.settings),
+    prGroupOf: createSidebarPRGroupReader(repoMap, prCache),
     repoOrder: getLogicalRepoOrderRankById(state.repos.map((repo) => repo.id)),
     workspaceStatuses: state.workspaceStatuses,
     projectOrderBy: state.projectOrderBy,
@@ -130,6 +131,7 @@ export function computeRenderedSidebarRows(
         workspaceHostScope: state.workspaceHostScope,
         visibleWorkspaceHostIds: state.visibleWorkspaceHostIds,
         defaultHostId,
+        localHostLabel: getLocalExecutionHostLabel(),
         collapsedHostKeys: state.collapsedGroups,
         forceCollapseHosts: false,
         preferProjectGrouping: true

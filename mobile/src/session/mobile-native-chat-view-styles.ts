@@ -43,9 +43,6 @@ export const styles = StyleSheet.create({
     fontSize: typography.metaSize,
     fontWeight: '600'
   },
-  workingPill: {
-    paddingHorizontal: 0
-  },
   pressed: {
     opacity: 0.6
   },
@@ -101,5 +98,11 @@ export const styles = StyleSheet.create({
     color: colors.textMuted,
     fontSize: typography.metaSize,
     fontWeight: '600'
+  },
+  loadEarlierFailedText: {
+    color: colors.textMuted,
+    fontSize: typography.metaSize,
+    textAlign: 'center',
+    marginTop: spacing.xs
   }
 })
