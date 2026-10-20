@@ -39,6 +39,7 @@ AIGC:
 - [构建号卡在旧版本](pitfalls/orca-build-version-base.md) — **2026-09-19 实测**：构建号基数 = `max(package.json 版本, 本地最高纯 vX.Y.Z tag)`；上游 main 的 package.json 长期停留旧号（main=1.4.197 而发布 tag 已 v1.4.206，`release:` 提交不在 main 历史）⇒ 本地 tag 过期就会「代码最新但版本号看着旧」；打包前用 `resolveVersionBase` 核对
 - [合并上游冲突解法手册](pitfalls/orca-merge-upstream-conflict-playbook.md) — 先判「谁改了这个文件」再取舍（禁 `--ours/--theirs` 一把梭）；8 个冲突的具体解法；en.json 邻接冲突（对象闭合括号在共享后缀）；键丢失核对脚本（注意 `:2:` stage 提交后失效）
 - [orca 浅克隆下的上游同步](pitfalls/orca-shallow-clone-sync.md) — **2026-09-19 实测**：`git fetch upstream` 会静默不更新引用（退出码 0 零输出，实测漏 15 天/1186 提交）；`main` 与上游无共同祖先 ⇒ 三步流程失效，改为直接 `custom merge upstream/main`；恢复需 `--unshallow`
+- [fetch 龟速真凶：insteadOf 把 HTTPS 改写回 SSH](pitfalls/orca-fetch-proxy-insteadof-trap.md) — **2026-10-20 实测**：全局 `url.git@github.com:.insteadOf` 让 `http.proxy` 完全失效（`GIT_CURL_VERBOSE` 零输出＝没走 HTTP），fetch 锁死 25KB/s；用**带端口形式** `https://github.com:443/...` 绕开前缀匹配 ⇒ 2.4MB/s（≈90×）。推送把 `gh auth token` 拼进 URL（`gh auth git-credential` 当 helper 时 git 拿不到口令）；别拉 `refs/heads/*`（上游 7982 分支）
 - [打包安装 ≠ 升级生效](reference/orca-dev-workflow.md#-安装成功--升级生效2026-09-19-踩坑) — ditto 替换 `/Applications/orca-s.app` 后旧进程仍在跑（`open` 只激活旧实例）；用 `ps aux | grep daemon-entry.js` 看 `--app-version` 判断实际运行版本；若 agent 会话跑在 orca-s 终端内，只能交用户手动重启
 - [doc-workflow hook 校验规则](pitfalls/doc-workflow-hook.md) — 设计文档现放 `.workbuddy/docs/<分类>/`，但 hook 仍扫描仓库根 `docs/`
 - [GitHub 推送被账户未验证邮箱拦截](pitfalls/orca-github-push-email-verify.md) — 硬性 blocker；推 GitHub 仍须 https_proxy=127.0.0.1:54687（**2026-09-19 实测 SSH 推送正常，未复现**）
@@ -80,6 +81,7 @@ AIGC:
 
 ## 设计文档
 
+- `.workbuddy/docs/workflow/2026-10-20-上游同步a18b44bfc0与orca-s重打包影响说明.md` — **2026-10-20 已实施**：增量合并上游 578 提交（`05086a892e`→`a18b44bfc0`）到 custom **直推**（合并 `b3e9400869` + 修复 `7c72f0fd78`）；9 冲突（6 语言包脚本合并 / 生成物 `--fix` / monaco 并集 / store 取上游结构注入二开 slice）+ **11 处集成缺口**（2 处运行期破损：zcode/pi 用量扫描、笔记外部路径授权）；`pnpm tc` EXIT=0；打包中
 - `.workbuddy/docs/workflow/2026-09-26-上游同步8846987c99与合并安全skill说明.md` — **2026-09-26 已实施**：PR #24 已合并（`e566cd15`）后同步上游 131 提交到 `8846987c99`；11 冲突（main.css 并集 / 6 语言包按键语义合并 / 3 处取上游排序 / skills 键实测保留 `zcode: null`）+ **7 处零冲突标记的静默重复**（zcode 撞车，tsc 只抓 1 处，检测脚本全抓）；键丢失审计双方零丢失；新建 `upstream-merge-safety` skill
 - `.workbuddy/docs/workflow/2026-09-23-切分支删合并分支与上游同步打包说明.md` — **2026-09-23 已实施**：切 custom + 删已合并分支（feat/notes-editor-fix 本地+远端）+ 强拉上游 304 提交合并（2 冲突叠加 + hasPartialCost 集成修复，三向键位零丢失）+ 打包安装 **`1.4.208-local.1790130615259.c8f75151e828`**（返工 2 次：mobile 独立 workspace 未装依赖、.DS_Store 撞 buildId 校验）；回退锚点 `backup/pre-sync-2026023`；遗留=用户手动重启 orca-s
 - `.workbuddy/docs/workflow/2026-09-19-上游同步与orca-s打包升级影响说明.md` — **2026-09-19 已实施**：合并上游 1186 提交（8 冲突全解）+ 追平最新 6 提交（`e2afb5eef9`）、electron 43.7.0、修掉「构建号卡 197」后装出版本 **`1.4.206-local.1789785189109.117aa480069c`**；含冲突明细、版本号机制、验证结果、遗留项（main 未同步 / 应用待手动重启）
@@ -95,4 +97,4 @@ AIGC:
 ## 并发会话与中断（2026-10-17）
 
 - [并发会话共用 worktree ⇒ 在途合并被抹掉](pitfalls/orca-concurrent-session-shared-worktree.md) — **2026-10-17 实测**：另一会话同目录做同一同步（`git reflog` 见 `reset: moving to HEAD` + 两次 `checkout -b sync/upstream-<sha>`），抹掉第一轮 21 处冲突解决、切走我的分支指针、还把我的 `git add -f .workbuddy` 卷进对方文档。**对策：解完立刻提交（已提交的合并遇 reset 是 no-op）、发现并发后停止动索引/工作区、成果存成分支、打包绝不可并发**。另附 Electron 走 `ELECTRON_MIRROR` 国内镜像 432KB/s（GitHub 仅 50KB/s）的实测
-- [2026-10-17 同步 a87aa4ccdb（3002 提交）状态](../docs/workflow/2026-10-17-上游同步a87aa4ccdb与并发会话冲突说明.md) — 合并 `2c7cc684a7`（存于分支 `backup/sync-a87aa4ccdb-2c7cc68`），21 处冲突决策表可直接复用到后续轮次；**未提 PR、未打包**；遗留 tc 的 5 个错误（2 个 `UsageProviderStores` 缺口确凿）
+- [2026-10-17 同步 a87aa4ccdb（3002 提交）状态](../docs/workflow/2026-10-17-上游同步a87aa4ccdb与并发会话冲突说明.md) — 该轮成果 `2c7cc684a7`（废弃 squash；分支 `backup/sync-a87aa4ccdb-2c7cc68` 已于 2026-10-20 删除，提交仍由 `sync/upstream-88f27711fd` + tag `backup/user-squash-merge-20261017` 保底）；真 merge 版是 `e7f4b1863f`（PR #26），**已被 2026-10-20 的 custom 直推取代**。⚠️ 该轮记录的「tc 通过」经 2026-10-20 复核**不成立**：node 项目其实从未真正通过（见 [集成缺口坑](pitfalls/orca-merge-integration-gap-typecheck.md)）
