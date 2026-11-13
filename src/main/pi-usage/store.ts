@@ -1,4 +1,3 @@
-import { app } from 'electron'
 import { join } from 'node:path'
 import type { UsageStoreHost } from '../usage/usage-store-host'
 import { piUsageProvider } from './pi-usage-provider'
@@ -17,17 +16,8 @@ import type {
   PiUsageSummary
 } from '../../shared/pi-usage-types'
 
-let _piUsageFile: string | null = null
-
-export function initPiUsagePath(): void {
-  _piUsageFile = join(app.getPath('userData'), 'orca-pi-usage.json')
-}
-
-function getPiUsageFile(): string {
-  if (!_piUsageFile) {
-    _piUsageFile = join(app.getPath('userData'), 'orca-pi-usage.json')
-  }
-  return _piUsageFile
+function getPiUsageFile(userDataPath: string): string {
+  return join(userDataPath, 'orca-pi-usage.json')
 }
 
 function filterSessionsByRange(sessions: PiUsageSession[], range: PiUsageRange): PiUsageSession[] {
@@ -196,7 +186,7 @@ export class PiUsageStore extends UsageProviderStoreLifecycle<
   constructor(host: UsageStoreHost) {
     super(host, {
       logTag: '[pi-usage]',
-      resolveCacheFile: getPiUsageFile,
+      resolveCacheFile: () => getPiUsageFile(host.userDataPath),
       createDefaultState: getDefaultState,
       normalizeState: normalizePersistedState,
       sourceKey: 'processedFiles',

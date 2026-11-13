@@ -1,4 +1,3 @@
-import { app } from 'electron'
 import { join } from 'node:path'
 import type { UsageStoreHost } from '../usage/usage-store-host'
 import { zcodeUsageProvider } from './zcode-usage-provider'
@@ -18,17 +17,8 @@ import type {
 } from './types'
 import type { ZCodeUsageBreakdownKind, ZCodeUsageRange } from '../../shared/zcode-usage-types'
 
-let _zcodeUsageFile: string | null = null
-
-export function initZCodeUsagePath(): void {
-  _zcodeUsageFile = join(app.getPath('userData'), 'orca-zcode-usage.json')
-}
-
-function getZCodeUsageFile(): string {
-  if (!_zcodeUsageFile) {
-    _zcodeUsageFile = join(app.getPath('userData'), 'orca-zcode-usage.json')
-  }
-  return _zcodeUsageFile
+function getZCodeUsageFile(userDataPath: string): string {
+  return join(userDataPath, 'orca-zcode-usage.json')
 }
 
 function filterSessionsByRange(
@@ -181,7 +171,7 @@ export class ZCodeUsageStore extends UsageProviderStoreLifecycle<
   constructor(host: UsageStoreHost) {
     super(host, {
       logTag: '[zcode-usage]',
-      resolveCacheFile: getZCodeUsageFile,
+      resolveCacheFile: () => getZCodeUsageFile(host.userDataPath),
       createDefaultState: getDefaultState,
       normalizeState: normalizePersistedState,
       sourceKey: 'processedDatabases',
