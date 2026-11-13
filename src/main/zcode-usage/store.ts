@@ -1,10 +1,10 @@
 import { app } from 'electron'
 import { join } from 'node:path'
-import type { Store } from '../persistence'
+import type { UsageStoreHost } from '../usage/usage-store-host'
 import { zcodeUsageProvider } from './zcode-usage-provider'
 import { getDefaultState, normalizePersistedState } from './persisted-state-normalization'
-import { UsageProviderStoreLifecycle } from '../usage/usage-provider-store-lifecycle'
-import { splitUsageCacheFileViaWorker } from '../usage/usage-scan-worker-spawn'
+import { UsageProviderStoreLifecycle } from '../usage/provider-lifecycle/usage-provider-store-lifecycle'
+import { splitUsageCacheFileViaWorker } from '../usage/scan-worker/usage-scan-worker-spawn'
 import type {
   ZCodeUsageBreakdownRow,
   ZCodeUsageDailyAggregate,
@@ -178,8 +178,8 @@ export class ZCodeUsageStore extends UsageProviderStoreLifecycle<
   ZCodeUsagePersistedState,
   'hasAnyZCodeData'
 > {
-  constructor(store: Pick<Store, 'getRepos' | 'getAllWorktreeMeta'>) {
-    super(store, {
+  constructor(host: UsageStoreHost) {
+    super(host, {
       logTag: '[zcode-usage]',
       resolveCacheFile: getZCodeUsageFile,
       createDefaultState: getDefaultState,

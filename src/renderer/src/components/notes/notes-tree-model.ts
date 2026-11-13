@@ -1,4 +1,4 @@
-import type { DirEntry } from '../../../../shared/filesystem-entry-types'
+import type { DirEntry } from '../../../../shared/file-listing/directory-entry'
 
 export type NotesTreeNode =
   | { kind: 'folder'; name: string; path: string; children: NotesTreeNode[] }

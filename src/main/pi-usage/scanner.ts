@@ -3,8 +3,8 @@ import { createReadStream } from 'node:fs'
 import { basename } from 'node:path'
 import { listPiSessionFiles } from './pi-session-discovery'
 import type { PiUsageDailyAggregate, PiUsageEvent, PiUsageSession } from './types'
-import type { UsageScanWorktreeRef } from '../usage/usage-provider-contract'
-import { writeUsageSourceCache, type UsageSourceCacheRef } from '../usage/usage-source-cache-file'
+import type { UsageScanWorktreeRef } from '../usage/provider-lifecycle/usage-provider-contract'
+import { writeUsageSourceCache, type UsageSourceCacheRef } from '../usage/cache/usage-source-cache-file'
 
 type PiUsagePayload = {
   input: number

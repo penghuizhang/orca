@@ -17,7 +17,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { translate } from '@/i18n/i18n'
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/class-names'
 
 /**
  * Manage user-defined calendar categories: add, rename, delete, recolor.
@@ -167,7 +167,7 @@ export function CalendarCategoryManagerDialog({
               }}
               placeholder={translate(
                 'auto.components.calendar.newCategoryPlaceholder',
-                'e.g. 学习, 运维'
+                'e.g. Learning, Ops'
               )}
               className="h-8 flex-1 text-xs"
             />

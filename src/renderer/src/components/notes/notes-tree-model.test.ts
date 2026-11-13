@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { DirEntry } from '../../../../shared/filesystem-entry-types'
+import type { DirEntry } from '../../../../shared/file-listing/directory-entry'
 import {
   ensureMarkdownExtension,
   filterNotesTree,

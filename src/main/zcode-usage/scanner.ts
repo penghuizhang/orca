@@ -8,12 +8,12 @@ import type {
   ZCodeUsageProcessedDatabase,
   ZCodeUsageSession
 } from './types'
-import type { UsageScanWorktreeRef } from '../usage/usage-provider-contract'
+import type { UsageScanWorktreeRef } from '../usage/provider-lifecycle/usage-provider-contract'
 import {
   readUsageSourceCache,
   writeUsageSourceCache,
   type UsageSourceCacheRef
-} from '../usage/usage-source-cache-file'
+} from '../usage/cache/usage-source-cache-file'
 
 function parseModelUsageRow(row: ZCodeModelUsageRow): ZCodeUsageEvent | null {
   if (row.status !== 'completed' && row.status !== 'error') {

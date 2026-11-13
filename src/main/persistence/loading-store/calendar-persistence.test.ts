@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { CalendarPersistence } from './calendar-persistence'
 import type { StoreRuntimeState } from './store-runtime-state'
-import type { WriteSchedulingOperations } from './write-scheduling'
+import type { WriteSchedulingOperations } from './profile-writing/write-scheduling'
 
 describe('CalendarPersistence boot order', () => {
   it('constructs before runtime.state is assigned (Store creates domains first)', () => {

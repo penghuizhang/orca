@@ -1,12 +1,12 @@
 import type React from 'react'
 import type { useAppStore } from '@/store'
-import type { parseGitHubIssueOrPRLink, RepoSlug } from '@/lib/github-links'
-import type { GitHubWorkItem } from '../../../../shared/github/work-item-types'
+import type { parseGitHubIssueOrPRLink } from '../../../../shared/github/repositories/links'
+import type { GitHubWorkItem } from '../../../../shared/github/work-items/work-item-types'
 import type { GitLabWorkItem } from '../../../../shared/gitlab-types'
-import type { JiraIssue, JiraSite } from '../../../../shared/jira-types'
+import type { JiraIssue, JiraSite } from '../../../../shared/jira/jira-types'
 import type { LinearIssue } from '../../../../shared/linear/issue-types'
 import type { BaseRefSearchResult } from '../../../../shared/repo-types'
-import type { TaskSourceContext } from '../../../../shared/task-source-context'
+import type { TaskSourceContext } from '../../../../shared/work-items/task-source-context'
 import type {
   SmartNameMode,
   SmartWorkspaceSourceRow
@@ -83,8 +83,6 @@ export type SmartWorkspaceNameFieldSearchState = {
   jiraIssues: JiraIssue[]
 }
 
-export type CachedRepoSlug = RepoSlug
-
 export const EMPTY_REPO_SEARCH_REPOS: readonly RepoOption[] = []
 export const SEARCH_DEBOUNCE_MS = 200
 export const RESULT_LIMIT = 12
@@ -105,7 +103,12 @@ export type WorkItemSourceSearchProps = Pick<
   | 'gitlabSourceContext'
   | 'linearSourceContext'
   | 'jiraSourceContext'
-> & { sourceSelected?: boolean; gitlabEnabled?: boolean; typedTextEnabled?: boolean }
+> & {
+  sourceSelected?: boolean
+  gitlabEnabled?: boolean
+  typedTextEnabled?: boolean
+  defaultLinearWorkspaceId?: string
+}
 export type NormalizedWorkItemSourceSearchProps = WorkItemSourceSearchProps & {
   disabled: boolean
   textOnly: boolean

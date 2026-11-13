@@ -18,7 +18,7 @@ import { getHolidayException } from './holiday-data'
 import { getLunarDayText, getLunarYearMonthDayText } from './lunar-date'
 import { Button } from '@/components/ui/button'
 import { translate } from '@/i18n/i18n'
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/class-names'
 
 export function CalendarDayPanel({
   dateKey,

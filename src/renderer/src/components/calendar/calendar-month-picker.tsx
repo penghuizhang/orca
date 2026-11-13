@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { formatMonthTitle } from './calendar-time'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { translate } from '@/i18n/i18n'
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/class-names'
 
 // Why: the lunar table covers 1900–2100, so month navigation stays inside it.
 const MIN_YEAR = 1900

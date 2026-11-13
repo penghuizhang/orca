@@ -1,9 +1,9 @@
 import { findSameFileDefinitionRanges, rankSearchMatches } from './code-navigation'
-import { searchRuntimeFiles } from '@/runtime/runtime-file-search-client'
-import { runtimeEnvironmentIdWithLegacyFallbackUnlessTwin } from '@/lib/worktree-runtime-owner'
-import { runtimeTargetForOwnerEnvironment } from '@/runtime/runtime-client-target'
-import { getConnectionId } from '@/lib/connection-context'
-import { getIndexedWorktreeById } from '@/store/worktree-repo-index'
+import { searchRuntimeFiles } from '@/runtime/files/search/runtime-file-search-client'
+import { runtimeEnvironmentIdOrLocalUnlessTwin } from '@/lib/workspace/ownership/worktree-runtime-owner'
+import { runtimeTargetForOwnerEnvironment } from '@/runtime/rpc/targets/runtime-client-target'
+import { getConnectionId } from '@/lib/workspace/ownership/connection-context'
+import { getIndexedWorktreeById } from '@/store/slices/worktrees/listing/worktree-catalog-index'
 import { useAppStore } from '@/store'
 
 type SearchFileWithMatches = {
@@ -49,7 +49,7 @@ export async function resolveDefinitionTarget(params: {
   if (!worktreePath) {
     return null
   }
-  const runtimeEnvironmentId = runtimeEnvironmentIdWithLegacyFallbackUnlessTwin(state, worktreeId)
+  const runtimeEnvironmentId = runtimeEnvironmentIdOrLocalUnlessTwin(state, worktreeId)
   const connectionId = getConnectionId(worktreeId) ?? undefined
   try {
     const result = await searchRuntimeFiles(

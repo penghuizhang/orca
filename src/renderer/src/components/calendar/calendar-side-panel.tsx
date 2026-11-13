@@ -13,7 +13,7 @@ import {
 import { isWeekendDateKey } from './holiday-data'
 import { Checkbox } from '@/components/ui/checkbox'
 import { translate } from '@/i18n/i18n'
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/class-names'
 
 export function CalendarSidePanel({
   visibleCategories,
@@ -58,7 +58,7 @@ export function CalendarSidePanel({
           </h2>
           <button
             type="button"
-            aria-label={translate('auto.components.calendar.manageCategories', 'Manage categories')}
+            aria-label={translate('auto.components.calendar.manageCategoriesTitle', 'Manage categories')}
             onClick={onRequestManageCategories}
             className="rounded px-1 text-[11px] font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
           >

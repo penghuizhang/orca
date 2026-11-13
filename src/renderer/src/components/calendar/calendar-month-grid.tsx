@@ -17,7 +17,7 @@ import {
   lunarRepeatDateKey
 } from './calendar-time'
 import { categoryColor } from './calendar-category-display'
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/class-names'
 import { translate } from '@/i18n/i18n'
 
 const MAX_VISIBLE_CHIPS = 3
@@ -145,9 +145,9 @@ export function CalendarMonthGrid({
                   <span className="truncate">
                     {`${block.name} · ${translate(
                       'auto.components.calendar.holidayDays',
-                      '{{count}} days',
+                      '{{days}} days',
                       {
-                        count: block.totalDays
+                        days: block.totalDays
                       }
                     )}`}
                   </span>

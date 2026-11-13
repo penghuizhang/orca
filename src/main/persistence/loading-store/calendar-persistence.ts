@@ -17,8 +17,8 @@ import {
 } from '../../custom-db/calendar-table'
 import { CalendarCategoriesTable } from '../../custom-db/calendar-categories-table'
 import type { StoreRuntimeState } from './store-runtime-state'
-import type { WriteSchedulingOperations } from './write-scheduling'
-import { scheduleSave } from './write-scheduling'
+import type { WriteSchedulingOperations } from './profile-writing/write-scheduling'
+import { scheduleSave } from './profile-writing/write-scheduling'
 
 const CALENDAR_MIGRATIONS = [CALENDAR_ENTRIES_TABLE_MIGRATION, CALENDAR_CATEGORIES_TABLE_MIGRATION]
 
@@ -118,7 +118,7 @@ export class CalendarPersistence {
           calendarEntries?: unknown[]
         }
       ).calendarEntries
-      scheduleSave(this[calendarPersistenceContext].scheduling)
+      scheduleSave(this[calendarPersistenceContext].scheduling, ['calendarEntries'])
     }
   }
 

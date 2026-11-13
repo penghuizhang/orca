@@ -1,4 +1,4 @@
-import type { UsageProvider } from '../usage/usage-provider-contract'
+import type { UsageProvider } from '../usage/provider-lifecycle/usage-provider-contract'
 import { scanPiUsageSessions } from './scanner'
 import type { PiUsageDailyAggregate, PiUsageSession } from './types'
 

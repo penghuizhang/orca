@@ -5,7 +5,7 @@ import { toast } from 'sonner'
 import { translate } from '@/i18n/i18n'
 import { resolveDefinitionTarget } from './code-navigation-trigger'
 import { useAppStore } from '@/store'
-import { runtimeEnvironmentIdWithLegacyFallbackUnlessTwin } from '@/lib/worktree-runtime-owner'
+import { runtimeEnvironmentIdOrLocalUnlessTwin } from '@/lib/workspace/ownership/worktree-runtime-owner'
 
 export function installCodeNavigationBindings(params: {
   editorInstance: editor.IStandaloneCodeEditor
@@ -88,7 +88,7 @@ export function installCodeNavigationBindings(params: {
     }
     const state = useAppStore.getState()
     const runtimeEnvironmentId =
-      runtimeEnvironmentIdWithLegacyFallbackUnlessTwin(state, worktreeId)?.trim() || null
+      runtimeEnvironmentIdOrLocalUnlessTwin(state, worktreeId)?.trim() || null
     state.openFile(
       {
         filePath: target.filePath,

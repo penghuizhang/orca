@@ -2,7 +2,7 @@ import { mkdir } from 'node:fs/promises'
 import path from 'node:path'
 import { app, ipcMain } from 'electron'
 import { DEFAULT_NOTES_ROOT_DIRECTORY } from '../../shared/notes-root-directory'
-import type { Store } from '../persistence'
+import type { Store } from '../persistence/loading-store/store'
 import { grantNotesRootAccess } from './notes-path-grant'
 import { expandHomePath } from './expand-home-path'
 

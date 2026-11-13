@@ -1,10 +1,10 @@
 import { app } from 'electron'
 import { join } from 'node:path'
-import type { Store } from '../persistence'
+import type { UsageStoreHost } from '../usage/usage-store-host'
 import { piUsageProvider } from './pi-usage-provider'
 import { getDefaultState, normalizePersistedState } from './persisted-state-normalization'
-import { UsageProviderStoreLifecycle } from '../usage/usage-provider-store-lifecycle'
-import { splitUsageCacheFileViaWorker } from '../usage/usage-scan-worker-spawn'
+import { UsageProviderStoreLifecycle } from '../usage/provider-lifecycle/usage-provider-store-lifecycle'
+import { splitUsageCacheFileViaWorker } from '../usage/scan-worker/usage-scan-worker-spawn'
 import type { PiUsageDailyAggregate, PiUsagePersistedState, PiUsageSession } from './types'
 import type {
   PiUsageBreakdownKind,
@@ -193,8 +193,8 @@ export class PiUsageStore extends UsageProviderStoreLifecycle<
   PiUsagePersistedStoreState,
   'hasAnyPiData'
 > {
-  constructor(store: Pick<Store, 'getRepos' | 'getAllWorktreeMeta'>) {
-    super(store, {
+  constructor(host: UsageStoreHost) {
+    super(host, {
       logTag: '[pi-usage]',
       resolveCacheFile: getPiUsageFile,
       createDefaultState: getDefaultState,
