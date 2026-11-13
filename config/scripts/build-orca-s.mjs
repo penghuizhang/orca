@@ -10,7 +10,7 @@ import { existsSync, readdirSync, rmSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { resolve } from 'node:path'
 
-import { getLocalBuildIdentity } from './build-mac-local.mjs'
+import { getLocalBuildIdentity } from './desktop-distribution/macos/build-mac-local.mjs'
 
 const repoRoot = resolve(import.meta.dirname, '..', '..')
 const args = new Set(process.argv.slice(2))
