@@ -53,43 +53,28 @@ AIGC:
 - [orca Code Navigation](reference/orca-code-navigation.md) — Command 跳转评估+MVP已落地；纯文本启发式+ripgrep跨文件+13语言provider
 - [orca 移动端探索与自建中转](reference/orca-mobile-relay.md) — mobile/=RN(Expo) 配套 App；frp 隧道已实施配通
 - [orca fork 二开项目](reference/orca-fork-2dev.md) — penghuizhang/orca 二开；main 纯净、custom 主干；**禁止往 main/master/orca 提 PR**
-- [orca 二开工作流程规范](reference/orca-dev-workflow.md) — 分支结构明确；标准化脚本已提交；工程专属 skill `.agents/skills/orca-dev-workflow/`
+- [orca 二开工作流程规范](reference/orca-dev-workflow.md) — 分支结构 + 标准化脚本 + 工程 skill；含「打包安装≠升级生效」（旧进程仍在跑，`ps aux | grep daemon-entry.js` 看 `--app-version`；agent 会话在 orca-s 终端内时只能交用户手动重启）
 - [orca 选中代码 AI 解释功能](reference/orca-select-explain-feature.md) — 编辑器选中代码片段→AI 解释（选中即问）；已实现
-- [.workbuddy/docs/ 分类整理](reference/orca-workbuddy-docs-classification.md) — 46 篇二开设计文档从 docs/ 迁移到 .workbuddy/docs/ 下 8 个分类目录
-- [Orca 外部 agent 集成机制与边界](reference/orca-agent-integration-surfaces.md) — 注册表约 15 处；检测/启动在执行宿主本地；6 种注入模式均要求长驻进程、**无 one-shot 通道**；MCP 只读 4 处配置；附「能否直接注册」三问
-- [uni-agent 集成 Orca](reference/orca-uni-agent-integration.md) — **待评审**；uni-agent 是 HBuilderX 本地 socket 客户端 + 一次性 CLI，需自研 PTY 壳才能当 TuiAgent
-- [TeleAgent 档位与真实模型](reference/teleagent-model-tiers.md) — **2026-09-25 实机取证**：极速/旗舰只是服务端路由别名（chat-flash 倍率 0.2 / chat-flagship 1.0）；应用内 `Rie` 表把「旗舰」等同 **GLM-5-Turbo**（`jJe("flagship")={chat-flagship, glm-5-turbo}`），极速无对应真名记录；产品提示词明令 NewApi/ 前缀不得暴露模型名；含取证路径、死胡同、llm_tap 玩法与授权边界
-- [TeleAgent 本地 API 反向代理](reference/teleagent-proxy.md) — 独立探索工程 `~/code/aistudy/2026/teleagent/`；4397 端口 + local_auth HMAC 签名；凭据靠 `sudo ps eww` 读 im-service 环境变量，PID 变即失效
+- [.workbuddy/docs/ 分类整理](reference/orca-workbuddy-docs-classification.md) — 46 篇二开设计文档从 docs/ 迁到 .workbuddy/docs/ 下 8 个分类
+- [Orca 外部 agent 集成机制与边界](reference/orca-agent-integration-surfaces.md) — 注册表约 15 处；检测/启动在执行宿主本地；6 种注入模式均要求长驻进程、**无 one-shot 通道**；MCP 只读 4 处配置｜[uni-agent 集成](reference/orca-uni-agent-integration.md) — 待评审：HBuilderX 本地 socket + 一次性 CLI，需自研 PTY 壳才能当 TuiAgent
+- [TeleAgent 档位与真实模型](reference/teleagent-model-tiers.md) — 2026-09-25 取证：极速/旗舰只是服务端路由别名（0.2/1.0 倍率），「旗舰」= **GLM-5-Turbo**；提示词禁露模型名｜[本地 API 反向代理](reference/teleagent-proxy.md) — `~/code/aistudy/2026/teleagent/`，4397 端口 + local_auth HMAC，凭据靠 `sudo ps eww` 读环境变量
 
 ## 项目结构与工作流
 
-- **合并正确性 skill（2026-09-26 新增）**：`.workbuddy/skills/upstream-merge-safety/` —— 重复 id 检测脚本（AST + 基线差集）+ i18n 语言包按键三向合并脚本 + 冲突取舍判定表；`orca-dev-workflow` 管流程，新 skill 管正确性
-- **防重踩预检（同步/打包前先跑）**：`node .agents/skills/orca-dev-workflow/scripts/orca-workflow.mjs preflight` —— 一条命令自动查「fetch 静默过期 / main 无共同祖先 / 发布 tag 过期致构建号旧 / 运行中仍是旧版」，覆盖四个坑；脚本在 `.agents/skills/`（本机，不提交）
+- **合并正确性 skill**：`.workbuddy/skills/upstream-merge-safety/`（重复 id AST 检测 + 语言包三向合并 + 冲突取舍判定表）；**防重踩预检**：`node .agents/skills/orca-dev-workflow/scripts/orca-workflow.mjs preflight`（fetch 静默过期 / main 无共同祖先 / tag 过期致构建号旧 / 运行中仍是旧版）
 - [团队知识入库约定](daily/2026-09-04.md#任务团队知识入库约定agentsmd--gitignore) — 记忆、设计文档、踩坑必须提交进仓库共享（`.workbuddy/` 与 `docs/**` 被 gitignore，须 `git add -f`）
-- **打包安装 ≠ 升级生效（2026-09-19 实测）**：ditto 替换 `/Applications/orca-s.app` 后旧进程仍在跑（`open` 只激活旧实例）；用 `ps aux | grep daemon-entry.js` 看 `--app-version` 判断实际运行版本；若 agent 会话跑在 orca-s 终端内（进程链 `zsh ← zcode-cli ← node ← login ← orca-s Helper ← orca-s`），只能交用户手动重启。详见 [工作流程规范](reference/orca-dev-workflow.md)
-
-## 归档文档（已迁移到 docs/）
-
-- `docs/05-调研文档/orca-feishu-bitable-research.md` — 飞书多维表格集成调研（2026-09-03）
-- `docs/09-踩坑归档/orca-custom-ci-failures.md` — CI 失败根因及修复方案（PR #14）
-- `docs/09-踩坑归档/orca-userdata-path-issue.md` — userData 路径配置问题（已修复）
+- **归档文档**：`docs/05-调研文档/orca-feishu-bitable-research.md`（飞书多维表格调研）、`docs/09-踩坑归档/orca-custom-ci-failures.md`（PR #14 CI 失败根因）、`docs/09-踩坑归档/orca-userdata-path-issue.md`（userData 路径，已修复）
 
 ## 设计文档
 
-- `.workbuddy/docs/workflow/2026-10-20-上游同步a18b44bfc0与orca-s重打包影响说明.md` — **2026-10-20 已实施**：增量合并上游 578 提交（`05086a892e`→`a18b44bfc0`）到 custom **直推**（合并 `b3e9400869` + 修复 `7c72f0fd78`）；9 冲突（6 语言包脚本合并 / 生成物 `--fix` / monaco 并集 / store 取上游结构注入二开 slice）+ **11 处集成缺口**（2 处运行期破损：zcode/pi 用量扫描、笔记外部路径授权）；`pnpm tc` EXIT=0；打包中
-- `.workbuddy/docs/workflow/2026-09-26-上游同步8846987c99与合并安全skill说明.md` — **2026-09-26 已实施**：PR #24 已合并（`e566cd15`）后同步上游 131 提交到 `8846987c99`；11 冲突（main.css 并集 / 6 语言包按键语义合并 / 3 处取上游排序 / skills 键实测保留 `zcode: null`）+ **7 处零冲突标记的静默重复**（zcode 撞车，tsc 只抓 1 处，检测脚本全抓）；键丢失审计双方零丢失；新建 `upstream-merge-safety` skill
-- `.workbuddy/docs/workflow/2026-09-23-切分支删合并分支与上游同步打包说明.md` — **2026-09-23 已实施**：切 custom + 删已合并分支（feat/notes-editor-fix 本地+远端）+ 强拉上游 304 提交合并（2 冲突叠加 + hasPartialCost 集成修复，三向键位零丢失）+ 打包安装 **`1.4.208-local.1790130615259.c8f75151e828`**（返工 2 次：mobile 独立 workspace 未装依赖、.DS_Store 撞 buildId 校验）；回退锚点 `backup/pre-sync-2026023`；遗留=用户手动重启 orca-s
-- `.workbuddy/docs/workflow/2026-09-19-上游同步与orca-s打包升级影响说明.md` — **2026-09-19 已实施**：合并上游 1186 提交（8 冲突全解）+ 追平最新 6 提交（`e2afb5eef9`）、electron 43.7.0、修掉「构建号卡 197」后装出版本 **`1.4.206-local.1789785189109.117aa480069c`**；含冲突明细、版本号机制、验证结果、遗留项（main 未同步 / 应用待手动重启）
-- `.workbuddy/docs/zcode/2026-09-13-uni-agent集成方案与可行性分析.md` — uni-agent 集成 Orca：**待评审**；结论=上游为一次性 CLI + HBuilderX 本地 socket 客户端（非独立 runtime），需自研 PTY 壳才能当 TuiAgent；含 Phase1 验证清单
-- `.workbuddy/docs/reference/2026-09-12-状态栏报错根因分析与修复建议.md` — 状态栏 #185 根因 + 修复与验收记录（已实施）
-- `docs/2026-09-04-分支结构规范化说明.md` — 分支结构与 PR 规范
-- `docs/2026-09-04-ZCode全局记忆迁移到工程目录方案.md` — 记忆迁移方案
-- `docs/2026-09-04-Pi智能体下拉入口与用量统计设计.md` — Pi 智能体功能设计
-- `docs/2026-09-04-记忆目录优化方案.md` — 记忆目录优化方案
-- `docs/2026-09-04-记忆目录子分类方案.md` — 记忆目录子分类方案
-
+- **2026-11-13 同步 b0c0377664（5818 提交）**：`.workbuddy/docs/workflow/2026-11-13-上游同步b0c0377664与orca-s重打包影响说明.md` — 55 冲突 + 55 处 tc 集成缺口 + 3 处打包期缺口全修；产物 `1.4.258-local.1794556594904.595c98fa853d`；遗留 3378 条陈旧 i18n 键
+- **2026-10-20 同步 a18b44bfc0（578 提交）**：`.workbuddy/docs/workflow/2026-10-20-上游同步a18b44bfc0与orca-s重打包影响说明.md` — 9 冲突 + 11 处集成缺口（2 处运行期破损）
+- **2026-09-26 同步 8846987c99（131 提交）**：`.workbuddy/docs/workflow/2026-09-26-上游同步8846987c99与合并安全skill说明.md` — 11 冲突 + 7 处静默重复；建 upstream-merge-safety skill
+- **2026-09-23 同步（304 提交）**：`.workbuddy/docs/workflow/2026-09-23-切分支删合并分支与上游同步打包说明.md` — 2 冲突 + hasPartialCost 修复，装 `1.4.208-local.1790130615259.*`｜**2026-09-19 同步（1186 提交）**：`.workbuddy/docs/workflow/2026-09-19-上游同步与orca-s打包升级影响说明.md` — 8 冲突全解，装 `1.4.206-local.1789785189109.*`
+- **2026-09-13 uni-agent 可行性**：`.workbuddy/docs/zcode/2026-09-13-uni-agent集成方案与可行性分析.md`（待评审）｜**2026-09-12 状态栏 #185**：`.workbuddy/docs/reference/2026-09-12-状态栏报错根因分析与修复建议.md`（已修复）
+- **2026-09-04 基础方案（docs/ 根）**：五篇 `docs/2026-09-04-*.md` — 分支结构规范化 / ZCode 全局记忆迁移 / Pi 智能体下拉入口与用量 / 记忆目录优化 / 记忆目录子分类
 > AI生成
 ## 并发会话与中断（2026-10-17）
 
-- [并发会话共用 worktree ⇒ 在途合并被抹掉](pitfalls/orca-concurrent-session-shared-worktree.md) — **2026-10-17 实测**：另一会话同目录做同一同步（`git reflog` 见 `reset: moving to HEAD` + 两次 `checkout -b sync/upstream-<sha>`），抹掉第一轮 21 处冲突解决、切走我的分支指针、还把我的 `git add -f .workbuddy` 卷进对方文档。**对策：解完立刻提交（已提交的合并遇 reset 是 no-op）、发现并发后停止动索引/工作区、成果存成分支、打包绝不可并发**。另附 Electron 走 `ELECTRON_MIRROR` 国内镜像 432KB/s（GitHub 仅 50KB/s）的实测
-- [2026-10-17 同步 a87aa4ccdb（3002 提交）状态](../docs/workflow/2026-10-17-上游同步a87aa4ccdb与并发会话冲突说明.md) — 该轮成果 `2c7cc684a7`（废弃 squash；分支 `backup/sync-a87aa4ccdb-2c7cc68` 已于 2026-10-20 删除，提交仍由 `sync/upstream-88f27711fd` + tag `backup/user-squash-merge-20261017` 保底）；真 merge 版是 `e7f4b1863f`（PR #26），**已被 2026-10-20 的 custom 直推取代**。⚠️ 该轮记录的「tc 通过」经 2026-10-20 复核**不成立**：node 项目其实从未真正通过（见 [集成缺口坑](pitfalls/orca-merge-integration-gap-typecheck.md)）
+- [并发会话共用 worktree ⇒ 在途合并被抹掉](pitfalls/orca-concurrent-session-shared-worktree.md) — 2026-10-17 实测：另一会话同目录做同一同步会 reset 掉在途冲突解决。**对策：解完立刻提交、发现并发后停止动索引/工作区、成果存成分支、打包绝不并发**；另附 `ELECTRON_MIRROR` 国内镜像 432KB/s 实测
+- 2026-10-17 同步 a87aa4ccdb 的成果（`2c7cc684a7` / 真 merge `e7f4b1863f`）**已被 2026-10-20 的 custom 直推取代**；该轮记的「tc 通过」经复核不成立（见 [集成缺口坑](pitfalls/orca-merge-integration-gap-typecheck.md)）
