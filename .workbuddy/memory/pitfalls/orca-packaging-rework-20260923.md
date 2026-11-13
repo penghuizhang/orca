@@ -12,6 +12,8 @@ metadata:
 
 3. **`build-orca-s.mjs` 硬性拒绝非 custom 分支，没有跳过开关**：源码注释写明「packaging any other branch silently ships the wrong build」。⇒ **同步 PR 必须先合进 custom 才能打包**，同步分支上打不出来（2026-09-26 是用户先合了 PR #25 才打）。
 4. **未跟踪文件仍只豁免 `?? .codegraph/`**：仓库根的 `test-data-rules-proto-top.png`（非本次任务产生）会让 `verify-features` 第 6 项 exit 1。处置方式：移到 `/tmp/orca-untracked-backup/` 之类的地方并告知用户位置（可逆），或加进 `.gitignore`（会进 PR）。打包前先 `git status --short` 看一眼。
+5. **`verify-features` 第 2 项会拦「有未合并的本地分支」**（`git branch --no-merged custom` 过滤掉 upstream/remotes/gitee 后非空即 exit 1）。历史遗留的废弃分支（如 2026-10-20 的 `backup/sync-a87aa4ccdb-2c7cc68` = 废弃 squash）会卡住打包。**删前先 `git for-each-ref --points-at <sha>` 确认同一提交还有别的引用（分支/tag）**，有即可 `git branch -D` 零损失。
+6. **`.DS_Store` 要全树清，不只 `mobile/{src,app}`**（2026-10-20 实测）：本轮 `verify-mobile-web-app-bundle` 报的是 **`mobile/src/.DS_Store`**，但同一棵树里另有 **92 个**未跟踪 `.DS_Store`（`.anti-slop-plugin/`、`native/`、`tests/e2e/.cross-version-checkouts/*` 等）⇒ 别等构建报错，**打包前直接 `find . -name .DS_Store -not -path "*/node_modules/*" -not -path "./.git/*" -not -path "./dist/*" -not -path "./out/*"` 清一遍**。⚠️ 有 **5 个 `.DS_Store` 是被 git 跟踪的**（`.workbuddy/.DS_Store`、`.workbuddy/docs/`、`.workbuddy/memory/`、`docs/assets/`、`docs/site/`）——**删它们会产生工作区 diff**，清理时务必只删 `git ls-files --error-unmatch` 判定为未跟踪的那些。
 
 **2026-09-26 一次通过的原因**：流程里已内置两个老坑的规避——打包前 `cd mobile && pnpm install`（本条 1）、同步第 1 步就 `git fetch upstream 'refs/tags/*:refs/tags/*'`（构建号基数 1.4.212 ≥ 远端最新，见 [[orca-build-version-base]]）。即：**把坑写进流程，比记住它更可靠**。
 

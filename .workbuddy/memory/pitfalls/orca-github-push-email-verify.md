@@ -20,3 +20,10 @@ metadata:
   - `gh` token 缺 `user` scope → `gh api user/emails` 返回 404；要查已验证邮箱需先 `gh auth refresh -s user`。
   - 推 GitHub 仍须走代理：`git -c http.proxy=http://127.0.0.1:54687 push`。
   - **2026-09-21 实测**：即使设置了 `http.proxy`，git push 仍可能完全挂起（无输出、无超时）。SSH 也不通（DNS 解析失败）。**变通方案**：用 GitHub Git Data API 逐 blob 上传 → 创建 tree/commit/ref → `pulls` API 建 PR。`gh` CLI 的 OAuth token 可通过 API 完成等效操作（`curl -H "Authorization: token $GH_TOKEN"`）。36 个文件的完整流程约 2 分钟。
+- **✅ 2026-10-20 实测：push 已恢复，且邮箱拦截未复现**（该轮 custom 与备份分支均一次推送成功）。当轮可用的确切公式：
+  ```bash
+  TOKEN=$(gh auth token)
+  git -c credential.helper= -c http.proxy=http://127.0.0.1:54687 \
+      push "https://x-access-token:${TOKEN}@github.com:443/penghuizhang/orca.git" custom
+  ```
+  两个关键点：① URL **必须带 `:443` 端口**（否则被全局 `insteadOf` 改写回 SSH，代理失效——详见 [[orca-fetch-proxy-insteadof-trap]]）；② **`credential.helper` 必须置空**——`gh auth git-credential` 作为 helper 在 git 里会 `fatal: unable to get password from user`（同时 `-c credential.helper=` 也能挡住 osxkeychain「无 github 条目」那条坑）。推送后用 `git ls-remote <带端口 URL> refs/heads/custom` 复核远端 tip。
