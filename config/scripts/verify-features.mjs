@@ -84,7 +84,8 @@ const requiredFiles = [
   { name: '日历组件', path: 'src/renderer/src/components/calendar' },
   { name: 'custom.db', path: 'src/main/custom-db' },
   { name: '浏览器自动化 MCP', path: 'src/main/browser/mcp' },
-  { name: 'agent-catalog.tsx', path: 'src/renderer/src/lib/agent-catalog.tsx' }
+  { name: 'agent-catalog 目录', path: 'src/renderer/src/lib/agent-catalog' },
+  { name: 'AgentIcon', path: 'src/renderer/src/components/agent/icons/AgentIcon.tsx' }
 ]
 
 for (const file of requiredFiles) {
