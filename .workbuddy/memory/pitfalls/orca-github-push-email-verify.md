@@ -26,4 +26,13 @@ metadata:
   git -c credential.helper= -c http.proxy=http://127.0.0.1:54687 \
       push "https://x-access-token:${TOKEN}@github.com:443/penghuizhang/orca.git" custom
   ```
+  失败时用 `git ls-remote <带端口 URL> refs/heads/custom` 核对远端 tip——走 URL 推送不会更新本地 `origin/custom` 跟踪引用。
+- **2026-11-13 实测：大包推送会 HTTP 408**（5818 提交、上游重构后 pack 很大）。默认设置连续两次 `RPC failed; HTTP 408` + `send-pack: unexpected disconnect`，第三次换成克制的传输参数才成功：
+  ```bash
+  git -c credential.helper= -c http.proxy=http://127.0.0.1:54687 \
+      -c http.postBuffer=1048576000 -c http.version=HTTP/1.1 \
+      -c http.lowSpeedLimit=500 -c http.lowSpeedTime=600 -c pack.threads=1 \
+      push "https://x-access-token:${TOKEN}@github.com:443/penghuizhang/orca.git" custom
+  ```
+  408 属大包 + 代理场景的传输超时，**不是**凭证或权限问题，别改邮箱/重配 credential 浪费时间；重试前先确认代理仍通（`curl -x http://127.0.0.1:54687 -sI https://github.com`）。
   两个关键点：① URL **必须带 `:443` 端口**（否则被全局 `insteadOf` 改写回 SSH，代理失效——详见 [[orca-fetch-proxy-insteadof-trap]]）；② **`credential.helper` 必须置空**——`gh auth git-credential` 作为 helper 在 git 里会 `fatal: unable to get password from user`（同时 `-c credential.helper=` 也能挡住 osxkeychain「无 github 条目」那条坑）。推送后用 `git ls-remote <带端口 URL> refs/heads/custom` 复核远端 tip。
