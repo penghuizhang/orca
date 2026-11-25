@@ -33,6 +33,7 @@ AIGC:
 - [changed 门禁大合并后失真](pitfalls/orca-changed-gate-baseline-degenerate.md) — **2026-09-23**：`check:code-quality:changed` 基线 origin/main，合上游后变更集=10173 文件报 3184 存量噪音；改对自己改的文件跑 5 套 oxlint 配置矩阵；zsh `for f in $var` 不分词要用 `${=var}`
 - [构建号卡在旧版本](pitfalls/orca-build-version-base.md) — **2026-09-19 实测**：构建号基数 = `max(package.json 版本, 本地最高纯 vX.Y.Z tag)`；上游 main 的 package.json 长期停留旧号（main=1.4.197 而发布 tag 已 v1.4.206，`release:` 提交不在 main 历史）⇒ 本地 tag 过期就会「代码最新但版本号看着旧」；打包前用 `resolveVersionBase` 核对
 - [合并上游冲突解法手册](pitfalls/orca-merge-upstream-conflict-playbook.md) — 先判「谁改了这个文件」再取舍（禁 `--ours/--theirs` 一把梭）；8 个冲突的具体解法；en.json 邻接冲突（对象闭合括号在共享后缀）；键丢失核对脚本（注意 `:2:` stage 提交后失效）
+- [i18n 语言包合并的正确语义](pitfalls/orca-i18n-locale-merge-semantics.md) — **2026-11-25**：merge-locales.py 上游删除的键要**跟随删除**（base 有 & theirs 无），base 必须是**上一轮上游基线**（传成 ours 会一次删掉 3.3k 二开键）；脚本打印的冲突只有键名不带嵌套路径；陈旧键清账看 extraction 的 unreferenced 全量清单（临时放开 slice(0,20)）；glossary 替换会打穿 CSS/代码值，正确序 = 上游有取上游 → 删键 → 术语替换；CLDR 复数变体（es `_many`）不是 en 子集，prune 必须保留后缀键；本轮清 3368 条存量债后 4 项本地化门禁全绿
 - [上游大重构同步套路](pitfalls/orca-upstream-sync-large-refactor.md) — **2026-11-13（5818 提交/55 冲突）**：`merge-tree --name-only` 输出别直接 `wc -l`（Auto-merging 行会造出 187 假数，真值以 `git status` 的 UU/UD 为准）；modify/delete 冲突一律「迁二开 delta 到上游新路径 + `git rm` 旧路径」；批量 import 替换要核对自引用误伤；上游批量删测试先 `git show HEAD:<file>` 判定（二开还可能留着已删功能的陈旧测试）；门禁红先用 HEAD 对照证明是否本次引入
 - [orca 浅克隆下的上游同步](pitfalls/orca-shallow-clone-sync.md) — **2026-09-19 实测**：`git fetch upstream` 会静默不更新引用（退出码 0 零输出，实测漏 15 天/1186 提交）；`main` 与上游无共同祖先 ⇒ 三步流程失效，改为直接 `custom merge upstream/main`；恢复需 `--unshallow`
 - [fetch 龟速真凶：insteadOf 把 HTTPS 改写回 SSH](pitfalls/orca-fetch-proxy-insteadof-trap.md) — **2026-10-20 实测**：全局 `url.git@github.com:.insteadOf` 让 `http.proxy` 完全失效（`GIT_CURL_VERBOSE` 零输出＝没走 HTTP），fetch 锁死 25KB/s；用**带端口形式** `https://github.com:443/...` 绕开前缀匹配 ⇒ 2.4MB/s（≈90×）。推送把 `gh auth token` 拼进 URL（`gh auth git-credential` 当 helper 时 git 拿不到口令）；别拉 `refs/heads/*`（上游 7982 分支）
@@ -68,6 +69,7 @@ AIGC:
 
 ## 设计文档
 
+- **2026-11-25 同步 e6a0ae0c24（3482 提交）**：`.workbuddy/docs/workflow/2026-11-25-上游同步e6a0ae0c24与orca-s重打包影响说明.md` — 33 冲突（上游重构 shared/preload/store/启动退出为 composeDesktopCore）+ 19 处 tc 缺口全修；**i18n 存量债清账**（清 3368 陈旧键、ko glossary 180 条、runtime-catalog 重生成，4 项本地化门禁全绿）；custom tip `2d9844d3aab`（已推）；产物 `1.4.274-local.1795589563592.2d9844d3aabc` 已装、**待用户 Cmd+Q 重启**
 - **2026-11-13 同步 b0c0377664（5818 提交）**：`.workbuddy/docs/workflow/2026-11-13-上游同步b0c0377664与orca-s重打包影响说明.md` — 55 冲突 + 55 处 tc 集成缺口 + 3 处打包期缺口全修；custom tip `0488b74eddc`（已推）；产物 `1.4.258-local.1794556594904.595c98fa853d` 已装、**待用户 Cmd+Q 重启**；遗留 3378 条陈旧 i18n 键
 - **2026-10-20 同步 a18b44bfc0（578 提交）**：`.workbuddy/docs/workflow/2026-10-20-上游同步a18b44bfc0与orca-s重打包影响说明.md` — 9 冲突 + 11 处集成缺口（2 处运行期破损）
 - **2026-09-26 同步 8846987c99（131 提交）**：`.workbuddy/docs/workflow/2026-09-26-上游同步8846987c99与合并安全skill说明.md` — 11 冲突 + 7 处静默重复；建 upstream-merge-safety skill
