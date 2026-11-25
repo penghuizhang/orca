@@ -9,39 +9,46 @@ import {
   getMobileColorScheme,
   subscribeMobileColorScheme
 } from '../src/theme/mobile-theme'
-import type { BridgeRpcClient } from '../src/mobile-web-shell/bridge/bridge-rpc-client'
+import type { BridgeRpcClient } from '../src/mobile-web-shell/bridge/client-state/bridge-rpc-client-contract'
 import {
   bootstrapShellPage,
   createShellPageClient,
   stampPageMountState,
   type PageMountTarget
-} from '../src/mobile-web-shell/bridge/page-bootstrap'
-import { storageReadResultSchema } from '../src/mobile-web-shell/bridge/bridge-native-verbs'
-import { BRIDGE_HOST_CATALOGS_GRANT } from '../src/mobile-web-shell/bridge/bridge-frame-fields'
+} from '../src/mobile-web-shell/bridge/page-lifecycle/page-bootstrap'
+import {
+  linkOpenResultSchema,
+  storageReadResultSchema
+} from '../src/mobile-web-shell/bridge/native-capabilities/bridge-native-verbs'
+import {
+  BRIDGE_DEFERRED_CODE_VERB,
+  BRIDGE_HOST_CATALOGS_GRANT
+} from '../src/mobile-web-shell/bridge/protocol/bridge-frame-fields'
+import { publishPageMermaidFetch } from '../src/components/mermaid/mermaid-page-engine'
 import {
   publishPageStorage,
   refreshPageTerminalSettings
-} from '../src/mobile-web-shell/bridge/page-async-storage'
+} from '../src/mobile-web-shell/bridge/page-storage/page-async-storage'
 import {
   createPageDeviceStore,
   publishPageDeviceStore
-} from '../src/mobile-web-shell/bridge/page-device-store'
+} from '../src/mobile-web-shell/bridge/page-storage/page-device-store'
 import {
   RouteScreenPaintProvider,
   createRouteScreenPaintReporter
-} from '../src/mobile-web-shell/bridge/page-first-paint'
-import { PageFaultBoundary } from '../src/mobile-web-shell/bridge/page-fault-boundary'
-import type { BridgeUiLocale } from '../src/mobile-web-shell/bridge/bridge-envelope'
-import { BRIDGE_OPEN_ROUTE_PARAM } from '../src/mobile-web-shell/bridge/bridge-route-update'
+} from '../src/mobile-web-shell/bridge/page-lifecycle/page-first-paint'
+import { PageFaultBoundary } from '../src/mobile-web-shell/bridge/page-lifecycle/page-fault-boundary'
+import type { BridgeUiLocale } from '../src/mobile-web-shell/bridge/protocol/bridge-envelope'
+import { BRIDGE_OPEN_ROUTE_PARAM } from '../src/mobile-web-shell/bridge/page-lifecycle/bridge-route-update'
 import { activateMobileUiLocale, subscribeMobileUiLanguage } from '../src/i18n/mobile-i18n'
 import { startPageLocaleCatalogs } from '../src/i18n/page-locale-catalog-source'
 import { getUiIntlLocale } from '../src/i18n/ui-intl-locale'
 import { readDeviceUiLocaleTags, resolveUiLocaleFromTags } from '../src/i18n/system-ui-locale'
-import { publishPageHostProfile } from '../src/mobile-web-shell/bridge/page-host-profile'
-import { publishExternalLinkOpener } from '../src/platform/external-link.web'
-import { publishHapticsNotifier } from '../src/platform/haptics.web'
-import { startBlurringOnKeyboardClose } from '../src/platform/keyboard-close-blur.web'
-import { publishShellKeyboardSource } from '../src/platform/keyboard-occlusion.web'
+import { publishPageHostProfile } from '../src/mobile-web-shell/bridge/page-lifecycle/page-host-profile'
+import { publishExternalLinkOpener } from '../src/platform/external-links/external-link.web'
+import { publishHapticsNotifier } from '../src/platform/haptics/haptics.web'
+import { startBlurringOnKeyboardClose } from '../src/platform/keyboard/keyboard-close-blur.web'
+import { publishShellKeyboardSource } from '../src/platform/keyboard/keyboard-occlusion.web'
 // Select the page-client provider explicitly; the builder aliases extensionless screen imports to this same web module.
 import { RpcClientProvider } from '../src/transport/connection/client-context.web'
 import { OrcaQueryProvider } from '../src/query/orca-query-provider.web'
@@ -166,6 +173,12 @@ bootstrapShellPage({
     if (session.grants.native.includes(BRIDGE_HOST_CATALOGS_GRANT)) {
       startPageLocaleCatalogs({ client, store: deviceStore })
     }
+    // A shell that skipped the diagram engine fetches it from the desktop before the first diagram imports it.
+    if (session.grants.native.includes(BRIDGE_DEFERRED_CODE_VERB)) {
+      publishPageMermaidFetch(async () => {
+        await client.callNativeVerb(BRIDGE_DEFERRED_CODE_VERB, {})
+      })
+    }
     // Subscribe before the first catalog load so a switch during startup is not lost; the latest request wins.
     let uiLocaleActivation = activatePageUiLocale(session.uiLocale)
     client.onUiLocaleUpdate((locale) => {
@@ -173,7 +186,21 @@ bootstrapShellPage({
     })
     // Publish plain-function seams before first render because effects and initial list paint already read them.
     publishPageHostProfile(session.host)
-    publishExternalLinkOpener((url) => client.notifyExternalLink(url))
+    publishExternalLinkOpener(
+      // Older shells only take the link; this one says whether an app opened it.
+      session.grants.native.includes('native.link.open')
+        ? async (url) => {
+            try {
+              return linkOpenResultSchema.parse(
+                (await client.callNativeVerb('native.link.open', { url })).result
+              ).opened
+            } catch {
+              // A reply lost while the phone was in the other app doesn't mean nothing opened.
+              return true
+            }
+          }
+        : (url) => client.notifyExternalLink(url)
+    )
     publishHapticsNotifier((kind) => client.notifyHaptics(kind))
     // Expose shell keyboard height to hooks and plain functions.
     publishShellKeyboardSource({

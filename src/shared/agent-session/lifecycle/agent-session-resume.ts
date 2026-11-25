@@ -1,5 +1,5 @@
 import { readAgentEffortLevel } from '../../agent-launch/choices/agent-effort-level'
-import { readClaudePermissionMode } from './provider-session-live-settings'
+import { readClaudePermissionMode } from './resume/provider-session-live-settings'
 import type { AgentHookSource } from '../../agent-hook-listener/transport/agent-hook-relay'
 import type {
   AgentStatusCacheIdentity,
@@ -9,8 +9,6 @@ import type { AgentStatusState } from '../../agent-status/contracts/agent-status
 import type { AgentMainAgentStatus } from '../../agent-status/lifecycle/main-agent-status'
 import type { TuiAgent } from '../../agent-launch/catalog/tui-agent'
 
-export { agentProviderSessionsEqual } from './agent-provider-session-equality'
-
 export const RESUMABLE_TUI_AGENTS = [
   'claude',
   'codebuddy',
@@ -18,7 +16,6 @@ export const RESUMABLE_TUI_AGENTS = [
   'qoder',
   'qoder-cn',
   'qwen-code',
-  'gemini',
   'antigravity',
   'opencode',
   'opencode2',
@@ -215,7 +212,6 @@ export function extractAgentProviderSession(
       const id = readSessionId(payload, ['session_id'])
       return id ? withTranscriptPath({ key: 'session_id', id }, payload) : null
     }
-    case 'gemini':
     case 'droid':
     // Why: Kimi Code posts a Claude-shaped `session_id` (e.g. session_<uuid>).
     // falls through

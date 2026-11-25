@@ -1,7 +1,7 @@
 import React, { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react'
 import { FolderOpen, FolderPlus, FilePlus, RefreshCw, Search } from 'lucide-react'
 import { toast } from 'sonner'
-import { NOTES_WORKTREE_ID } from '../../../../shared/constants'
+import { NOTES_WORKTREE_ID } from '../../../../shared/workspace/identity/virtual-worktree-locality'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { translate } from '@/i18n/i18n'

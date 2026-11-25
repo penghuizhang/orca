@@ -16,8 +16,8 @@ import {
   type StoreDomains,
   type StoreDomainOperations
 } from './store-domain-composition'
-import type { PersistedState } from '../../../shared/persisted-state-types'
-import { ORCA_LAYOUT_OWNER_IS_MAIN } from '../../../shared/layout-owner-switch'
+import type { PersistedState } from '../../../shared/orca-profiles/persisted-state-types'
+import { ORCA_LAYOUT_OWNER_IS_MAIN } from '../../../shared/workspace-layout/layout-owner-switch'
 import { dropInvalidWorkspaceLayoutsAtLoad } from '../restoring-sessions/invalid-workspace-layout-purge'
 import {
   bindPersistedTabTerminalPanes,
@@ -197,8 +197,8 @@ export class Store {
   }
 
   /** Retain the legacy settings key until migration to the main-owned store succeeds. */
-  migrateLegacyOpenCodeGoApiKey(target: OpenCodeGoApiKeyTarget): void {
-    if (migrateLegacyOpenCodeGoApiKey(this.runtime.protectedSecrets, target)) {
+  async migrateLegacyOpenCodeGoApiKey(target: OpenCodeGoApiKeyTarget): Promise<void> {
+    if (await migrateLegacyOpenCodeGoApiKey(this.runtime.protectedSecrets, target)) {
       scheduleSave(this.domains.scheduling, ['settings'])
     }
   }
@@ -277,7 +277,7 @@ export class Store {
     }
     return enqueuePrimaryStateOperation(this.domains.writes, async () => {
       this.runtime.dirtyProfileStateDomains = null
-      if (!(await writeToDiskAsync(this.domains.writes))) {
+      if (!(await writeToDiskAsync(this.domains.writes, { wholeSessions: true }))) {
         throw new Error('Profile state changed while preparing its export')
       }
       return exportState(authority)

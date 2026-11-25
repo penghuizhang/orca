@@ -6,7 +6,7 @@ import {
   nativeChatReasoningDisclosureKey,
   nativeChatReasoningHeadline,
   type NativeChatReasoningHeadline
-} from '../../../../../../shared/native-chat/transcript/native-chat-reasoning-row'
+} from '../../../../../../shared/native-chat/transcript/row-content/native-chat-reasoning-row'
 import {
   NativeChatReasoningBody,
   NativeChatReasoningChevron
@@ -67,7 +67,7 @@ export function NativeChatReasoningRow({
             <NativeChatReasoningChevron />
           </button>
         </CollapsibleTrigger>
-        <CollapsibleContent animation="height" data-native-chat-member-detail>
+        <CollapsibleContent animation="height">
           <NativeChatReasoningBody rowKey={disclosureKey} markdown={markdown} />
         </CollapsibleContent>
       </Collapsible>

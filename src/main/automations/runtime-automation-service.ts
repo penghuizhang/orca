@@ -1,11 +1,10 @@
-import type { AutomationUsageClient } from '../../shared/backend-service-contract'
+import type { AutomationUsageClient } from '../../shared/backend/backend-service-contract'
 import { observeAutomationChatRun } from './observation/runtime-chat-run-observer'
 import { readAutomationRunReceipt } from './launch/automation-run-receipt'
 import { publishedLaunchTarget } from './launch/automation-agent-run-result'
 import { launchAutomationChatAgent } from './launch/automation-chat-agent-launch'
 import { tuiAgentDisplayName } from '../../shared/agent-launch/catalog/tui-agent-display-names'
 import type { Store } from '../persistence/loading-store/store'
-import type { AutomationRun } from '../../shared/automations/history/automation-run'
 import type { OrcaRuntimeService } from '../runtime/orca-runtime'
 import { AutomationService } from './automation-service'
 import {
@@ -23,6 +22,11 @@ import {
   createRuntimeAutomationRunTerminalObserver
 } from './observation/runtime-terminal-run-observer'
 import { closeEarlierHookReviewRunTerminals } from './terminal-retention/hook-review-blocked-run-terminals'
+import { bindBotAutomations, botAutomationServiceOptions } from './bot-automation-service-wiring'
+import {
+  runPaneKeepsRunPty,
+  runTabWasFocused
+} from './terminal-retention/run-terminal-workspace-session'
 import { automationRunSetupSkip } from './launch/automation-run-setup-skip'
 import { automationSystemSettled } from './dispatch/automation-wake-settle'
 
@@ -35,6 +39,7 @@ export function createRuntimeAutomationService(input: {
   codexUsage?: AutomationUsageClient
   /** Only server processes execute remote_host_service schedules. */
   allowRemoteHostScheduling: boolean
+  isHostQuitting?: () => boolean
 }): AutomationService {
   const { store, runtime, claudeUsage, codexUsage } = input
   // Launch handles remain usable before pane-key lookup resolves.
@@ -155,8 +160,10 @@ export function createRuntimeAutomationService(input: {
         return observation
       }
     },
+    isHostQuitting: input.isHostQuitting,
     onAutomationsChanged: (payload) => runtime.notifyAutomationsChanged(payload),
     allowRemoteHostScheduling: input.allowRemoteHostScheduling,
+    ...botAutomationServiceOptions(runtime),
     chatDispatcher: async (request) => {
       const { terminalHandle, ...launched } = await launchAutomationChatAgent(runtime, {
         ...request,
@@ -209,17 +216,8 @@ export function createRuntimeAutomationService(input: {
   })
   service.wakeGate.settled = () => automationSystemSettled()
   runtime.setAutomationService(service)
+  bindBotAutomations(service, store, runtime)
   return service
-}
-
-/** A desktop visit stamps the shown tab's focus; main-created run tabs start unstamped. */
-function runTabWasFocused(runtime: OrcaRuntimeService, run: AutomationRun): boolean {
-  const tabs = run.workspaceId
-    ? runtime.getWorkspaceSessionForWorktree(run.workspaceId)?.unifiedTabs?.[run.workspaceId]
-    : undefined
-  return Boolean(
-    tabs?.some((tab) => tab.id === run.terminalSessionId && tab.lastFocusedAt !== undefined)
-  )
 }
 
 function createRuntimeRunTerminalRetention(
@@ -236,6 +234,7 @@ function createRuntimeRunTerminalRetention(
       return run.terminalPtyId ? runtime.readTerminalClientUse(run.terminalPtyId) : 'unknown'
     },
     runTerminalAlive: (run) => runOwnHandle(runtime, run) !== null,
+    runPaneKept: (run) => runPaneKeepsRunPty(runtime, run),
     shellAloneAtPrompt: (run) =>
       run.terminalPtyId
         ? runtime.confirmTerminalShellAlone(run.terminalPtyId)
@@ -284,7 +283,7 @@ function createRuntimeRunTerminalRetention(
     },
     inAutomationLane: (automationId, operation) =>
       service.runInAutomationLane(automationId, operation),
-    forgetRunTerminal: async (run) => {
+    forgetRunTerminal: async (run, keepPane) => {
       // An idle shell proves a dispatched run exited without a completion result.
       const unfinished = run.status === 'dispatched'
       await service.markDispatchResult({
@@ -293,8 +292,7 @@ function createRuntimeRunTerminalRetention(
         error: unfinished
           ? (run.error ?? 'The agent exited without reporting completion.')
           : run.error,
-        terminalSessionId: null,
-        terminalPaneKey: null,
+        ...(keepPane ? {} : { terminalSessionId: null, terminalPaneKey: null }),
         terminalPtyId: null
       })
     }
