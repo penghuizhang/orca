@@ -26,8 +26,7 @@ function sourceCacheRef(): UsageSourceCacheRef {
   return {
     path: sourceCachePath,
     schemaVersion: PI_USAGE_SCHEMA_VERSION,
-    worktreeFingerprint: null,
-    reuse: true
+    worktreeFingerprint: null
   }
 }
 

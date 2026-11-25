@@ -147,7 +147,6 @@ export async function registerCoreHandlers(
       // Restart/profile switching closes this through will-quit; this callback covers relaunch exit.
       onBeforeRelaunchExit: () => closeNotificationDismissalsBeforeRelaunch(runtime)
     })
-    })
     registerCliHandlers()
     registerOrcaUninstallHandlers(store)
     registerPreflightHandlers(store)

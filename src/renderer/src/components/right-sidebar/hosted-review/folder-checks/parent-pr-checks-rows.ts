@@ -74,11 +74,15 @@ export function summarizeParentPrChecksRows(
     pending: rows.filter((row) => row.group === 'pending').length,
     passing: rows.filter((row) => row.group === 'passing').length,
     noPr: rows.filter((row) => row.status === 'noReview').length,
-    unknown: rows.filter(
-      (row) =>
-        ['notFetched', 'loading', 'linkedDetailsUnavailable', 'refreshError'].includes(
-          row.status
-        ) || ['unsupported', 'unavailable'].includes(row.status)
+    unknown: rows.filter((row) =>
+      [
+        'notFetched',
+        'loading',
+        'linkedDetailsUnavailable',
+        'refreshError',
+        'unsupported',
+        'unavailable'
+      ].includes(row.status)
     ).length
   }
 }
@@ -111,7 +115,6 @@ function buildParentPrChecksRow(
     args.worktree.linkedBitbucketPR ?? null,
     args.worktree.linkedAzureDevOpsPR ?? null,
     args.worktree.linkedGiteaPR ?? null,
-    args.worktree.linkedGiteePR ?? null,
     { suppressedGitHubPR: args.worktree.suppressedGitHubPR ?? null }
   )
   const review = reviewSnapshot.review
@@ -295,7 +298,7 @@ function hasLinkedReview(worktree: Worktree): boolean {
     worktree.linkedBitbucketPR ??
     worktree.linkedAzureDevOpsPR ??
     worktree.linkedGiteaPR ??
-    worktree.linkedGiteePR
+    null
   )
 }
 
@@ -305,7 +308,6 @@ function getLinkedReviewHints(worktree: Worktree): Parameters<typeof linkedRevie
     linkedGitLabMR: worktree.linkedGitLabMR ?? null,
     linkedBitbucketPR: worktree.linkedBitbucketPR ?? null,
     linkedAzureDevOpsPR: worktree.linkedAzureDevOpsPR ?? null,
-    linkedGiteaPR: worktree.linkedGiteaPR ?? null,
-    linkedGiteePR: worktree.linkedGiteePR ?? null
+    linkedGiteaPR: worktree.linkedGiteaPR ?? null
   }
 }

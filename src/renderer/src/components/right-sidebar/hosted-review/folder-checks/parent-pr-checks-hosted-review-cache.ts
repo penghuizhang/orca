@@ -39,7 +39,6 @@ export function canUseParentPrChecksHostedReviewCacheEntry(
     worktree.linkedBitbucketPR ?? null,
     worktree.linkedAzureDevOpsPR ?? null,
     worktree.linkedGiteaPR ?? null,
-    worktree.linkedGiteePR ?? null,
     {
       reviewHintKey: entry.linkedReviewHintKey,
       suppressedGitHubPR: worktree.suppressedGitHubPR ?? null

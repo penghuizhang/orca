@@ -101,7 +101,6 @@ export function getWorktreeCardPrDisplay(
   linkedBitbucketPR: number | null = null,
   linkedAzureDevOpsPR: number | null = null,
   linkedGiteaPR: number | null = null,
-  linkedGiteePR: number | null = null,
   options: WorktreeCardPrDisplayOptions = {},
   t?: Translate
 ): WorktreeCardPrDisplay | null {
@@ -110,16 +109,14 @@ export function getWorktreeCardPrDisplay(
     linkedGitLabMR,
     linkedBitbucketPR,
     linkedAzureDevOpsPR,
-    linkedGiteaPR,
-    linkedGiteePR
+    linkedGiteaPR
   }
   const hasLinkedReview =
     linkedPR !== null ||
     linkedGitLabMR !== null ||
     linkedBitbucketPR !== null ||
     linkedAzureDevOpsPR !== null ||
-    linkedGiteaPR !== null ||
-    linkedGiteePR !== null
+    linkedGiteaPR !== null
   if (
     review?.provider === 'github' &&
     isGitHubPRSuppressed(

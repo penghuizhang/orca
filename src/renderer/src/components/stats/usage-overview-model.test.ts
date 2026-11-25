@@ -3,17 +3,17 @@ import type {
   ClaudeUsageDailyPoint,
   ClaudeUsageScanState,
   ClaudeUsageSummary
-} from '../../../../shared/claude-usage-types'
+} from '../../../../shared/agent-usage/analytics/claude-usage-types'
 import type {
   CodexUsageDailyPoint,
   CodexUsageScanState,
   CodexUsageSummary
-} from '../../../../shared/codex-usage-types'
+} from '../../../../shared/agent-usage/analytics/codex-usage-types'
 import type {
   OpenCodeUsageDailyPoint,
   OpenCodeUsageScanState,
   OpenCodeUsageSummary
-} from '../../../../shared/opencode-usage-types'
+} from '../../../../shared/agent-usage/analytics/opencode-usage-types'
 import type {
   ZCodeUsageDailyPoint,
   ZCodeUsageScanState,

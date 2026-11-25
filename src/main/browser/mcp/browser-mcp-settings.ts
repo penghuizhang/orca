@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { getSecretStore } from '../../../shared/secret-store'
+import { getSecretStore } from '../../../shared/secure-storage/secret-store'
 
 // Why: the MCP bearer token is a localhost-only defense-in-depth secret; we seal it with the host SecretStore when available.
 

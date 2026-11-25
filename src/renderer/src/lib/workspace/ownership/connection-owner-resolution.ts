@@ -7,7 +7,6 @@ import {
   getRepoSshConnectionId
 } from '../../../../../shared/execution-host/execution-host'
 import type { Repo } from '../../../../../shared/repository/repo-types'
-import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../../../shared/workspace/identity/floating-workspace-id'
 import { isLocalOnlyVirtualWorktree } from '../../../../../shared/workspace/identity/virtual-worktree-locality'
 import { getRepoIdFromWorktreeId } from '../../../../../shared/worktree/id'
 import { parseWorkspaceKey } from '../../../../../shared/workspace/identity/workspace-scope'
