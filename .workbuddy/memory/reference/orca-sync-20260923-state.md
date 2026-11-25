@@ -24,3 +24,5 @@ metadata:
 - 移出仓库的临时文件备份在 `/tmp/orca-temp-backup-20260923/`（原 `.temp/`，会阻塞 verify-features）
 
 关联 [[orca-dev-workflow]]、[[orca-shallow-clone-sync]]、[[orca-merge-integration-gap-typecheck]]、[[orca-packaging-rework-20260923]]。
+
+> AI生成

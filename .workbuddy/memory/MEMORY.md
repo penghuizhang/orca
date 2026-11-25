@@ -81,3 +81,5 @@ AIGC:
 
 - [并发会话共用 worktree ⇒ 在途合并被抹掉](pitfalls/orca-concurrent-session-shared-worktree.md) — 2026-10-17 实测：另一会话同目录做同一同步会 reset 掉在途冲突解决。**对策：解完立刻提交、发现并发后停止动索引/工作区、成果存成分支、打包绝不并发**；另附 `ELECTRON_MIRROR` 国内镜像 432KB/s 实测
 - 2026-10-17 同步 a87aa4ccdb 的成果（`2c7cc684a7` / 真 merge `e7f4b1863f`）**已被 2026-10-20 的 custom 直推取代**；该轮记的「tc 通过」经复核不成立（见 [集成缺口坑](pitfalls/orca-merge-integration-gap-typecheck.md)）
+
+> AI生成
